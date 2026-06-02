@@ -1,0 +1,29 @@
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.countdown-word {
+  font-family: var(--ui-font);
+  font-size: clamp(1.5rem, 6vw, 3.5rem);
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-shadow: 0 0 18px var(--glow);
+  animation: countpop 0.7s ease-out;
+}
+@keyframes countpop {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+}

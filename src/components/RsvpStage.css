@@ -1,0 +1,81 @@
+.rsvp-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+/* Horizontal band centered vertically; word is positioned within it. */
+.rsvp-band {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  display: flex;
+  justify-content: center;
+}
+
+.rsvp-word {
+  font-family: var(--word-font);
+  font-size: clamp(3rem, 12vw, 8rem);
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--fg);
+  text-shadow: 0 0 10px rgba(233, 217, 194, 0.15);
+  will-change: transform;
+  animation: flashin 0.09s ease-out;
+}
+.rsvp-word.is-strong {
+  font-weight: 700;
+  color: #fff;
+}
+.rsvp-word.is-em {
+  font-style: italic;
+}
+
+.rsvp-pivot {
+  color: var(--orp);
+  text-shadow: 0 0 14px var(--glow);
+}
+
+/* List-item flash: distinct color tint; the bullet does the flourish so it
+   never fights the pivot-pinning transform on .rsvp-word. */
+.rsvp-word.is-list .rsvp-pre,
+.rsvp-word.is-list .rsvp-post {
+  color: var(--accent-2);
+}
+.rsvp-bullet {
+  display: inline-block;
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--glow);
+  animation: bulletpop 0.22s ease-out;
+}
+
+@keyframes flashin {
+  from {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes bulletpop {
+  0% {
+    opacity: 0;
+    transform: translateX(-0.5em) scale(0.6);
+  }
+  60% {
+    transform: translateX(0) scale(1.25);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rsvp-word,
+  .rsvp-bullet {
+    animation: none;
+  }
+}

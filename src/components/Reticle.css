@@ -1,0 +1,41 @@
+.reticle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(70vw, 900px);
+  height: 0;
+  pointer-events: none;
+}
+/* Horizontal rails framing the word band. */
+.reticle::before,
+.reticle::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--grid);
+}
+.reticle::before {
+  top: -2.2em;
+}
+.reticle::after {
+  top: 2.2em;
+}
+/* Center tick marks. */
+.reticle-line {
+  position: absolute;
+  left: 50%;
+  width: 2px;
+  height: 0.7em;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--glow);
+  transform: translateX(-50%);
+}
+.reticle-top {
+  top: -1.9em;
+}
+.reticle-bottom {
+  top: 1.2em;
+}

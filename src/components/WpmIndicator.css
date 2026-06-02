@@ -1,0 +1,11 @@
+.wpm-indicator {
+  position: fixed;
+  bottom: 1.4rem;
+  right: 1.6rem;
+  font-family: var(--word-font);
+  font-size: 1.6rem;
+  font-style: italic;
+  color: var(--fg-dim);
+  letter-spacing: 0.05em;
+  pointer-events: none;
+}

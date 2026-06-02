@@ -1,0 +1,39 @@
+.reader {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.exit-button {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 50;
+  width: 2.2rem;
+  height: 2.2rem;
+  font-size: 0.8rem;
+  color: var(--fg-dim);
+  background: var(--bg-2);
+  border: 2px solid var(--fg-dim);
+  border-radius: 4px;
+}
+.exit-button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--glow);
+}
+
+.finished {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+.finished-title {
+  font-size: 1rem;
+  color: var(--fg-dim);
+  letter-spacing: 0.2em;
+}

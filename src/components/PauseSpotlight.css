@@ -1,0 +1,82 @@
+.pause {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6vh 8vw;
+}
+
+.pause-context {
+  --spot-x: 50%;
+  --spot-y: 50%;
+  max-width: 70ch;
+  max-height: 80vh;
+  overflow: hidden;
+  font-family: var(--word-font);
+  font-size: clamp(1.3rem, 2.6vw, 2rem);
+  line-height: 1.7;
+  color: var(--fg);
+  cursor: crosshair;
+
+  /* Spotlight: only content near the cursor/active word is lit. */
+  -webkit-mask-image: radial-gradient(
+    circle at var(--spot-x) var(--spot-y),
+    #000 0,
+    #000 90px,
+    rgba(0, 0, 0, 0.25) 200px,
+    transparent 320px
+  );
+  mask-image: radial-gradient(
+    circle at var(--spot-x) var(--spot-y),
+    #000 0,
+    #000 90px,
+    rgba(0, 0, 0, 0.25) 200px,
+    transparent 320px
+  );
+}
+
+.pause-block {
+  margin: 0.6em 0;
+}
+.pause-block.heading {
+  color: var(--accent);
+  font-size: 1.2em;
+  letter-spacing: 0.04em;
+}
+.pause-block.atomic {
+  color: var(--fg-dim);
+  font-style: italic;
+  letter-spacing: 0.1em;
+}
+
+.pw {
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+}
+.pw.strong {
+  color: #fff;
+  font-weight: 700;
+}
+.pw.em {
+  font-style: italic;
+}
+.pw.li {
+  color: var(--accent-2);
+}
+.pw:hover {
+  color: var(--accent-2);
+}
+.pw.active {
+  color: var(--orp);
+  text-shadow: 0 0 16px var(--glow);
+}
+
+.pause-hint {
+  position: fixed;
+  bottom: 1.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  color: var(--fg-dim);
+  letter-spacing: 0.08em;
+}

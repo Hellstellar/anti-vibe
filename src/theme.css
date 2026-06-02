@@ -1,0 +1,87 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+
+:root {
+  /* Theme palette — retro cyberpunk handheld (warm dark + red/orange). */
+  --bg: #0a0705;
+  --bg-2: #140d09;
+  --fg: #e9d9c2;
+  --fg-dim: #8a6f55;
+  --accent: #ff4a2e;
+  --accent-2: #ff8a3d;
+  --glow: rgba(255, 74, 46, 0.55);
+  --orp: #ff2f1f;
+  --grid: rgba(255, 138, 61, 0.12);
+
+  /* Fonts — word font is customizable; UI chrome stays pixel. */
+  --word-font: 'VT323', monospace;
+  --ui-font: 'Press Start 2P', monospace;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: radial-gradient(circle at 50% 40%, var(--bg-2), var(--bg) 70%);
+  color: var(--fg);
+  font-family: var(--ui-font);
+  overflow: hidden;
+}
+
+button {
+  font-family: var(--ui-font);
+  cursor: pointer;
+}
+
+/* ---- CRT scanline overlay ---- */
+.crt-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0) 0px,
+      rgba(0, 0, 0, 0) 2px,
+      rgba(0, 0, 0, 0.18) 3px,
+      rgba(0, 0, 0, 0.18) 4px
+    );
+  mix-blend-mode: multiply;
+  animation: flicker 4s infinite steps(60);
+}
+.crt-overlay::after {
+  /* vignette */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(0, 0, 0, 0) 55%,
+    rgba(0, 0, 0, 0.55) 100%
+  );
+}
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.92;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt-overlay {
+    animation: none;
+  }
+}
