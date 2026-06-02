@@ -28,6 +28,15 @@ npm run dev
 
 Opens on `http://localhost:5173`. Copy some markdown, click **PASTE & READ**.
 
+### Tests
+
+```bash
+npm test          # run unit tests once (Vitest)
+npm run test:watch
+```
+
+Unit tests cover the pure logic: ORP pivot + WPM ramp + per-word timing (`timing.ts`), chunk gathering (`chunk.ts`), and the markdown → token-stream parse (`parseMarkdown.ts`).
+
 > Clipboard access needs a secure context. On `localhost` it works; if the browser blocks it, the app falls back to a paste box.
 
 ## Stack
