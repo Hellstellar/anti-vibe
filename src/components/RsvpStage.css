@@ -49,9 +49,10 @@
   color: var(--accent);
   text-shadow: 0 0 10px var(--glow);
 }
-/* Animate the bullet only on the first word of a new list item. */
+/* Animate the bullet only on the first word of a new list item — a punchy
+   pop so a new item is clearly distinguishable from words within an item. */
 .rsvp-word.is-list-start .rsvp-bullet {
-  animation: bulletpop 0.22s ease-out;
+  animation: bulletpop 0.5s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
 
 @keyframes flashin {
@@ -65,14 +66,24 @@
 @keyframes bulletpop {
   0% {
     opacity: 0;
-    transform: translateX(-0.5em) scale(0.6);
+    transform: translateX(-0.6em) scale(0.2) rotate(-25deg);
+    color: var(--accent-2);
+    text-shadow: 0 0 4px var(--glow);
   }
-  60% {
-    transform: translateX(0) scale(1.25);
+  45% {
+    opacity: 1;
+    transform: translateX(0) scale(2) rotate(8deg);
+    color: #fff;
+    text-shadow: 0 0 28px var(--accent), 0 0 48px var(--glow);
+  }
+  70% {
+    transform: scale(0.85) rotate(0deg);
   }
   100% {
     opacity: 1;
     transform: scale(1);
+    color: var(--accent);
+    text-shadow: 0 0 10px var(--glow);
   }
 }
 
