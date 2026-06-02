@@ -78,6 +78,16 @@ describe('parseMarkdown — words', () => {
     expect(w.map((t) => t.text)).toEqual(['one', 'two', 'three'])
   })
 
+  it('marks listItemStart only on the first word of each item', () => {
+    const w = words('- one two\n- three four')
+    // first word of item 1 ('one') and item 2 ('three') start; others don't.
+    expect(w.map((t) => t.listItemStart)).toEqual([true, false, true, false])
+  })
+
+  it('never marks listItemStart on plain paragraph words', () => {
+    expect(words('plain words here').some((t) => t.listItemStart)).toBe(false)
+  })
+
   it('does not flag plain paragraph words as list items', () => {
     expect(words('just a paragraph').every((t) => !t.listItem)).toBe(true)
   })

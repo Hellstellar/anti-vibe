@@ -38,6 +38,9 @@ export function parseMarkdown(src: string): ParseResult {
   const tokens: Token[] = []
   const blocks: Block[] = []
   let wordCount = 0
+  // Set when a new list item begins; the next emitted word claims it so the
+  // bullet animates once per item rather than on every word.
+  let pendingListStart = false
 
   const pushWord = (
     text: string,
@@ -46,6 +49,8 @@ export function parseMarkdown(src: string): ParseResult {
     listItem: boolean,
   ) => {
     if (!text.trim()) return
+    const listItemStart = listItem && pendingListStart
+    if (listItemStart) pendingListStart = false
     const token: WordToken = {
       kind: 'word',
       text,
@@ -53,6 +58,7 @@ export function parseMarkdown(src: string): ParseResult {
       blockId,
       emphasis: [...emphasis],
       listItem,
+      listItemStart,
       index: tokens.length,
       wordIndex: wordCount++,
     }
@@ -143,6 +149,7 @@ export function parseMarkdown(src: string): ParseResult {
         break
       case 'list':
         for (const item of (node as List).children) {
+          pendingListStart = true
           for (const child of item.children) {
             emitNode(child, blockId, true)
           }

@@ -35,11 +35,13 @@ export default function RsvpStage() {
   if (!chunk) return null
 
   const emphasis = chunk.words[0]?.emphasis ?? []
+  const listItemStart = chunk.words[0]?.listItemStart ?? false
   const cls = [
     'rsvp-word',
     emphasis.includes('strong') ? 'is-strong' : '',
     emphasis.includes('em') ? 'is-em' : '',
     chunk.listItem ? 'is-list' : '',
+    listItemStart ? 'is-list-start' : '',
   ]
     .filter(Boolean)
     .join(' ')

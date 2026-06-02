@@ -48,6 +48,9 @@
   display: inline-block;
   color: var(--accent);
   text-shadow: 0 0 10px var(--glow);
+}
+/* Animate the bullet only on the first word of a new list item. */
+.rsvp-word.is-list-start .rsvp-bullet {
   animation: bulletpop 0.22s ease-out;
 }
 

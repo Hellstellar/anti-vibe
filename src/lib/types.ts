@@ -14,8 +14,10 @@ export interface WordToken {
   blockId: number
   /** Active inline emphasis marks. */
   emphasis: Emphasis[]
-  /** True when this word belongs to a list item (distinct animation). */
+  /** True when this word belongs to a list item (distinct styling). */
   listItem: boolean
+  /** True only for the FIRST word of a list item (drives the bullet animation). */
+  listItemStart: boolean
   /** Position in the global token stream (counts atomic tokens too). */
   index: number
   /** Ordinal among WORD tokens only — drives the WPM ramp. */
