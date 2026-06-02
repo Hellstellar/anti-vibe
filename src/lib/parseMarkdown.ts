@@ -37,6 +37,7 @@ export function parseMarkdown(src: string): ParseResult {
   const tree = processor.parse(src) as Root
   const tokens: Token[] = []
   const blocks: Block[] = []
+  let wordCount = 0
 
   const pushWord = (
     text: string,
@@ -44,16 +45,16 @@ export function parseMarkdown(src: string): ParseResult {
     emphasis: Emphasis[],
     listItem: boolean,
   ) => {
-    const c = clean(text)
     if (!text.trim()) return
     const token: WordToken = {
       kind: 'word',
       text,
-      clean: c,
+      clean: clean(text),
       blockId,
       emphasis: [...emphasis],
       listItem,
       index: tokens.length,
+      wordIndex: wordCount++,
     }
     tokens.push(token)
   }
@@ -117,34 +118,12 @@ export function parseMarkdown(src: string): ParseResult {
     }
   }
 
-  const walkList = (list: List, blockId: number) => {
-    for (const item of list.children) {
-      for (const child of item.children) {
-        if (child.type === 'paragraph') {
-          walkInline(child.children, blockId, [], true)
-        } else if (child.type === 'list') {
-          walkList(child, blockId)
-        }
-      }
-    }
-  }
-
-  const walkBlockquote = (bq: Blockquote, blockId: number) => {
-    for (const child of bq.children) {
-      if (child.type === 'paragraph') {
-        walkInline(child.children, blockId, [], false)
-      } else if (child.type === 'list') {
-        walkList(child, blockId)
-      } else if (child.type === 'blockquote') {
-        walkBlockquote(child, blockId)
-      }
-    }
-  }
-
-  for (const node of tree.children) {
-    const blockId = blocks.length
-    const tokenStart = tokens.length
-
+  /**
+   * Emit tokens for a single block-level node. Used both for top-level blocks
+   * and for blocks nested inside list items / blockquotes, so nested code,
+   * tables, headings and images are not silently dropped.
+   */
+  const emitNode = (node: RootContent, blockId: number, listItem: boolean) => {
     switch (node.type) {
       case 'heading':
         pushAtomic('heading', node, blockId)
@@ -159,19 +138,32 @@ export function parseMarkdown(src: string): ParseResult {
         if (isImageOnly(node)) {
           pushAtomic('image', node, blockId)
         } else {
-          walkInline(node.children, blockId, [], false)
+          walkInline(node.children, blockId, [], listItem)
         }
         break
       case 'list':
-        walkList(node, blockId)
+        for (const item of (node as List).children) {
+          for (const child of item.children) {
+            emitNode(child, blockId, true)
+          }
+        }
         break
       case 'blockquote':
-        walkBlockquote(node, blockId)
+        for (const child of (node as Blockquote).children) {
+          emitNode(child, blockId, listItem)
+        }
         break
       default:
         // thematicBreak, html, definition, etc. — skip
         break
     }
+  }
+
+  for (const node of tree.children) {
+    const blockId = blocks.length
+    const tokenStart = tokens.length
+
+    emitNode(node, blockId, false)
 
     const tokenEnd = tokens.length - 1
     if (tokenEnd >= tokenStart) {

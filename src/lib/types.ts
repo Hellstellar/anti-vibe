@@ -16,8 +16,10 @@ export interface WordToken {
   emphasis: Emphasis[]
   /** True when this word belongs to a list item (distinct animation). */
   listItem: boolean
-  /** Position in the global token stream. */
+  /** Position in the global token stream (counts atomic tokens too). */
   index: number
+  /** Ordinal among WORD tokens only — drives the WPM ramp. */
+  wordIndex: number
 }
 
 /** A block rendered as-is that auto-pauses playback when reached. */

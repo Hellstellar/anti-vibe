@@ -12,6 +12,7 @@ function word(text: string, index: number, blockId = 0): WordToken {
     emphasis: [],
     listItem: false,
     index,
+    wordIndex: index,
   }
 }
 
@@ -92,5 +93,19 @@ describe('chunkDelay', () => {
       wordDelay(tokens[0] as WordToken, 0, DEFAULT_CONFIG) +
       wordDelay(tokens[1] as WordToken, 1, DEFAULT_CONFIG)
     expect(chunkDelay(c, DEFAULT_CONFIG)).toBeCloseTo(expected)
+  })
+
+  it('ramps on wordIndex, not the global token index', () => {
+    // A word whose global index is large (after many atomics) but whose
+    // wordIndex is 0 must use the slow start-of-ramp delay.
+    const w: WordToken = { ...word('cat', 50), wordIndex: 0 }
+    const c = chunkAt([w], 0, 1)!
+    // Expected = the start-of-ramp delay (wordIndex 0), not the index-50 delay.
+    expect(chunkDelay(c, DEFAULT_CONFIG)).toBeCloseTo(
+      wordDelay(w, 0, DEFAULT_CONFIG),
+    )
+    expect(chunkDelay(c, DEFAULT_CONFIG)).not.toBeCloseTo(
+      wordDelay(w, 50, DEFAULT_CONFIG),
+    )
   })
 })

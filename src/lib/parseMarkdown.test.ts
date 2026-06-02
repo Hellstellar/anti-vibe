@@ -39,6 +39,17 @@ describe('parseMarkdown — atomic blocks', () => {
       'npm',
     )
   })
+
+  it('emits a fenced code block nested inside a list item as atomic (not dropped)', () => {
+    const md = '- intro\n\n  ```js\n  const x = 1\n  ```'
+    const a = atomics(md)
+    expect(a.map((t) => t.blockType)).toContain('code')
+  })
+
+  it('emits an image-only paragraph inside a list item as an atomic image', () => {
+    const a = atomics('- ![diagram](d.png)')
+    expect(a.map((t) => t.blockType)).toContain('image')
+  })
 })
 
 describe('parseMarkdown — words', () => {
@@ -51,6 +62,14 @@ describe('parseMarkdown — words', () => {
   it('assigns a monotonic global index across the stream', () => {
     const tokens = parseMarkdown('# H\n\nfirst second').tokens
     expect(tokens.map((t) => t.index)).toEqual([0, 1, 2])
+  })
+
+  it('numbers wordIndex over words only, skipping atomic tokens', () => {
+    // heading (atomic, no wordIndex) then two words.
+    const w = words('# Heading\n\nfirst second')
+    expect(w.map((t) => t.wordIndex)).toEqual([0, 1])
+    // global index skips past the heading token.
+    expect(w.map((t) => t.index)).toEqual([1, 2])
   })
 
   it('flags list-item words', () => {

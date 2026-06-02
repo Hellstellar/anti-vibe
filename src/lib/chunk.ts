@@ -47,5 +47,7 @@ export function chunkAt(
 
 /** Total dwell time for a chunk (sum of member word delays). */
 export function chunkDelay(chunk: Chunk, cfg: ReaderConfig): number {
-  return chunk.words.reduce((sum, w) => sum + wordDelay(w, w.index, cfg), 0)
+  // Ramp on wordIndex (count of words read), not the global token index which
+  // also counts atomic blocks.
+  return chunk.words.reduce((sum, w) => sum + wordDelay(w, w.wordIndex, cfg), 0)
 }

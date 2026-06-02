@@ -17,6 +17,7 @@ function word(text: string, overrides: Partial<WordToken> = {}): WordToken {
     emphasis: [],
     listItem: false,
     index: 0,
+    wordIndex: 0,
     ...overrides,
   }
 }

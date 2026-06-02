@@ -6,16 +6,42 @@ import type { Block, ReaderConfig, ReaderMode, Token } from '../lib/types'
 
 const CFG_KEY = 'rsvp-reader-config'
 
+/** Coerce a value to a finite number, falling back when NaN/Infinity/missing. */
+function num(v: unknown, fallback: number): number {
+  const n = typeof v === 'number' ? v : Number(v)
+  return Number.isFinite(n) ? n : fallback
+}
+
+/**
+ * Clamp config into a safe, self-consistent range. Guards against corrupted or
+ * hand-edited localStorage (e.g. targetWpm 0/NaN -> Infinity delay) and keeps
+ * startWpm <= targetWpm so the ramp always accelerates rather than decelerates.
+ */
+function sanitizeConfig(cfg: ReaderConfig): ReaderConfig {
+  const targetWpm = Math.max(10, num(cfg.targetWpm, DEFAULT_CONFIG.targetWpm))
+  const startWpm = Math.min(
+    targetWpm,
+    Math.max(10, num(cfg.startWpm, DEFAULT_CONFIG.startWpm)),
+  )
+  return {
+    ...cfg,
+    startWpm,
+    targetWpm,
+    rampWords: Math.max(0, Math.round(num(cfg.rampWords, DEFAULT_CONFIG.rampWords))),
+    chunkSize: Math.max(1, Math.round(num(cfg.chunkSize, DEFAULT_CONFIG.chunkSize))),
+  }
+}
+
 function loadConfig(): ReaderConfig {
   try {
     const raw = localStorage.getItem(CFG_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      return {
+      return sanitizeConfig({
         ...DEFAULT_CONFIG,
         ...parsed,
         multipliers: { ...DEFAULT_CONFIG.multipliers, ...parsed.multipliers },
-      }
+      })
     }
   } catch {
     /* ignore */
@@ -64,20 +90,13 @@ interface ReaderState {
 }
 
 export const useReader = create<ReaderState>((set, get) => {
-  /** Index of the previous word token, for stepping backward. */
-  const prevWordIndex = (from: number): number => {
+  /** Nearest word-token index in direction `dir` (+1/-1), or null if none. */
+  const findWord = (from: number, dir: 1 | -1): number | null => {
     const { tokens } = get()
-    for (let i = from - 1; i >= 0; i--) {
+    for (let i = from + dir; i >= 0 && i < tokens.length; i += dir) {
       if (tokens[i].kind === 'word') return i
     }
-    return from
-  }
-  const nextWordIndex = (from: number): number => {
-    const { tokens } = get()
-    for (let i = from + 1; i < tokens.length; i++) {
-      if (tokens[i].kind === 'word') return i
-    }
-    return from
+    return null
   }
 
   const scheduleNext = () => {
@@ -160,14 +179,23 @@ export const useReader = create<ReaderState>((set, get) => {
       if (mode === 'playing') pause()
       else if (mode === 'atomic') resumeFromAtomic()
       else if (mode === 'paused') run()
-      else if (mode === 'idle') startCountdown()
+      else if (mode === 'idle') {
+        // 'idle' also means finished (currentIndex past end) — restart from
+        // the top rather than running a countdown that immediately ends.
+        const { currentIndex, tokens } = get()
+        if (currentIndex >= tokens.length) set({ currentIndex: 0 })
+        startCountdown()
+      }
     },
 
     step: (delta) => {
+      // Only meaningful while reading; ignore during countdown/idle so an arrow
+      // key can't abort the countdown before playback starts.
+      const { mode, currentIndex } = get()
+      if (mode !== 'playing' && mode !== 'paused' && mode !== 'atomic') return
+      const target = findWord(currentIndex, delta < 0 ? -1 : 1)
+      if (target === null) return // at a boundary — stay put
       clearTimer()
-      const { currentIndex } = get()
-      const target =
-        delta < 0 ? prevWordIndex(currentIndex) : nextWordIndex(currentIndex)
       set({ currentIndex: target, mode: 'paused' })
     },
 
@@ -178,7 +206,7 @@ export const useReader = create<ReaderState>((set, get) => {
     },
 
     setCfg: (partial) => {
-      const next = { ...get().cfg, ...partial }
+      const next = sanitizeConfig({ ...get().cfg, ...partial })
       saveConfig(next)
       set({ cfg: next })
     },
