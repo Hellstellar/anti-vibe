@@ -173,7 +173,8 @@
 }
 
 .pw {
-  transition: color 0.15s ease, text-shadow 0.15s ease;
+  border-radius: 3px;
+  transition: color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
 }
 .pw.strong {
   color: #fff;
@@ -183,7 +184,9 @@
   font-style: italic;
 }
 .pw:hover {
-  color: var(--accent-2);
+  color: var(--bg);
+  background-color: var(--accent);
+  box-shadow: 0 0 10px var(--glow);
 }
 .pw.active {
   color: var(--orp);
