@@ -17,6 +17,13 @@ LLMs and agents generate walls of text, and the cost of reviewing it is real —
 
 The goal is review tooling that's **easier on your eyes and attention**, not only quicker — a small health/wellbeing angle baked into a speed tool. See [`docs/VISION.md`](./docs/VISION.md) for where it could go.
 
+## Screenshots
+
+|                                                   |                                                            |                                                  |
+| ------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
+| ![Landing](docs/screenshots/landing.png)          | ![Section reading view](docs/screenshots/reading.png)      | ![RSVP word flash](docs/screenshots/rsvp.png)    |
+| **Landing** — paste or open a `.md` file          | **Reading view** — section under a cursor spotlight + CRT fade | **RSVP** — one word at a time, ORP pivot in red |
+
 ## Features
 
 - **Load** — paste markdown from the clipboard, or open a `.md` file.
