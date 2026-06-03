@@ -45,9 +45,18 @@ export function chunkAt(
   }
 }
 
-/** Total dwell time for a chunk (sum of member word delays). */
-export function chunkDelay(chunk: Chunk, cfg: ReaderConfig): number {
-  // Ramp on wordIndex (count of words read), not the global token index which
-  // also counts atomic blocks.
-  return chunk.words.reduce((sum, w) => sum + wordDelay(w, w.wordIndex, cfg), 0)
+/**
+ * Total dwell time for a chunk (sum of member word delays).
+ * Ramp position is each word's offset from `rampStart` (the wordIndex where the
+ * current play session began), so playback eases in again after every resume.
+ */
+export function chunkDelay(
+  chunk: Chunk,
+  cfg: ReaderConfig,
+  rampStart = 0,
+): number {
+  return chunk.words.reduce(
+    (sum, w) => sum + wordDelay(w, Math.max(0, w.wordIndex - rampStart), cfg),
+    0,
+  )
 }

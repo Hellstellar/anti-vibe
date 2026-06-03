@@ -73,6 +73,9 @@ interface ReaderState {
   mode: ReaderMode
   cfg: ReaderConfig
   spotlight: { x: number; y: number }
+  /** wordIndex where the current play session began — the ramp eases in from
+   *  here, so every pause/resume restarts the slow-start. */
+  rampStart: number
 
   load: (src: string) => void
   exit: () => void
@@ -99,8 +102,18 @@ export const useReader = create<ReaderState>((set, get) => {
     return null
   }
 
+  /** wordIndex to ramp from for a play session starting at token `idx`. */
+  const rampOriginAt = (idx: number): number => {
+    const { tokens } = get()
+    const t = tokens[idx]
+    if (t && t.kind === 'word') return t.wordIndex
+    const n = findWord(idx, 1)
+    const nt = n !== null ? tokens[n] : undefined
+    return nt && nt.kind === 'word' ? nt.wordIndex : 0
+  }
+
   const scheduleNext = () => {
-    const { tokens, currentIndex, cfg } = get()
+    const { tokens, currentIndex, cfg, rampStart } = get()
     const token = tokens[currentIndex]
 
     if (!token) {
@@ -123,7 +136,7 @@ export const useReader = create<ReaderState>((set, get) => {
       return
     }
 
-    const delay = chunkDelay(chunk, cfg)
+    const delay = chunkDelay(chunk, cfg, rampStart)
     timer = setTimeout(() => {
       set({ currentIndex: chunk.end + 1 })
       scheduleNext()
@@ -137,16 +150,17 @@ export const useReader = create<ReaderState>((set, get) => {
     mode: 'idle',
     cfg: loadConfig(),
     spotlight: { x: 0, y: 0 },
+    rampStart: 0,
 
     load: (src) => {
       clearTimer()
       const { tokens, blocks } = parseMarkdown(src)
-      set({ tokens, blocks, currentIndex: 0, mode: 'idle' })
+      set({ tokens, blocks, currentIndex: 0, mode: 'idle', rampStart: 0 })
     },
 
     exit: () => {
       clearTimer()
-      set({ tokens: [], blocks: [], currentIndex: 0, mode: 'idle' })
+      set({ tokens: [], blocks: [], currentIndex: 0, mode: 'idle', rampStart: 0 })
     },
 
     startCountdown: () => {
@@ -156,16 +170,18 @@ export const useReader = create<ReaderState>((set, get) => {
 
     run: () => {
       clearTimer()
-      // Play from the current token. If it's atomic, scheduleNext will
+      // Play from the current token, easing the ramp in from here (so resuming
+      // after a pause starts slow again). If it's atomic, scheduleNext will
       // auto-pause on it (e.g. a leading heading).
-      set({ mode: 'playing' })
+      set({ mode: 'playing', rampStart: rampOriginAt(get().currentIndex) })
       scheduleNext()
     },
 
     // Advance past the atomic token we're paused on, then resume playback.
     resumeFromAtomic: () => {
       clearTimer()
-      set({ currentIndex: get().currentIndex + 1, mode: 'playing' })
+      const next = get().currentIndex + 1
+      set({ currentIndex: next, mode: 'playing', rampStart: rampOriginAt(next) })
       scheduleNext()
     },
 
@@ -201,7 +217,7 @@ export const useReader = create<ReaderState>((set, get) => {
 
     resumeAt: (index) => {
       clearTimer()
-      set({ currentIndex: index, mode: 'playing' })
+      set({ currentIndex: index, mode: 'playing', rampStart: rampOriginAt(index) })
       scheduleNext()
     },
 

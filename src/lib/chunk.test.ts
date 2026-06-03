@@ -109,4 +109,18 @@ describe('chunkDelay', () => {
       wordDelay(w, 50, DEFAULT_CONFIG),
     )
   })
+
+  it('eases the ramp in from rampStart (resume restarts slow)', () => {
+    // Word deep in the doc (wordIndex 40, past the ramp) but resumed here:
+    // rampStart=40 -> ramp offset 0 -> slow start delay, not target.
+    const w: WordToken = { ...word('cat', 40), wordIndex: 40 }
+    const c = chunkAt([w], 0, 1)!
+    expect(chunkDelay(c, DEFAULT_CONFIG, 40)).toBeCloseTo(
+      wordDelay(w, 0, DEFAULT_CONFIG),
+    )
+    // Without the offset it would be the fast target-speed delay.
+    expect(chunkDelay(c, DEFAULT_CONFIG, 40)).toBeGreaterThan(
+      chunkDelay(c, DEFAULT_CONFIG, 0),
+    )
+  })
 })
