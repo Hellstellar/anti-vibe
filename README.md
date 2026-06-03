@@ -1,12 +1,19 @@
 # RSVP READER
 
-A retro-cyberpunk **speed-reader for reviewing LLM / agent output**. Paste markdown, and it flashes the text one word at a time — fixed in the center of the screen, pivot letter highlighted — so the content moves instead of your eyes.
+A retro-cyberpunk reader for **reviewing LLM / agent output without the fatigue**. Move through generated markdown section by section, glance at each, and speed-read the parts worth it on demand — eyes still, content moving.
 
-> **RSVP** (Rapid Serial Visual Presentation) shows information one item at a time in the same spot. Instead of reading a paragraph at your own pace, words flash by in the center of your vision. It's speed-reading where the content moves, not your gaze — making it easier to process info without scrolling or moving your eyes around.
+> **RSVP** (Rapid Serial Visual Presentation) shows information one item at a time in the same spot. Instead of reading a paragraph at your own pace, words flash by in the center of your vision. It's speed-reading where the content moves, not your gaze — easier to process without scrolling or darting your eyes around.
 
 ## Why
 
-LLMs and agents generate walls of text. Skimming it is slow and tiring. This app lets you move through generated markdown section by section, glance at a focus-sized preview of each, and speed-read the parts worth it on demand by clicking a word.
+LLMs and agents generate walls of text, and the cost of reviewing it is real — not just the time. This app attacks that cost from several sides:
+
+- **Less reading fatigue** — RSVP keeps your eyes still (the content moves, your gaze doesn't), and the cursor spotlight + CRT fade limit what's on screen at once, easing the load.
+- **Lower inertia to review** — section-by-section navigation means you commit to one small chunk at a time instead of facing the whole document. Glance at a heading, decide, skip it or speed-read it.
+- **Faster review** — opt-in RSVP blasts through the sections worth reading at your target WPM; review keeps pace with how much AI output you now generate.
+- **Less screen time** — faster, gentler review means fewer hours staring at walls of text.
+
+The goal is review tooling that's **easier on your eyes and attention**, not only quicker — a small health/wellbeing angle baked into a speed tool. See [`docs/VISION.md`](./docs/VISION.md) for where it could go.
 
 ## Features
 
