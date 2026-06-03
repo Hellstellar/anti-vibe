@@ -143,6 +143,8 @@ export default function SectionView() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number | null>(null)
   const [canScrollDown, setCanScrollDown] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+  const [hasX, setHasX] = useState(false)
 
   const section = sections[currentSection]
 
@@ -150,6 +152,8 @@ export default function SectionView() {
     const el = scrollRef.current
     if (!el) return
     setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 8)
+    setHasX(el.scrollWidth > el.clientWidth + 4)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8)
   }
 
   const setSpot = (el: HTMLElement, x: number, y: number) => {
@@ -244,7 +248,7 @@ export default function SectionView() {
     <div className="section">
       <div
         ref={scrollRef}
-        className="section-context"
+        className={`section-context${hasX ? ' has-x' : ''}`}
         style={{ '--spot-r': `${spotlightRadius}px` } as CSSProperties}
         onMouseMove={onMove}
         onScroll={updateScrollCue}
@@ -271,6 +275,9 @@ export default function SectionView() {
 
       {revealed && canScrollDown && (
         <div className="scroll-cue" aria-hidden="true">▼</div>
+      )}
+      {revealed && canScrollRight && (
+        <div className="scroll-cue-x" aria-hidden="true">▶</div>
       )}
 
       <div className="section-hint">
