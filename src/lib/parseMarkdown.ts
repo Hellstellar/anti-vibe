@@ -74,6 +74,9 @@ export function parseMarkdown(src: string): ParseResult {
   // Set when a new list item begins; the next emitted word claims it so the
   // bullet animates once per item rather than on every word.
   let pendingListStart = false
+  // Set on a line break (soft or hard); the next word records it so the
+  // reading view can render the break.
+  let pendingBreak = false
 
   const pushWord = (
     text: string,
@@ -81,9 +84,13 @@ export function parseMarkdown(src: string): ParseResult {
     emphasis: Emphasis[],
     listItem: boolean,
   ) => {
-    if (!text.trim()) return
+    if (!text.trim()) {
+      return
+    }
     const listItemStart = listItem && pendingListStart
     if (listItemStart) pendingListStart = false
+    const breakBefore = pendingBreak
+    pendingBreak = false
     const token: WordToken = {
       kind: 'word',
       text,
@@ -92,6 +99,7 @@ export function parseMarkdown(src: string): ParseResult {
       emphasis: [...emphasis],
       listItem,
       listItemStart,
+      breakBefore,
       index: tokens.length,
       wordIndex: wordCount++,
     }
@@ -122,14 +130,21 @@ export function parseMarkdown(src: string): ParseResult {
     for (const child of children) {
       switch (child.type) {
         case 'text':
-          for (const w of child.value.split(/\s+/)) {
-            pushWord(w, blockId, emphasis, listItem)
-          }
+        case 'inlineCode': {
+          // Preserve soft line breaks (single \n) inside the text: the first
+          // word of each line after the first is flagged with a break.
+          const lines = child.value.split('\n')
+          lines.forEach((line, li) => {
+            if (li > 0) pendingBreak = true
+            for (const w of line.split(/\s+/)) {
+              pushWord(w, blockId, emphasis, listItem)
+            }
+          })
           break
-        case 'inlineCode':
-          for (const w of child.value.split(/\s+/)) {
-            pushWord(w, blockId, emphasis, listItem)
-          }
+        }
+        case 'break':
+          // Hard line break (trailing spaces or backslash).
+          pendingBreak = true
           break
         case 'emphasis':
           walkInline(child.children, blockId, [...emphasis, 'em'], listItem)
@@ -163,6 +178,7 @@ export function parseMarkdown(src: string): ParseResult {
    * tables, headings and images are not silently dropped.
    */
   const emitNode = (node: RootContent, blockId: number, listItem: boolean) => {
+    pendingBreak = false // breaks don't carry across blocks
     switch (node.type) {
       case 'heading':
         pushAtomic('heading', node, blockId)

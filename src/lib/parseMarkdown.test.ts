@@ -92,6 +92,14 @@ describe('parseMarkdown — words', () => {
     expect(words('just a paragraph').every((t) => !t.listItem)).toBe(true)
   })
 
+  it('flags a soft line break (single newline) on the next line\'s first word', () => {
+    // A metadata block: each "**Key:** val" line separated by single newlines
+    // is one paragraph; the first word of each later line carries breakBefore.
+    const w = words('**Status:** open\n**Owner:** sooraj')
+    expect(w.map((t) => t.text)).toEqual(['Status:', 'open', 'Owner:', 'sooraj'])
+    expect(w.map((t) => t.breakBefore)).toEqual([false, false, true, false])
+  })
+
   it('captures emphasis marks', () => {
     const w = words('a **bold** and *italic* word')
     const bold = w.find((t) => t.text === 'bold')!

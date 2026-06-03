@@ -18,6 +18,8 @@ export interface WordToken {
   listItem: boolean
   /** True only for the FIRST word of a list item (drives the bullet animation). */
   listItemStart: boolean
+  /** True when a line break (soft or hard) precedes this word in the source. */
+  breakBefore: boolean
   /** Position in the global token stream (counts atomic tokens too). */
   index: number
   /** Ordinal among WORD tokens only — drives the WPM ramp. */

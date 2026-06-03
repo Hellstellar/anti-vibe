@@ -12,6 +12,7 @@ function word(text: string, index: number, blockId = 0): WordToken {
     emphasis: [],
     listItem: false,
     listItemStart: false,
+    breakBefore: false,
     index,
     wordIndex: index,
   }

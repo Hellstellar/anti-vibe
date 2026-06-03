@@ -70,9 +70,12 @@ function Word({ w, active }: { w: WordToken; active: boolean }) {
     .filter(Boolean)
     .join(' ')
   return (
-    <span data-token-index={w.index} className={cls}>
-      {w.text}{' '}
-    </span>
+    <>
+      {w.breakBefore && <br />}
+      <span data-token-index={w.index} className={cls}>
+        {w.text}{' '}
+      </span>
+    </>
   )
 }
 
