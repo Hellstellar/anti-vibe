@@ -29,6 +29,10 @@ function sanitizeConfig(cfg: ReaderConfig): ReaderConfig {
     targetWpm,
     rampWords: Math.max(0, Math.round(num(cfg.rampWords, DEFAULT_CONFIG.rampWords))),
     chunkSize: Math.max(1, Math.round(num(cfg.chunkSize, DEFAULT_CONFIG.chunkSize))),
+    spotlightRadius: Math.min(
+      400,
+      Math.max(30, Math.round(num(cfg.spotlightRadius, DEFAULT_CONFIG.spotlightRadius))),
+    ),
   }
 }
 

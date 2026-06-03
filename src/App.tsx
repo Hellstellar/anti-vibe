@@ -1,6 +1,7 @@
 import { useReader } from './store/readerStore'
 import LandingView from './components/LandingView'
 import ReaderView from './components/ReaderView'
+import SettingsPanel from './components/SettingsPanel'
 import CrtOverlay from './components/CrtOverlay'
 
 export default function App() {
@@ -9,6 +10,7 @@ export default function App() {
   return (
     <>
       {hasContent ? <ReaderView /> : <LandingView />}
+      <SettingsPanel />
       <CrtOverlay />
     </>
   )

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { type CSSProperties, useEffect, useRef } from 'react'
 import { useReader } from '../store/readerStore'
 import type { Block, WordToken } from '../lib/types'
 import './PauseSpotlight.css'
@@ -8,6 +8,7 @@ export default function PauseSpotlight() {
   const blocks = useReader((s) => s.blocks)
   const currentIndex = useReader((s) => s.currentIndex)
   const resumeAt = useReader((s) => s.resumeAt)
+  const spotlightRadius = useReader((s) => s.cfg.spotlightRadius)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number | null>(null)
@@ -64,6 +65,7 @@ export default function PauseSpotlight() {
       <div
         ref={containerRef}
         className="pause-context"
+        style={{ '--spot-r': `${spotlightRadius}px` } as CSSProperties}
         onMouseMove={onMove}
         onClick={onClick}
       >

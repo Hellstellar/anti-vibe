@@ -4,7 +4,6 @@ import Countdown from './Countdown'
 import RsvpStage from './RsvpStage'
 import PauseSpotlight from './PauseSpotlight'
 import AtomicBlockView from './AtomicBlockView'
-import SettingsPanel from './SettingsPanel'
 import './ReaderView.css'
 
 export default function ReaderView() {
@@ -72,8 +71,6 @@ export default function ReaderView() {
           </button>
         </div>
       )}
-
-      <SettingsPanel />
     </div>
   )
 }

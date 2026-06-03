@@ -58,6 +58,8 @@ export interface ReaderConfig {
   rampWords: number
   /** Words shown per flash. */
   chunkSize: number
+  /** Radius (px) of the fully-lit core of the pause spotlight. */
+  spotlightRadius: number
   multipliers: {
     longWordPerChar: number
     softPunct: number

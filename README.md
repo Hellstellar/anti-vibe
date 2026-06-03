@@ -15,7 +15,7 @@ LLMs and agents generate walls of text. Skimming it is slow and tiring. This app
 - **Speed ramp** — starts slow, accelerates to your target WPM; long words and punctuation get extra dwell time. Live `wpm` readout.
 - **Pause spotlight** — pause and the surrounding paragraph appears as flowing text under a moving radial spotlight; the cursor is the light source, everything else fades. **Click any word to resume from there.**
 - **Markdown-aware** — headings, fenced code, tables, and images are **auto-pause points**, rendered as-is. List items flash with a distinct animation.
-- **Configurable** — target WPM, start WPM, and words-per-flash (saved to localStorage).
+- **Configurable** — target WPM, start WPM, words-per-flash, and pause-spotlight illumination radius (saved to localStorage; settings reachable from the landing page and the reader).
 - **Keyboard** — `space` pause/resume · `←` / `→` step a word · `esc` exit.
 - **Theme** — retro-cyberpunk pixelated: dark warm palette, red/orange accents, pixel fonts, CRT scanlines. The reading font is swappable via the `--word-font` CSS variable.
 

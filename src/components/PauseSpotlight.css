@@ -10,6 +10,7 @@
 .pause-context {
   --spot-x: 50%;
   --spot-y: 50%;
+  --spot-r: 90px;
   max-width: 70ch;
   max-height: 80vh;
   overflow: hidden;
@@ -20,20 +21,21 @@
   cursor: crosshair;
   text-align: center;
 
-  /* Spotlight: only content near the cursor/active word is lit. */
+  /* Spotlight: only content near the cursor/active word is lit. Radius is
+     configurable via --spot-r; the falloff scales off it. */
   -webkit-mask-image: radial-gradient(
     circle at var(--spot-x) var(--spot-y),
     #000 0,
-    #000 90px,
-    rgba(0, 0, 0, 0.25) 200px,
-    transparent 320px
+    #000 var(--spot-r),
+    rgba(0, 0, 0, 0.25) calc(var(--spot-r) * 2.2),
+    transparent calc(var(--spot-r) * 3.6)
   );
   mask-image: radial-gradient(
     circle at var(--spot-x) var(--spot-y),
     #000 0,
-    #000 90px,
-    rgba(0, 0, 0, 0.25) 200px,
-    transparent 320px
+    #000 var(--spot-r),
+    rgba(0, 0, 0, 0.25) calc(var(--spot-r) * 2.2),
+    transparent calc(var(--spot-r) * 3.6)
   );
 }
 
