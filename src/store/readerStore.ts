@@ -29,14 +29,6 @@ function sanitizeConfig(cfg: ReaderConfig): ReaderConfig {
     targetWpm,
     rampWords: Math.max(0, Math.round(num(cfg.rampWords, DEFAULT_CONFIG.rampWords))),
     chunkSize: Math.max(1, Math.round(num(cfg.chunkSize, DEFAULT_CONFIG.chunkSize))),
-    spotlightRadius: Math.min(
-      400,
-      Math.max(30, Math.round(num(cfg.spotlightRadius, DEFAULT_CONFIG.spotlightRadius))),
-    ),
-    previewWords: Math.min(
-      400,
-      Math.max(5, Math.round(num(cfg.previewWords, DEFAULT_CONFIG.previewWords))),
-    ),
   }
 }
 
@@ -99,8 +91,6 @@ interface ReaderState {
   enterKey: () => void
   nextSection: () => void
   prevSection: () => void
-  /** Page the reading-view preview window within the current section. */
-  pageSection: (dir: 1 | -1) => void
   /** Start RSVP for the current section from token `index`. */
   rsvpFrom: (index: number) => void
   /** Space: pause RSVP, or start it for the revealed section. */
@@ -227,31 +217,6 @@ export const useReader = create<ReaderState>((set, get) => {
 
     nextSection: () => gotoSection(get().currentSection + 1),
     prevSection: () => gotoSection(get().currentSection - 1),
-
-    pageSection: (dir) => {
-      const { mode, revealed, sections, currentSection, tokens, blocks, cfg, currentIndex } = get()
-      if (mode !== 'section') return
-      // Collapsed (heading-only): arrows skip to the next/prev heading without
-      // revealing this section.
-      if (!revealed) {
-        gotoSection(currentSection + dir)
-        return
-      }
-      const sec = sections[currentSection]
-      if (!sec) return
-      const headingBlock = sec.hasHeading ? blocks[sec.blockStart] : null
-      const contentStart = headingBlock ? headingBlock.tokenEnd + 1 : sec.tokenStart
-      const words: number[] = []
-      for (let i = contentStart; i <= sec.tokenEnd && i < tokens.length; i++) {
-        if (tokens[i].kind === 'word') words.push(i)
-      }
-      if (words.length === 0) return
-      let startPos = words.findIndex((idx) => idx >= currentIndex)
-      if (startPos === -1) startPos = Math.max(0, words.length - cfg.previewWords)
-      const lastStart = Math.max(0, words.length - cfg.previewWords)
-      const next = Math.max(0, Math.min(startPos + dir * cfg.previewWords, lastStart))
-      set({ currentIndex: words[next] })
-    },
 
     rsvpFrom: (index) => {
       clearTimer()

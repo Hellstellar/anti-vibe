@@ -60,34 +60,6 @@ export default function SettingsPanel() {
               onChange={(e) => setCfg({ startWpm: Number(e.target.value) })}
             />
           </label>
-
-          <label className="setting">
-            <span>
-              illumination <b>{cfg.spotlightRadius}px</b>
-            </span>
-            <input
-              type="range"
-              min={40}
-              max={300}
-              step={10}
-              value={cfg.spotlightRadius}
-              onChange={(e) => setCfg({ spotlightRadius: Number(e.target.value) })}
-            />
-          </label>
-
-          <label className="setting">
-            <span>
-              preview words <b>{cfg.previewWords}</b>
-            </span>
-            <input
-              type="range"
-              min={15}
-              max={150}
-              step={5}
-              value={cfg.previewWords}
-              onChange={(e) => setCfg({ previewWords: Number(e.target.value) })}
-            />
-          </label>
         </div>
       )}
     </div>

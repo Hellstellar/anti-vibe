@@ -75,10 +75,6 @@ export interface ReaderConfig {
   rampWords: number
   /** Words shown per flash. */
   chunkSize: number
-  /** Radius (px) of the fully-lit core of the reading spotlight. */
-  spotlightRadius: number
-  /** Max words of a section shown as a preview before truncation. */
-  previewWords: number
   multipliers: {
     longWordPerChar: number
     softPunct: number

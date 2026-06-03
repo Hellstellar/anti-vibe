@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useReader } from '../store/readerStore'
 import type { Block, Token, WordToken } from '../lib/types'
 import './SectionView.css'
@@ -48,7 +48,6 @@ function AtomicBlock({ block }: { block: Block }) {
       </table>
     )
   }
-  // image: paragraph whose child is an image, or an image node
   const img =
     node.type === 'image' ? node : (node.children ?? []).find((c: any) => c.type === 'image')
   if (!img) return null
@@ -79,32 +78,24 @@ function Word({ w, active }: { w: WordToken; active: boolean }) {
   )
 }
 
-/** Render one content block, showing only words within the [lo, hi] window. */
 function ContentBlock({
   block,
   tokens,
-  lo,
-  hi,
   currentIndex,
 }: {
   block: Block
   tokens: Token[]
-  lo: number
-  hi: number
   currentIndex: number
 }) {
-  // Atomic block: render as-is if it falls inside the preview window.
   if (block.type === 'heading' || block.type === 'code' || block.type === 'table') {
-    return block.tokenStart >= lo && block.tokenStart <= hi ? <AtomicBlock block={block} /> : null
+    return <AtomicBlock block={block} />
   }
   const slice = tokens.slice(block.tokenStart, block.tokenEnd + 1)
   if (slice.length === 1 && slice[0].kind === 'atomic') {
-    return block.tokenStart >= lo && block.tokenStart <= hi ? <AtomicBlock block={block} /> : null
+    return <AtomicBlock block={block} />
   }
 
-  const words = slice.filter(
-    (t): t is WordToken => t.kind === 'word' && t.index >= lo && t.index <= hi,
-  )
+  const words = slice.filter((t): t is WordToken => t.kind === 'word')
   if (words.length === 0) return null
 
   if (block.type === 'list') {
@@ -144,49 +135,45 @@ export default function SectionView() {
   const revealed = useReader((s) => s.revealed)
   const currentIndex = useReader((s) => s.currentIndex)
   const rsvpFrom = useReader((s) => s.rsvpFrom)
-  const spotlightRadius = useReader((s) => s.cfg.spotlightRadius)
-  const previewWords = useReader((s) => s.cfg.previewWords)
+  const nextSection = useReader((s) => s.nextSection)
+  const prevSection = useReader((s) => s.prevSection)
 
-  const containerRef = useRef<HTMLDivElement>(null)
-  const rafRef = useRef<number | null>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
 
   const section = sections[currentSection]
 
-  // Spotlight follows the active word on entry / section change.
+  // Keyboard: collapsed -> skip headings; revealed -> scroll the section.
   useEffect(() => {
-    const c = containerRef.current
-    if (!c) return
-    const active = c.querySelector<HTMLElement>('.pw.active')
-    const cr = c.getBoundingClientRect()
-    if (active) {
-      const wr = active.getBoundingClientRect()
-      setSpot(c, wr.left + wr.width / 2 - cr.left, wr.top + wr.height / 2 - cr.top)
-    } else {
-      setSpot(c, c.clientWidth / 2, c.clientHeight / 2)
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'TEXTAREA' || tag === 'INPUT') return
+      const down = e.key === 'ArrowDown' || e.key === 'ArrowRight'
+      const up = e.key === 'ArrowUp' || e.key === 'ArrowLeft'
+      if (!down && !up) return
+      e.preventDefault()
+      if (!revealed) {
+        if (down) nextSection()
+        else prevSection()
+        return
+      }
+      const el = scrollRef.current
+      if (!el) return
+      // No explicit behavior — CSS `scroll-behavior: smooth` animates it.
+      el.scrollBy({ top: (down ? 1 : -1) * el.clientHeight * 0.45 })
     }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [revealed, nextSection, prevSection])
+
+  // On reveal / section change reset scroll to top; when paused mid-section,
+  // bring the active (current) word into view.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const active = el.querySelector<HTMLElement>('.pw.active')
+    if (active) active.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    else el.scrollTo({ top: 0 })
   }, [currentSection, revealed, currentIndex])
-
-  const setSpot = (el: HTMLElement, x: number, y: number) => {
-    el.style.setProperty('--spot-x', `${x}px`)
-    el.style.setProperty('--spot-y', `${y}px`)
-  }
-
-  const onMove = (e: React.MouseEvent) => {
-    const c = containerRef.current
-    if (!c) return
-    const cr = c.getBoundingClientRect()
-    const x = e.clientX - cr.left
-    const y = e.clientY - cr.top
-    if (rafRef.current !== null) return
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null
-      setSpot(c, x, y)
-    })
-  }
-
-  useEffect(() => () => {
-    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
-  }, [])
 
   const onClick = (e: React.MouseEvent) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>('[data-token-index]')
@@ -197,29 +184,6 @@ export default function SectionView() {
   if (!section) return null
 
   const headingBlock = section.hasHeading ? blocks[section.blockStart] : null
-  const contentStart = headingBlock ? headingBlock.tokenEnd + 1 : section.tokenStart
-
-  // Preview window [lo, hi] of `previewWords` words, anchored to the current
-  // position so a paused/deep spot in a big section is shown (not just the
-  // start). Earlier/later content is collapsed behind "…".
-  const contentWords: number[] = []
-  for (let i = contentStart; i <= section.tokenEnd && i < tokens.length; i++) {
-    if (tokens[i].kind === 'word') contentWords.push(i)
-  }
-  let lo = contentStart
-  let hi = section.tokenEnd
-  let truncatedBefore = false
-  let truncatedAfter = false
-  if (contentWords.length > 0) {
-    let startPos = contentWords.findIndex((idx) => idx >= currentIndex)
-    if (startPos === -1) startPos = Math.max(0, contentWords.length - previewWords)
-    const endPos = Math.min(contentWords.length - 1, startPos + previewWords - 1)
-    lo = contentWords[startPos]
-    hi = contentWords[endPos]
-    truncatedBefore = startPos > 0
-    truncatedAfter = endPos < contentWords.length - 1
-  }
-
   const contentBlocks = blocks.slice(
     section.blockStart + (headingBlock ? 1 : 0),
     section.blockEnd + 1,
@@ -228,31 +192,21 @@ export default function SectionView() {
 
   return (
     <div className="section">
-      <div
-        ref={containerRef}
-        className="section-context"
-        style={{ '--spot-r': `${spotlightRadius}px` } as CSSProperties}
-        onMouseMove={onMove}
-        onClick={onClick}
-      >
+      <div ref={scrollRef} className="section-context" onClick={onClick}>
         {headingBlock && <h2 className="sv-block heading">{section.title}</h2>}
         {!section.hasHeading && !revealed && (
           <div className="sv-start">▸ start of document</div>
         )}
 
-        {revealed && truncatedBefore && <div className="sv-more">…</div>}
         {revealed &&
           contentBlocks.map((b) => (
             <ContentBlock
               key={b.id}
               block={b}
               tokens={tokens}
-              lo={lo}
-              hi={hi}
               currentIndex={currentIndex}
             />
           ))}
-        {revealed && truncatedAfter && <div className="sv-more">…</div>}
         {revealed && !hasContent && (
           <div className="sv-empty">(no content under this heading)</div>
         )}
@@ -261,7 +215,7 @@ export default function SectionView() {
       <div className="section-hint">
         {!revealed
           ? 'enter ▸ reveal · ↑↓ ▸ skip heading · shift+enter ▸ previous · esc ▸ exit'
-          : 'click ▸ speed-read · ↑↓ ▸ page · space ▸ play/pause · enter ▸ next'}
+          : 'click ▸ speed-read · ↑↓ ▸ scroll · space ▸ play/pause · enter ▸ next'}
       </div>
     </div>
   )

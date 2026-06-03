@@ -8,12 +8,12 @@
 }
 
 .section-context {
-  --spot-x: 50%;
-  --spot-y: 50%;
-  --spot-r: 90px;
-  max-width: 70ch;
-  max-height: 80vh;
-  overflow: hidden;
+  width: min(70ch, 86vw);
+  max-height: 78vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  /* breathing room so first/last lines can scroll into the clear band */
+  padding: 22vh 0;
   font-family: var(--word-font);
   font-size: clamp(1.3rem, 2.6vw, 2rem);
   line-height: 1.7;
@@ -21,20 +21,26 @@
   cursor: crosshair;
   text-align: center;
 
-  -webkit-mask-image: radial-gradient(
-    circle at var(--spot-x) var(--spot-y),
-    #000 0,
-    #000 var(--spot-r),
-    rgba(0, 0, 0, 0.25) calc(var(--spot-r) * 2.2),
-    transparent calc(var(--spot-r) * 3.6)
+  /* CRT-style fade: content dissolves toward the top and bottom edges. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 26%,
+    #000 74%,
+    transparent 100%
   );
-  mask-image: radial-gradient(
-    circle at var(--spot-x) var(--spot-y),
-    #000 0,
-    #000 var(--spot-r),
-    rgba(0, 0, 0, 0.25) calc(var(--spot-r) * 2.2),
-    transparent calc(var(--spot-r) * 3.6)
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 26%,
+    #000 74%,
+    transparent 100%
   );
+
+  scrollbar-width: none;
+}
+.section-context::-webkit-scrollbar {
+  display: none;
 }
 
 .sv-block {
