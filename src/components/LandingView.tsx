@@ -39,7 +39,7 @@ export default function LandingView() {
   return (
     <div className="landing">
       <div className="landing-title">RSVP&nbsp;READER</div>
-      <div className="landing-sub">speed-read llm output · markdown</div>
+      <div className="landing-sub">LLM output review made easy</div>
 
       {!fallback ? (
         <div className="landing-actions">
