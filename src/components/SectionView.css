@@ -21,21 +21,42 @@
   cursor: crosshair;
   text-align: center;
 
-  /* CRT-style fade: content dissolves toward the top and bottom edges. */
+  --spot-x: 50%;
+  --spot-y: 50%;
+  --spot-r: 130px;
+
+  /* Two composited masks: a CRT top/bottom fade AND a radial cursor spotlight.
+     Intersect -> content is lit only near the cursor AND inside the band. */
   -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 26%,
-    #000 74%,
-    transparent 100%
-  );
+      to bottom,
+      transparent 0,
+      #000 22%,
+      #000 78%,
+      transparent 100%
+    ),
+    radial-gradient(
+      circle at var(--spot-x) var(--spot-y),
+      #000 0,
+      #000 var(--spot-r),
+      rgba(0, 0, 0, 0.18) calc(var(--spot-r) * 2.3),
+      transparent calc(var(--spot-r) * 3.6)
+    );
+  -webkit-mask-composite: source-in;
   mask-image: linear-gradient(
-    to bottom,
-    transparent 0,
-    #000 26%,
-    #000 74%,
-    transparent 100%
-  );
+      to bottom,
+      transparent 0,
+      #000 22%,
+      #000 78%,
+      transparent 100%
+    ),
+    radial-gradient(
+      circle at var(--spot-x) var(--spot-y),
+      #000 0,
+      #000 var(--spot-r),
+      rgba(0, 0, 0, 0.18) calc(var(--spot-r) * 2.3),
+      transparent calc(var(--spot-r) * 3.6)
+    );
+  mask-composite: intersect;
 
   scrollbar-width: none;
 }

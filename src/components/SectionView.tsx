@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { type CSSProperties, useEffect, useRef } from 'react'
 import { useReader } from '../store/readerStore'
 import type { Block, Token, WordToken } from '../lib/types'
 import './SectionView.css'
@@ -137,10 +137,52 @@ export default function SectionView() {
   const rsvpFrom = useReader((s) => s.rsvpFrom)
   const nextSection = useReader((s) => s.nextSection)
   const prevSection = useReader((s) => s.prevSection)
+  const spotlightRadius = useReader((s) => s.cfg.spotlightRadius)
+  const setCfg = useReader((s) => s.setCfg)
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  const rafRef = useRef<number | null>(null)
 
   const section = sections[currentSection]
+
+  const setSpot = (el: HTMLElement, x: number, y: number) => {
+    el.style.setProperty('--spot-x', `${x}px`)
+    el.style.setProperty('--spot-y', `${y}px`)
+  }
+
+  // Cursor is the light source — update CSS vars off the React path.
+  const onMove = (e: React.MouseEvent) => {
+    const el = scrollRef.current
+    if (!el) return
+    const cr = el.getBoundingClientRect()
+    const x = e.clientX - cr.left
+    const y = e.clientY - cr.top
+    if (rafRef.current !== null) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      setSpot(el, x, y)
+    })
+  }
+
+  // Cmd/Ctrl + scroll adjusts the illumination radius (instead of scrolling).
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    const onWheel = (e: WheelEvent) => {
+      if (!e.metaKey && !e.ctrlKey) return
+      e.preventDefault()
+      const step = e.deltaY > 0 ? -12 : 12
+      // Read the live value so rapid wheels don't all compute off a stale base.
+      const cur = useReader.getState().cfg.spotlightRadius
+      setCfg({ spotlightRadius: cur + step })
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [setCfg])
+
+  useEffect(() => () => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+  }, [])
 
   // Keyboard: collapsed -> skip headings; revealed -> scroll the section.
   useEffect(() => {
@@ -192,7 +234,13 @@ export default function SectionView() {
 
   return (
     <div className="section">
-      <div ref={scrollRef} className="section-context" onClick={onClick}>
+      <div
+        ref={scrollRef}
+        className="section-context"
+        style={{ '--spot-r': `${spotlightRadius}px` } as CSSProperties}
+        onMouseMove={onMove}
+        onClick={onClick}
+      >
         {headingBlock && <h2 className="sv-block heading">{section.title}</h2>}
         {!section.hasHeading && !revealed && (
           <div className="sv-start">▸ start of document</div>

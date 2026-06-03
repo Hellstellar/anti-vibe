@@ -60,6 +60,21 @@ export default function SettingsPanel() {
               onChange={(e) => setCfg({ startWpm: Number(e.target.value) })}
             />
           </label>
+
+          <label className="setting">
+            <span>
+              illumination <b>{cfg.spotlightRadius}px</b>
+            </span>
+            <input
+              type="range"
+              min={40}
+              max={400}
+              step={10}
+              value={cfg.spotlightRadius}
+              onChange={(e) => setCfg({ spotlightRadius: Number(e.target.value) })}
+            />
+          </label>
+          <div className="setting-note">tip: cmd/ctrl + scroll to resize</div>
         </div>
       )}
     </div>

@@ -49,3 +49,10 @@
   width: 100%;
   accent-color: var(--accent);
 }
+.setting-note {
+  font-family: var(--ui-font);
+  font-size: 0.45rem;
+  letter-spacing: 0.05em;
+  color: var(--fg-dim);
+  line-height: 1.5;
+}

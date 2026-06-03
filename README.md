@@ -13,9 +13,9 @@ LLMs and agents generate walls of text. Skimming it is slow and tiring. This app
 - **Load** — paste markdown from the clipboard, or open a `.md` file.
 - **Section navigation** — the doc is split into heading-delimited sections. You land on a heading; **Enter** reveals a focus-sized preview of its content, **Enter** again moves to the next section, **Shift+Enter** goes back. Skim heading-to-heading without reading everything.
 - **Opt-in RSVP** — when a section looks worth speed-reading, **click any word** and RSVP plays that section from there. Words flash centered with the ORP/pivot letter pinned to a reticle; speed ramps from slow to your target WPM (and re-ramps on each start). `space` pauses back to the reading view.
-- **CRT reading view** — a revealed section shows in full inside a scrollable pane that dissolves toward the top and bottom edges (CRT-style fade). Scroll with the arrow keys.
+- **CRT reading view** — a revealed section shows in full inside a scrollable pane that dissolves toward the top and bottom edges (CRT-style fade), under a cursor spotlight that lights the text you point at. Scroll with the arrow keys; **Cmd/Ctrl + scroll** resizes the spotlight.
 - **Markdown-aware** — headings, lists, blockquotes, fenced code, tables, and images render as styled markdown; prose centered, list items bulleted, line breaks preserved.
-- **Configurable** — target/start WPM and words-per-flash (saved to localStorage; settings reachable from the landing page and the reader).
+- **Configurable** — target/start WPM, words-per-flash, and spotlight illumination radius (saved to localStorage; settings reachable from the landing page and the reader).
 - **Keyboard** — `enter` reveal / next section · `shift+enter` previous · `↑`/`↓` scroll (or skip headings when collapsed) · `space` play/pause RSVP · `esc` exit.
 - **Theme** — retro-cyberpunk pixelated: dark warm palette, red/orange accents, pixel fonts, CRT scanlines. The reading font is swappable via the `--word-font` CSS variable.
 
