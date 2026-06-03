@@ -60,6 +60,68 @@
   }
 }
 
+/* Hold-to-advance cue: fills as you hold the arrow at a section edge. */
+.hold-cue {
+  position: fixed;
+  z-index: 55;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--glow);
+}
+.hold-cue.y.next {
+  bottom: 2.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.hold-cue.y.prev {
+  top: 2.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.hold-cue.x.next {
+  right: 4vw;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.hold-cue.x.prev {
+  left: 4vw;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.hold-arrow {
+  font-size: 1.3rem;
+  animation: holdpulse 0.5s ease-in-out infinite;
+}
+@keyframes holdpulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.hold-bar {
+  width: 90px;
+  height: 4px;
+  background: var(--bg-2);
+  border: 1px solid var(--fg-dim);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.hold-fill {
+  height: 100%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--glow);
+  transition: width 0.06s linear;
+}
+.hold-label {
+  font-family: var(--ui-font);
+  font-size: 0.45rem;
+  letter-spacing: 0.12em;
+  color: var(--fg-dim);
+  text-transform: uppercase;
+}
+
 .finished {
   height: 100%;
   display: flex;

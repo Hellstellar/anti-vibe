@@ -135,6 +135,7 @@ export default function SectionView() {
   const revealed = useReader((s) => s.revealed)
   const currentIndex = useReader((s) => s.currentIndex)
   const rsvpFrom = useReader((s) => s.rsvpFrom)
+  const gotoSectionRevealed = useReader((s) => s.gotoSectionRevealed)
   const spotlightRadius = useReader((s) => s.cfg.spotlightRadius)
   const setCfg = useReader((s) => s.setCfg)
 
@@ -219,6 +220,22 @@ export default function SectionView() {
   )
   const hasContent = contentBlocks.length > 0
 
+  if (!revealed) {
+    // Heading view: a CRT-faded list of headings, current one centered.
+    return (
+      <div className="section">
+        <HeadingList
+          sections={sections}
+          current={currentSection}
+          onPick={gotoSectionRevealed}
+        />
+        <div className="section-hint">
+          enter ▸ open · ↑↓ ▸ headings · cmd+enter ▸ rsvp
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="section">
       <div
@@ -230,36 +247,56 @@ export default function SectionView() {
         onClick={onClick}
       >
         {headingBlock && <h2 className="sv-block heading">{section.title}</h2>}
-        {!section.hasHeading && !revealed && (
-          <div className="sv-start">▸ start of document</div>
-        )}
-
-        {revealed &&
-          contentBlocks.map((b) => (
-            <ContentBlock
-              key={b.id}
-              block={b}
-              tokens={tokens}
-              currentIndex={currentIndex}
-            />
-          ))}
-        {revealed && !hasContent && (
+        {contentBlocks.map((b) => (
+          <ContentBlock
+            key={b.id}
+            block={b}
+            tokens={tokens}
+            currentIndex={currentIndex}
+          />
+        ))}
+        {!hasContent && (
           <div className="sv-empty">(no content under this heading)</div>
         )}
       </div>
 
-      {revealed && canScrollDown && (
-        <div className="scroll-cue" aria-hidden="true">▼</div>
-      )}
-      {revealed && canScrollRight && (
-        <div className="scroll-cue-x" aria-hidden="true">▶</div>
-      )}
+      {canScrollDown && <div className="scroll-cue" aria-hidden="true">▼</div>}
+      {canScrollRight && <div className="scroll-cue-x" aria-hidden="true">▶</div>}
 
       <div className="section-hint">
-        {!revealed
-          ? 'enter ▸ open · ← → ▸ section · cmd+enter ▸ rsvp'
-          : 'enter ▸ step · click ▸ rsvp · cmd+enter ▸ rsvp · ↑↓ ▸ scroll · ← → ▸ section · esc ▸ back'}
+        enter ▸ step · click ▸ rsvp · cmd+enter ▸ rsvp · ↑↓ ▸ scroll · ← → ▸ scroll · esc ▸ back
       </div>
+    </div>
+  )
+}
+
+function HeadingList({
+  sections,
+  current,
+  onPick,
+}: {
+  sections: ReturnType<typeof useReader.getState>['sections']
+  current: number
+  onPick: (i: number) => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    ref.current
+      ?.querySelector<HTMLElement>('.hl-row.active')
+      ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  }, [current])
+
+  return (
+    <div className="heading-list" ref={ref}>
+      {sections.map((s, i) => (
+        <div
+          key={s.id}
+          className={`hl-row${i === current ? ' active' : ''}`}
+          onClick={() => onPick(i)}
+        >
+          {s.title || '— start —'}
+        </div>
+      ))}
     </div>
   )
 }

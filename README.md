@@ -34,7 +34,7 @@ The goal is review tooling that's **easier on your eyes and attention**, not onl
 - **Markdown-aware** — headings, lists, blockquotes, fenced code, tables, and images render as styled markdown; prose centered, list items bulleted, line breaks preserved.
 - **Sound** — chiptune blips on interactions (synthesized, no audio files); toggle in settings.
 - **Configurable** — target/start WPM, words-per-flash, and spotlight illumination radius (saved to localStorage; settings reachable from the landing page and the reader).
-- **Keyboard** — one axis of focus: `enter` **fixate deeper** (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` **RSVP the section from the start** (from any level) · `←`/`→` previous / next section · `↑`/`↓` scroll · `space` pause/resume RSVP · `esc` **up one level** (RSVP/step → reading → heading; never to landing — the ✕ button exits).
+- **Keyboard** — one axis of focus: `enter` **fixate deeper** (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` **RSVP the section from the start** (any level) · `space` pause/resume RSVP · `esc` **up one level** (never to landing — the ✕ exits). Arrows are contextual: in the **heading list** `↑`/`↓` move between headings; in the **reading view** `↑`/`↓` scroll and `←`/`→` scroll wide content (hold `↑`/`↓` at an edge to cross into the next/prev section); in **step mode** `←`/`→` move between units (hold at the last/first to cross sections). Crossing always lands in the next section's reading view.
 - **Theme** — retro-cyberpunk pixelated: dark warm palette, red/orange accents, pixel fonts, CRT scanlines. The reading font is swappable via the `--word-font` CSS variable.
 
 ## Run

@@ -109,6 +109,8 @@ interface ReaderState {
   enterKey: () => void
   nextSection: () => void
   prevSection: () => void
+  /** Go to a section and reveal it (used by hold-to-advance). */
+  gotoSectionRevealed: (idx: number) => void
   /** Start RSVP for the current section from token `index` (runs the
    *  Ready/Set/Fixate countdown first). */
   rsvpFrom: (index: number) => void
@@ -261,6 +263,19 @@ export const useReader = create<ReaderState>((set, get) => {
 
     nextSection: () => gotoSection(get().currentSection + 1),
     prevSection: () => gotoSection(get().currentSection - 1),
+    // Like gotoSection but lands in the revealed reading view.
+    gotoSectionRevealed: (idx: number) => {
+      clearTimer()
+      const { sections } = get()
+      if (!sections.length) return
+      const clamped = Math.max(0, Math.min(sections.length - 1, idx))
+      set({
+        currentSection: clamped,
+        revealed: true,
+        currentIndex: sections[clamped].tokenStart,
+        mode: 'section',
+      })
+    },
 
     // Clicking a word: prime the Ready/Set/Fixate countdown before RSVP.
     rsvpFrom: (index) => {
