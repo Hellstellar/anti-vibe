@@ -6,17 +6,17 @@ A retro-cyberpunk **speed-reader for reviewing LLM / agent output**. Paste markd
 
 ## Why
 
-LLMs and agents generate walls of text. Skimming it is slow and tiring. This app lets you blast through generated markdown fast, and **pause anytime** to drop into a focused spotlight view of the surrounding text — then resume from any word.
+LLMs and agents generate walls of text. Skimming it is slow and tiring. This app lets you move through generated markdown section by section, glance at a focus-sized preview of each, and speed-read the parts worth it on demand by clicking a word.
 
-## Features (MVP)
+## Features
 
-- **Paste & read** — one button reads markdown from your clipboard.
-- **RSVP playback** — words flash centered; the ORP/pivot letter is highlighted in red and pinned to a fixed reticle.
-- **Speed ramp** — starts slow, accelerates to your target WPM; long words and punctuation get extra dwell time. Live `wpm` readout.
-- **Pause spotlight** — pause and the surrounding paragraph appears as flowing text under a moving radial spotlight; the cursor is the light source, everything else fades. **Click any word to resume from there.**
-- **Markdown-aware** — headings, fenced code, tables, and images are **auto-pause points**, rendered as-is. List items flash with a distinct animation.
-- **Configurable** — target WPM, start WPM, words-per-flash, and pause-spotlight illumination radius (saved to localStorage; settings reachable from the landing page and the reader).
-- **Keyboard** — `space` pause/resume · `←` / `→` step a word · `esc` exit.
+- **Load** — paste markdown from the clipboard, or open a `.md` file.
+- **Section navigation** — the doc is split into heading-delimited sections. You land on a heading; **Enter** reveals a focus-sized preview of its content, **Enter** again moves to the next section, **Shift+Enter** goes back. Skim heading-to-heading without reading everything.
+- **Opt-in RSVP** — when a section looks worth speed-reading, **click any word** and RSVP plays that section from there. Words flash centered with the ORP/pivot letter pinned to a reticle; speed ramps from slow to your target WPM (and re-ramps on each start). `space` pauses back to the reading view.
+- **Focus preview** — short sections show in full; long ones truncate to a configurable word budget (the rest is read via RSVP). A cursor spotlight lights the text you point at.
+- **Markdown-aware** — headings, lists, blockquotes, fenced code, tables, and images render as styled markdown in the reading view; prose centered, list items bulleted.
+- **Configurable** — target/start WPM, words-per-flash, spotlight illumination radius, and preview word budget (saved to localStorage; settings reachable from the landing page and the reader).
+- **Keyboard** — `enter` reveal / next section · `shift+enter` previous · `space` play/pause RSVP · `esc` exit.
 - **Theme** — retro-cyberpunk pixelated: dark warm palette, red/orange accents, pixel fonts, CRT scanlines. The reading font is swappable via the `--word-font` CSS variable.
 
 ## Run
@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-Opens on `http://localhost:5173`. Copy some markdown, click **PASTE & READ**.
+Opens on `http://localhost:5173`. Copy some markdown and click **PASTE & READ**, or **OPEN .MD FILE**.
 
 ### Tests
 

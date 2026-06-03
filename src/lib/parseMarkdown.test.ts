@@ -145,3 +145,35 @@ describe('parseMarkdown — blocks', () => {
     expect(blocks).toHaveLength(0)
   })
 })
+
+describe('parseMarkdown — sections', () => {
+  it('splits the document into heading-delimited sections', () => {
+    const md = '# One\n\nbody of one\n\n# Two\n\nbody of two here'
+    const { sections } = parseMarkdown(md)
+    expect(sections).toHaveLength(2)
+    expect(sections.map((s) => s.title)).toEqual(['One', 'Two'])
+    expect(sections.every((s) => s.hasHeading)).toBe(true)
+  })
+
+  it('groups content under its heading (token range spans heading + body)', () => {
+    const { sections, tokens } = parseMarkdown('# H\n\nalpha beta gamma')
+    const s = sections[0]
+    // heading token + 3 words
+    expect(s.tokenStart).toBe(0)
+    expect(s.tokenEnd).toBe(3)
+    expect(tokens[s.tokenStart].kind).toBe('atomic')
+  })
+
+  it('puts leading content before the first heading in an untitled section', () => {
+    const { sections } = parseMarkdown('intro words\n\n# Heading\n\nbody')
+    expect(sections).toHaveLength(2)
+    expect(sections[0].hasHeading).toBe(false)
+    expect(sections[0].title).toBe('')
+    expect(sections[1].title).toBe('Heading')
+  })
+
+  it('treats consecutive headings as separate sections', () => {
+    const { sections } = parseMarkdown('# A\n\n## B\n\ntext')
+    expect(sections.map((s) => s.title)).toEqual(['A', 'B'])
+  })
+})

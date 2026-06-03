@@ -2,18 +2,16 @@ import { useEffect } from 'react'
 import { useReader } from '../store/readerStore'
 import Countdown from './Countdown'
 import RsvpStage from './RsvpStage'
-import PauseSpotlight from './PauseSpotlight'
-import AtomicBlockView from './AtomicBlockView'
+import SectionView from './SectionView'
 import './ReaderView.css'
 
 export default function ReaderView() {
   const mode = useReader((s) => s.mode)
-  const currentIndex = useReader((s) => s.currentIndex)
-  const total = useReader((s) => s.tokens.length)
   const startCountdown = useReader((s) => s.startCountdown)
-  const togglePause = useReader((s) => s.togglePause)
-  const step = useReader((s) => s.step)
-  const run = useReader((s) => s.run)
+  const enterReading = useReader((s) => s.enterReading)
+  const enterKey = useReader((s) => s.enterKey)
+  const prevSection = useReader((s) => s.prevSection)
+  const toggleRsvp = useReader((s) => s.toggleRsvp)
   const exit = useReader((s) => s.exit)
 
   // Auto-start the countdown when the reader first opens.
@@ -24,22 +22,18 @@ export default function ReaderView() {
   // Keyboard shortcuts.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      // Don't hijack typing in the fallback textarea, etc.
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'TEXTAREA' || tag === 'INPUT') return
 
       switch (e.key) {
         case ' ':
           e.preventDefault()
-          togglePause()
+          toggleRsvp()
           break
-        case 'ArrowRight':
+        case 'Enter':
           e.preventDefault()
-          step(1)
-          break
-        case 'ArrowLeft':
-          e.preventDefault()
-          step(-1)
+          if (e.shiftKey) prevSection()
+          else enterKey()
           break
         case 'Escape':
           e.preventDefault()
@@ -49,9 +43,7 @@ export default function ReaderView() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [togglePause, step, exit])
-
-  const atEnd = currentIndex >= total
+  }, [toggleRsvp, enterKey, prevSection, exit])
 
   return (
     <div className="reader">
@@ -59,18 +51,9 @@ export default function ReaderView() {
         ✕
       </button>
 
-      {mode === 'countdown' && <Countdown onDone={run} />}
+      {mode === 'countdown' && <Countdown onDone={enterReading} />}
       {mode === 'playing' && <RsvpStage />}
-      {mode === 'paused' && <PauseSpotlight />}
-      {mode === 'atomic' && <AtomicBlockView />}
-      {mode === 'idle' && atEnd && (
-        <div className="finished">
-          <div className="finished-title">— end —</div>
-          <button className="big-button small" onClick={() => exit()}>
-            READ SOMETHING ELSE
-          </button>
-        </div>
-      )}
+      {mode === 'section' && <SectionView />}
     </div>
   )
 }

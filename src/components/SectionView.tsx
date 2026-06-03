@@ -1,0 +1,258 @@
+import { type CSSProperties, useEffect, useRef } from 'react'
+import { useReader } from '../store/readerStore'
+import type { Block, Token, WordToken } from '../lib/types'
+import './SectionView.css'
+
+/** Flatten an mdast node to plain text. */
+function nodeText(node: any): string {
+  if (!node) return ''
+  if (typeof node.value === 'string') return node.value
+  if (Array.isArray(node.children)) return node.children.map(nodeText).join('')
+  return ''
+}
+
+/** Render an atomic block (code / table / image) as-is. */
+function AtomicBlock({ block }: { block: Block }) {
+  const node: any = block.node
+  if (block.type === 'code') {
+    return (
+      <pre className="sv-code">
+        {node.lang && <span className="sv-code-lang">{node.lang}</span>}
+        <code>{node.value}</code>
+      </pre>
+    )
+  }
+  if (block.type === 'table') {
+    const rows = (node.children ?? []) as any[]
+    const [head, ...body] = rows
+    return (
+      <table className="sv-table">
+        {head && (
+          <thead>
+            <tr>
+              {(head.children ?? []).map((c: any, i: number) => (
+                <th key={i}>{nodeText(c)}</th>
+              ))}
+            </tr>
+          </thead>
+        )}
+        <tbody>
+          {body.map((row: any, r: number) => (
+            <tr key={r}>
+              {(row.children ?? []).map((c: any, ci: number) => (
+                <td key={ci}>{nodeText(c)}</td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+  }
+  // image: paragraph whose child is an image, or an image node
+  const img =
+    node.type === 'image' ? node : (node.children ?? []).find((c: any) => c.type === 'image')
+  if (!img) return null
+  return (
+    <figure className="sv-image">
+      <img src={img.url} alt={img.alt ?? ''} />
+      {img.alt && <figcaption>{img.alt}</figcaption>}
+    </figure>
+  )
+}
+
+function Word({ w, active }: { w: WordToken; active: boolean }) {
+  const cls = [
+    'pw',
+    active ? 'active' : '',
+    w.emphasis.includes('strong') ? 'strong' : '',
+    w.emphasis.includes('em') ? 'em' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return (
+    <span data-token-index={w.index} className={cls}>
+      {w.text}{' '}
+    </span>
+  )
+}
+
+/** Render one content block, showing only words up to `cutoff`. */
+function ContentBlock({
+  block,
+  tokens,
+  cutoff,
+  currentIndex,
+}: {
+  block: Block
+  tokens: Token[]
+  cutoff: number
+  currentIndex: number
+}) {
+  // Atomic block: render as-is if it falls before the preview cutoff.
+  if (block.type === 'heading' || block.type === 'code' || block.type === 'table') {
+    return block.tokenStart <= cutoff ? <AtomicBlock block={block} /> : null
+  }
+  const slice = tokens.slice(block.tokenStart, block.tokenEnd + 1)
+  if (slice.length === 1 && slice[0].kind === 'atomic') {
+    return block.tokenStart <= cutoff ? <AtomicBlock block={block} /> : null
+  }
+
+  const words = slice.filter(
+    (t): t is WordToken => t.kind === 'word' && t.index <= cutoff,
+  )
+  if (words.length === 0) return null
+
+  if (block.type === 'list') {
+    const items: WordToken[][] = []
+    for (const w of words) {
+      if (w.listItemStart || items.length === 0) items.push([])
+      items[items.length - 1].push(w)
+    }
+    return (
+      <ul className="sv-block list">
+        {items.map((item, i) => (
+          <li key={i} className="sv-li">
+            {item.map((w) => (
+              <Word key={w.index} w={w} active={w.index === currentIndex} />
+            ))}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  const Tag = block.type === 'blockquote' ? 'blockquote' : 'p'
+  return (
+    <Tag className={`sv-block ${block.type}`}>
+      {words.map((w) => (
+        <Word key={w.index} w={w} active={w.index === currentIndex} />
+      ))}
+    </Tag>
+  )
+}
+
+export default function SectionView() {
+  const tokens = useReader((s) => s.tokens)
+  const blocks = useReader((s) => s.blocks)
+  const sections = useReader((s) => s.sections)
+  const currentSection = useReader((s) => s.currentSection)
+  const revealed = useReader((s) => s.revealed)
+  const currentIndex = useReader((s) => s.currentIndex)
+  const rsvpFrom = useReader((s) => s.rsvpFrom)
+  const spotlightRadius = useReader((s) => s.cfg.spotlightRadius)
+  const previewWords = useReader((s) => s.cfg.previewWords)
+
+  const containerRef = useRef<HTMLDivElement>(null)
+  const rafRef = useRef<number | null>(null)
+
+  const section = sections[currentSection]
+
+  // Spotlight follows the active word on entry / section change.
+  useEffect(() => {
+    const c = containerRef.current
+    if (!c) return
+    const active = c.querySelector<HTMLElement>('.pw.active')
+    const cr = c.getBoundingClientRect()
+    if (active) {
+      const wr = active.getBoundingClientRect()
+      setSpot(c, wr.left + wr.width / 2 - cr.left, wr.top + wr.height / 2 - cr.top)
+    } else {
+      setSpot(c, c.clientWidth / 2, c.clientHeight / 2)
+    }
+  }, [currentSection, revealed, currentIndex])
+
+  const setSpot = (el: HTMLElement, x: number, y: number) => {
+    el.style.setProperty('--spot-x', `${x}px`)
+    el.style.setProperty('--spot-y', `${y}px`)
+  }
+
+  const onMove = (e: React.MouseEvent) => {
+    const c = containerRef.current
+    if (!c) return
+    const cr = c.getBoundingClientRect()
+    const x = e.clientX - cr.left
+    const y = e.clientY - cr.top
+    if (rafRef.current !== null) return
+    rafRef.current = requestAnimationFrame(() => {
+      rafRef.current = null
+      setSpot(c, x, y)
+    })
+  }
+
+  useEffect(() => () => {
+    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
+  }, [])
+
+  const onClick = (e: React.MouseEvent) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>('[data-token-index]')
+    if (!el) return
+    rsvpFrom(Number(el.dataset.tokenIndex))
+  }
+
+  if (!section) return null
+
+  const headingBlock = section.hasHeading ? blocks[section.blockStart] : null
+  const contentStart = headingBlock ? headingBlock.tokenEnd + 1 : section.tokenStart
+
+  // Cutoff: token index of the last word to show within the preview budget.
+  let cutoff = section.tokenEnd
+  let truncated = false
+  let seen = 0
+  for (let i = contentStart; i <= section.tokenEnd && i < tokens.length; i++) {
+    if (tokens[i].kind === 'word') {
+      seen++
+      if (seen === previewWords) {
+        cutoff = i
+        // anything word after this is hidden -> truncated
+        for (let j = i + 1; j <= section.tokenEnd; j++) {
+          if (tokens[j].kind === 'word') { truncated = true; break }
+        }
+        break
+      }
+    }
+  }
+
+  const contentBlocks = blocks.slice(
+    section.blockStart + (headingBlock ? 1 : 0),
+    section.blockEnd + 1,
+  )
+  const hasContent = contentBlocks.length > 0
+
+  return (
+    <div className="section">
+      <div
+        ref={containerRef}
+        className="section-context"
+        style={{ '--spot-r': `${spotlightRadius}px` } as CSSProperties}
+        onMouseMove={onMove}
+        onClick={onClick}
+      >
+        {headingBlock && <h2 className="sv-block heading">{section.title}</h2>}
+        {!section.hasHeading && !revealed && (
+          <div className="sv-start">▸ start of document</div>
+        )}
+
+        {revealed &&
+          contentBlocks.map((b) => (
+            <ContentBlock
+              key={b.id}
+              block={b}
+              tokens={tokens}
+              cutoff={cutoff}
+              currentIndex={currentIndex}
+            />
+          ))}
+        {revealed && truncated && <div className="sv-more">…</div>}
+        {revealed && !hasContent && (
+          <div className="sv-empty">(no content under this heading)</div>
+        )}
+      </div>
+
+      <div className="section-hint">
+        {!revealed
+          ? 'enter ▸ reveal · shift+enter ▸ previous · esc ▸ exit'
+          : 'click a word ▸ speed-read · space ▸ play/pause · enter ▸ next section'}
+      </div>
+    </div>
+  )
+}

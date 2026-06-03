@@ -46,9 +46,24 @@ export interface Block {
   tokenEnd: number
 }
 
+/** A heading and the blocks beneath it (until the next heading). */
+export interface Section {
+  id: number
+  /** Heading text, or '' for leading content before the first heading. */
+  title: string
+  hasHeading: boolean
+  /** Inclusive block-index range. */
+  blockStart: number
+  blockEnd: number
+  /** Inclusive token-index range. */
+  tokenStart: number
+  tokenEnd: number
+}
+
 export interface ParseResult {
   tokens: Token[]
   blocks: Block[]
+  sections: Section[]
 }
 
 /** Runtime-tunable playback configuration (persisted to localStorage). */
@@ -58,8 +73,10 @@ export interface ReaderConfig {
   rampWords: number
   /** Words shown per flash. */
   chunkSize: number
-  /** Radius (px) of the fully-lit core of the pause spotlight. */
+  /** Radius (px) of the fully-lit core of the reading spotlight. */
   spotlightRadius: number
+  /** Max words of a section shown as a preview before truncation. */
+  previewWords: number
   multipliers: {
     longWordPerChar: number
     softPunct: number
@@ -72,6 +89,5 @@ export interface ReaderConfig {
 export type ReaderMode =
   | 'idle'
   | 'countdown'
+  | 'section'
   | 'playing'
-  | 'paused'
-  | 'atomic'

@@ -13,6 +13,7 @@ import type {
   Block,
   Emphasis,
   ParseResult,
+  Section,
   Token,
   WordToken,
   AtomicToken,
@@ -23,6 +24,38 @@ const processor = unified().use(remarkParse).use(remarkGfm)
 /** Strip everything but letters/digits for ORP + length math. */
 function clean(text: string): string {
   return text.replace(/[^\p{L}\p{N}]/gu, '')
+}
+
+/** Flatten an mdast node to its plain text (for heading titles). */
+function nodeText(node: any): string {
+  if (!node) return ''
+  if (typeof node.value === 'string') return node.value
+  if (Array.isArray(node.children)) return node.children.map(nodeText).join('')
+  return ''
+}
+
+/** Group blocks into heading-delimited sections. */
+function buildSections(blocks: Block[]): Section[] {
+  const sections: Section[] = []
+  blocks.forEach((b, bi) => {
+    const isHeading = b.type === 'heading'
+    if (isHeading || sections.length === 0) {
+      sections.push({
+        id: sections.length,
+        title: isHeading ? nodeText(b.node) : '',
+        hasHeading: isHeading,
+        blockStart: bi,
+        blockEnd: bi,
+        tokenStart: b.tokenStart,
+        tokenEnd: b.tokenEnd,
+      })
+    } else {
+      const s = sections[sections.length - 1]
+      s.blockEnd = bi
+      s.tokenEnd = b.tokenEnd
+    }
+  })
+  return sections
 }
 
 /** Is this paragraph nothing but image(s) (+ whitespace)? */
@@ -184,5 +217,5 @@ export function parseMarkdown(src: string): ParseResult {
     }
   }
 
-  return { tokens, blocks }
+  return { tokens, blocks, sections: buildSections(blocks) }
 }

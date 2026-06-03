@@ -6,6 +6,7 @@ export const DEFAULT_CONFIG: ReaderConfig = {
   rampWords: 20,
   chunkSize: 1,
   spotlightRadius: 90,
+  previewWords: 45,
   multipliers: {
     longWordPerChar: 0.04,
     softPunct: 1.5,

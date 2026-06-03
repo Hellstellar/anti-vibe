@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { parseMarkdown } from '../lib/parseMarkdown'
 import { chunkAt, chunkDelay } from '../lib/chunk'
 import { DEFAULT_CONFIG } from '../lib/timing'
-import type { Block, ReaderConfig, ReaderMode, Token } from '../lib/types'
+import type { Block, ReaderConfig, ReaderMode, Section, Token } from '../lib/types'
 
 const CFG_KEY = 'rsvp-reader-config'
 
@@ -32,6 +32,10 @@ function sanitizeConfig(cfg: ReaderConfig): ReaderConfig {
     spotlightRadius: Math.min(
       400,
       Math.max(30, Math.round(num(cfg.spotlightRadius, DEFAULT_CONFIG.spotlightRadius))),
+    ),
+    previewWords: Math.min(
+      400,
+      Math.max(5, Math.round(num(cfg.previewWords, DEFAULT_CONFIG.previewWords))),
     ),
   }
 }
@@ -73,70 +77,72 @@ function clearTimer() {
 interface ReaderState {
   tokens: Token[]
   blocks: Block[]
+  sections: Section[]
+  /** RSVP cursor: token index of the current chunk's first word. */
   currentIndex: number
+  /** Index into sections[] of the section being read. */
+  currentSection: number
+  /** Whether the current section's content is revealed (vs heading-only). */
+  revealed: boolean
   mode: ReaderMode
   cfg: ReaderConfig
-  spotlight: { x: number; y: number }
-  /** wordIndex where the current play session began — the ramp eases in from
-   *  here, so every pause/resume restarts the slow-start. */
+  /** wordIndex where the current RSVP session began — the ramp eases in
+   *  from here, so every (re)start eases in slowly. */
   rampStart: number
 
   load: (src: string) => void
   exit: () => void
   startCountdown: () => void
-  /** Begin the playback loop from the current index. */
-  run: () => void
-  /** Advance past the atomic token currently shown, then resume. */
-  resumeFromAtomic: () => void
-  pause: () => void
-  togglePause: () => void
-  step: (delta: number) => void
-  resumeAt: (index: number) => void
+  /** Enter the section reading view (called when the countdown finishes). */
+  enterReading: () => void
+  /** Enter key: reveal the current section, or advance to the next one. */
+  enterKey: () => void
+  nextSection: () => void
+  prevSection: () => void
+  /** Start RSVP for the current section from token `index`. */
+  rsvpFrom: (index: number) => void
+  /** Space: pause RSVP, or start it for the revealed section. */
+  toggleRsvp: () => void
   setCfg: (partial: Partial<ReaderConfig>) => void
-  setSpotlight: (x: number, y: number) => void
 }
 
 export const useReader = create<ReaderState>((set, get) => {
-  /** Nearest word-token index in direction `dir` (+1/-1), or null if none. */
-  const findWord = (from: number, dir: 1 | -1): number | null => {
+  /** Nearest word-token index at/after `from` within [lo, hi], or null. */
+  const wordAtOrAfter = (from: number, hi: number): number | null => {
     const { tokens } = get()
-    for (let i = from + dir; i >= 0 && i < tokens.length; i += dir) {
+    for (let i = from; i <= hi && i < tokens.length; i++) {
       if (tokens[i].kind === 'word') return i
     }
     return null
   }
 
-  /** wordIndex to ramp from for a play session starting at token `idx`. */
+  /** wordIndex to ramp from for an RSVP session starting at token `idx`. */
   const rampOriginAt = (idx: number): number => {
     const { tokens } = get()
     const t = tokens[idx]
     if (t && t.kind === 'word') return t.wordIndex
-    const n = findWord(idx, 1)
+    const n = wordAtOrAfter(idx + 1, tokens.length - 1)
     const nt = n !== null ? tokens[n] : undefined
     return nt && nt.kind === 'word' ? nt.wordIndex : 0
   }
 
+  // RSVP loop, bounded to the current section. Stops (back to the reading view)
+  // at the section end or on an atomic block.
   const scheduleNext = () => {
-    const { tokens, currentIndex, cfg, rampStart } = get()
+    const { tokens, currentIndex, cfg, rampStart, sections, currentSection } = get()
+    const sec = sections[currentSection]
     const token = tokens[currentIndex]
 
-    if (!token) {
-      // Reached the end.
+    if (!token || (sec && currentIndex > sec.tokenEnd) || token.kind === 'atomic') {
       clearTimer()
-      set({ mode: 'idle' })
-      return
-    }
-
-    if (token.kind === 'atomic') {
-      clearTimer()
-      set({ mode: 'atomic' })
+      set({ mode: 'section', revealed: true })
       return
     }
 
     const chunk = chunkAt(tokens, currentIndex, cfg.chunkSize)
     if (!chunk) {
       clearTimer()
-      set({ mode: 'idle' })
+      set({ mode: 'section', revealed: true })
       return
     }
 
@@ -147,24 +153,57 @@ export const useReader = create<ReaderState>((set, get) => {
     }, delay)
   }
 
+  const gotoSection = (idx: number) => {
+    clearTimer()
+    const { sections } = get()
+    if (sections.length === 0) return
+    const clamped = Math.max(0, Math.min(sections.length - 1, idx))
+    set({
+      currentSection: clamped,
+      revealed: false,
+      currentIndex: sections[clamped].tokenStart,
+      mode: 'section',
+    })
+  }
+
   return {
     tokens: [],
     blocks: [],
+    sections: [],
     currentIndex: 0,
+    currentSection: 0,
+    revealed: false,
     mode: 'idle',
     cfg: loadConfig(),
-    spotlight: { x: 0, y: 0 },
     rampStart: 0,
 
     load: (src) => {
       clearTimer()
-      const { tokens, blocks } = parseMarkdown(src)
-      set({ tokens, blocks, currentIndex: 0, mode: 'idle', rampStart: 0 })
+      const { tokens, blocks, sections } = parseMarkdown(src)
+      set({
+        tokens,
+        blocks,
+        sections,
+        currentIndex: sections[0]?.tokenStart ?? 0,
+        currentSection: 0,
+        revealed: false,
+        mode: 'idle',
+        rampStart: 0,
+      })
     },
 
     exit: () => {
       clearTimer()
-      set({ tokens: [], blocks: [], currentIndex: 0, mode: 'idle', rampStart: 0 })
+      set({
+        tokens: [],
+        blocks: [],
+        sections: [],
+        currentIndex: 0,
+        currentSection: 0,
+        revealed: false,
+        mode: 'idle',
+        rampStart: 0,
+      })
     },
 
     startCountdown: () => {
@@ -172,57 +211,42 @@ export const useReader = create<ReaderState>((set, get) => {
       set({ mode: 'countdown' })
     },
 
-    run: () => {
+    enterReading: () => {
       clearTimer()
-      // Play from the current token, easing the ramp in from here (so resuming
-      // after a pause starts slow again). If it's atomic, scheduleNext will
-      // auto-pause on it (e.g. a leading heading).
-      set({ mode: 'playing', rampStart: rampOriginAt(get().currentIndex) })
-      scheduleNext()
+      gotoSection(0)
     },
 
-    // Advance past the atomic token we're paused on, then resume playback.
-    resumeFromAtomic: () => {
-      clearTimer()
-      const next = get().currentIndex + 1
-      set({ currentIndex: next, mode: 'playing', rampStart: rampOriginAt(next) })
-      scheduleNext()
+    enterKey: () => {
+      const { mode, revealed, currentSection } = get()
+      if (mode !== 'section') return
+      if (!revealed) set({ revealed: true })
+      else gotoSection(currentSection + 1)
     },
 
-    pause: () => {
-      clearTimer()
-      set({ mode: 'paused' })
-    },
+    nextSection: () => gotoSection(get().currentSection + 1),
+    prevSection: () => gotoSection(get().currentSection - 1),
 
-    togglePause: () => {
-      const { mode, run, pause, resumeFromAtomic, startCountdown } = get()
-      if (mode === 'playing') pause()
-      else if (mode === 'atomic') resumeFromAtomic()
-      else if (mode === 'paused') run()
-      else if (mode === 'idle') {
-        // 'idle' also means finished (currentIndex past end) — restart from
-        // the top rather than running a countdown that immediately ends.
-        const { currentIndex, tokens } = get()
-        if (currentIndex >= tokens.length) set({ currentIndex: 0 })
-        startCountdown()
-      }
-    },
-
-    step: (delta) => {
-      // Only meaningful while reading; ignore during countdown/idle so an arrow
-      // key can't abort the countdown before playback starts.
-      const { mode, currentIndex } = get()
-      if (mode !== 'playing' && mode !== 'paused' && mode !== 'atomic') return
-      const target = findWord(currentIndex, delta < 0 ? -1 : 1)
-      if (target === null) return // at a boundary — stay put
-      clearTimer()
-      set({ currentIndex: target, mode: 'paused' })
-    },
-
-    resumeAt: (index) => {
+    rsvpFrom: (index) => {
       clearTimer()
       set({ currentIndex: index, mode: 'playing', rampStart: rampOriginAt(index) })
       scheduleNext()
+    },
+
+    toggleRsvp: () => {
+      const { mode, revealed, sections, currentSection } = get()
+      if (mode === 'playing') {
+        clearTimer()
+        set({ mode: 'section', revealed: true })
+        return
+      }
+      if (mode !== 'section') return
+      if (!revealed) {
+        set({ revealed: true })
+        return
+      }
+      const sec = sections[currentSection]
+      const start = sec ? wordAtOrAfter(sec.tokenStart, sec.tokenEnd) : null
+      if (start !== null) get().rsvpFrom(start)
     },
 
     setCfg: (partial) => {
@@ -230,7 +254,5 @@ export const useReader = create<ReaderState>((set, get) => {
       saveConfig(next)
       set({ cfg: next })
     },
-
-    setSpotlight: (x, y) => set({ spotlight: { x, y } }),
   }
 })
