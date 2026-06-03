@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { useReader } from './store/readerStore'
+import { sfx, setSoundEnabled } from './lib/sfx'
 import LandingView from './components/LandingView'
 import ReaderView from './components/ReaderView'
 import SettingsPanel from './components/SettingsPanel'
@@ -6,6 +8,26 @@ import CrtOverlay from './components/CrtOverlay'
 
 export default function App() {
   const hasContent = useReader((s) => s.tokens.length > 0)
+
+  // Play theme SFX on meaningful store transitions.
+  useEffect(() => {
+    let prev = useReader.getState()
+    setSoundEnabled(prev.cfg.soundOn)
+    return useReader.subscribe((s) => {
+      setSoundEnabled(s.cfg.soundOn)
+      if (s.revealed && !prev.revealed) sfx.reveal()
+      if (s.currentSection !== prev.currentSection) sfx.nav()
+      if (s.mode !== prev.mode) {
+        if (s.mode === 'playing') sfx.start()
+        else if (prev.mode === 'playing' && s.mode === 'section') sfx.pause()
+      }
+      if (s.mode === 'playing' && s.currentIndex !== prev.currentIndex) {
+        const t = s.tokens[s.currentIndex]
+        if (t && t.kind === 'word' && t.listItemStart) sfx.listItem()
+      }
+      prev = s
+    })
+  }, [])
 
   return (
     <>

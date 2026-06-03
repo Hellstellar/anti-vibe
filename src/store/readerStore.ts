@@ -33,6 +33,7 @@ function sanitizeConfig(cfg: ReaderConfig): ReaderConfig {
       400,
       Math.max(40, Math.round(num(cfg.spotlightRadius, DEFAULT_CONFIG.spotlightRadius))),
     ),
+    soundOn: typeof cfg.soundOn === 'boolean' ? cfg.soundOn : DEFAULT_CONFIG.soundOn,
   }
 }
 

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { useReader } from '../store/readerStore'
+import { primeAudio, sfx } from '../lib/sfx'
 import './LandingView.css'
 
 export default function LandingView() {
@@ -10,6 +11,8 @@ export default function LandingView() {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const pasteAndRead = async () => {
+    primeAudio()
+    sfx.click()
     setError(null)
     try {
       const clip = await navigator.clipboard.readText()
@@ -25,6 +28,7 @@ export default function LandingView() {
   }
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    primeAudio()
     setError(null)
     const file = e.target.files?.[0]
     if (!file) return
@@ -49,7 +53,11 @@ export default function LandingView() {
           </button>
           <button
             className="big-button alt"
-            onClick={() => fileRef.current?.click()}
+            onClick={() => {
+              primeAudio()
+              sfx.click()
+              fileRef.current?.click()
+            }}
           >
             OPEN .MD FILE
           </button>

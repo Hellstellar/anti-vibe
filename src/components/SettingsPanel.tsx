@@ -75,6 +75,13 @@ export default function SettingsPanel() {
             />
           </label>
           <div className="setting-note">tip: cmd/ctrl + scroll to resize</div>
+
+          <button
+            className="setting-toggle-btn"
+            onClick={() => setCfg({ soundOn: !cfg.soundOn })}
+          >
+            sound: {cfg.soundOn ? 'on' : 'off'}
+          </button>
         </div>
       )}
     </div>

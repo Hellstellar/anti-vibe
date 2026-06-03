@@ -77,6 +77,8 @@ export interface ReaderConfig {
   chunkSize: number
   /** Radius (px) of the fully-lit core of the cursor spotlight. */
   spotlightRadius: number
+  /** Chiptune sound effects on interactions. */
+  soundOn: boolean
   multipliers: {
     longWordPerChar: number
     softPunct: number

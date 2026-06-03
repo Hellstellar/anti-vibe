@@ -56,3 +56,17 @@
   color: var(--fg-dim);
   line-height: 1.5;
 }
+.setting-toggle-btn {
+  font-family: var(--ui-font);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--bg);
+  border: 2px solid var(--fg-dim);
+  border-radius: 4px;
+  padding: 0.5rem;
+}
+.setting-toggle-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px var(--glow);
+}
