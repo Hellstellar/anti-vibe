@@ -230,7 +230,13 @@ export const useReader = create<ReaderState>((set, get) => {
 
     pageSection: (dir) => {
       const { mode, revealed, sections, currentSection, tokens, blocks, cfg, currentIndex } = get()
-      if (mode !== 'section' || !revealed) return
+      if (mode !== 'section') return
+      // Collapsed (heading-only): arrows skip to the next/prev heading without
+      // revealing this section.
+      if (!revealed) {
+        gotoSection(currentSection + dir)
+        return
+      }
       const sec = sections[currentSection]
       if (!sec) return
       const headingBlock = sec.hasHeading ? blocks[sec.blockStart] : null
