@@ -72,8 +72,8 @@ function Word({ w, active }: { w: WordToken; active: boolean }) {
     <>
       {w.breakBefore && <br />}
       <span data-token-index={w.index} className={cls}>
-        {w.text}{' '}
-      </span>
+        {w.text}
+      </span>{' '}
     </>
   )
 }
