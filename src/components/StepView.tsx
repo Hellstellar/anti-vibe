@@ -97,7 +97,7 @@ export default function StepView() {
         {unit.label}
       </div>
 
-      <div key={stepIndex} className="step-body">
+      <div key={stepIndex} className="step-body step-scroll">
         <UnitBody unit={unit} />
       </div>
 
@@ -105,7 +105,7 @@ export default function StepView() {
         {stepIndex + 1} / {stepUnits.length}
       </div>
       <div className="step-hint">
-        enter ▸ next · shift+enter ▸ back · esc ▸ section
+        enter ▸ next · shift+enter ▸ prev · ← → ▸ section · cmd+enter ▸ rsvp · esc ▸ back
       </div>
     </div>
   )

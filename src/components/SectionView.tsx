@@ -135,8 +135,6 @@ export default function SectionView() {
   const revealed = useReader((s) => s.revealed)
   const currentIndex = useReader((s) => s.currentIndex)
   const rsvpFrom = useReader((s) => s.rsvpFrom)
-  const nextSection = useReader((s) => s.nextSection)
-  const prevSection = useReader((s) => s.prevSection)
   const spotlightRadius = useReader((s) => s.cfg.spotlightRadius)
   const setCfg = useReader((s) => s.setCfg)
 
@@ -194,29 +192,6 @@ export default function SectionView() {
   useEffect(() => () => {
     if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
   }, [])
-
-  // Keyboard: collapsed -> skip headings; revealed -> scroll the section.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement)?.tagName
-      if (tag === 'TEXTAREA' || tag === 'INPUT') return
-      const down = e.key === 'ArrowDown' || e.key === 'ArrowRight'
-      const up = e.key === 'ArrowUp' || e.key === 'ArrowLeft'
-      if (!down && !up) return
-      e.preventDefault()
-      if (!revealed) {
-        if (down) nextSection()
-        else prevSection()
-        return
-      }
-      const el = scrollRef.current
-      if (!el) return
-      // No explicit behavior — CSS `scroll-behavior: smooth` animates it.
-      el.scrollBy({ top: (down ? 1 : -1) * el.clientHeight * 0.45 })
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [revealed, nextSection, prevSection])
 
   // On reveal / section change reset scroll to top; when paused mid-section,
   // bring the active (current) word into view.
@@ -282,8 +257,8 @@ export default function SectionView() {
 
       <div className="section-hint">
         {!revealed
-          ? 'enter ▸ reveal · ↑↓ ▸ skip heading · shift+enter ▸ previous · esc ▸ exit'
-          : 'click ▸ rsvp · cmd+enter ▸ step · ↑↓ ▸ scroll · enter ▸ next'}
+          ? 'enter ▸ open · ← → ▸ section · cmd+enter ▸ rsvp'
+          : 'enter ▸ step · click ▸ rsvp · cmd+enter ▸ rsvp · ↑↓ ▸ scroll · ← → ▸ section · esc ▸ back'}
       </div>
     </div>
   )

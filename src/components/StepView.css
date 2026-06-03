@@ -35,6 +35,14 @@
   max-width: 60ch;
   animation: stepin 0.18s ease-out;
 }
+.step-scroll {
+  max-height: 64vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.step-scroll::-webkit-scrollbar {
+  display: none;
+}
 @keyframes stepin {
   from {
     opacity: 0.2;

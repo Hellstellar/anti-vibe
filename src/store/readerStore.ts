@@ -116,11 +116,14 @@ interface ReaderState {
   beginRsvp: () => void
   /** Space: pause RSVP, or start it for the revealed section. */
   toggleRsvp: () => void
-  /** Cmd/Ctrl+Enter: step through the current section one unit at a time. */
   startStepping: () => void
   stepNext: () => void
   stepPrev: () => void
-  /** Esc: back up one level (stepping/RSVP -> section -> heading -> exit). */
+  /** Enter: fixate one level deeper (heading -> reveal -> step -> next unit). */
+  fixateDeeper: () => void
+  /** Cmd/Ctrl+Enter: RSVP the current section from its first word, any level. */
+  rsvpSection: () => void
+  /** Esc: up one level (RSVP/step -> reading -> heading). Never to landing. */
   goBack: () => void
   setCfg: (partial: Partial<ReaderConfig>) => void
 }
@@ -309,13 +312,30 @@ export const useReader = create<ReaderState>((set, get) => {
 
     stepNext: () => {
       const { stepIndex, stepUnits } = get()
-      if (stepIndex < stepUnits.length - 1) set({ stepIndex: stepIndex + 1 })
-      else set({ mode: 'section', revealed: true }) // past the last unit
+      if (stepIndex < stepUnits.length - 1) set({ stepIndex: stepIndex + 1 }) // clamp at last
     },
 
     stepPrev: () => {
       const { stepIndex } = get()
-      if (stepIndex > 0) set({ stepIndex: stepIndex - 1 }) // clamp; Esc is back
+      if (stepIndex > 0) set({ stepIndex: stepIndex - 1 })
+    },
+
+    fixateDeeper: () => {
+      const { mode, revealed } = get()
+      if (mode === 'section') {
+        if (!revealed) set({ revealed: true }) // heading -> reading
+        else get().startStepping() // reading -> step
+      } else if (mode === 'stepping') {
+        get().stepNext() // step -> next unit
+      }
+    },
+
+    rsvpSection: () => {
+      const { sections, currentSection } = get()
+      const sec = sections[currentSection]
+      if (!sec) return
+      const from = wordAtOrAfter(sec.tokenStart, sec.tokenEnd)
+      if (from !== null) get().rsvpFrom(from) // countdown then play from start
     },
 
     goBack: () => {
@@ -324,14 +344,12 @@ export const useReader = create<ReaderState>((set, get) => {
         clearTimer()
         set({ mode: 'section', revealed: true })
       } else if (mode === 'countdown') {
-        // cancel the pre-RSVP countdown
         clearTimer()
         set({ pendingRsvp: null, mode: 'section', revealed: true })
       } else if (mode === 'section' && revealed) {
-        set({ revealed: false })
-      } else {
-        get().exit()
+        set({ revealed: false }) // reading -> heading
       }
+      // collapsed heading: stay put — landing only via the ✕ button
     },
 
     setCfg: (partial) => {

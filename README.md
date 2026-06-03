@@ -34,7 +34,7 @@ The goal is review tooling that's **easier on your eyes and attention**, not onl
 - **Markdown-aware** — headings, lists, blockquotes, fenced code, tables, and images render as styled markdown; prose centered, list items bulleted, line breaks preserved.
 - **Sound** — chiptune blips on interactions (synthesized, no audio files); toggle in settings.
 - **Configurable** — target/start WPM, words-per-flash, and spotlight illumination radius (saved to localStorage; settings reachable from the landing page and the reader).
-- **Keyboard** — `enter` reveal / next / step-next · `cmd/ctrl+enter` start step mode · `shift+enter` previous · `↑`/`↓` scroll or skip headings · `space` play/pause RSVP · `esc` **back** (step/RSVP → section → heading → exit).
+- **Keyboard** — one axis of focus: `enter` **fixate deeper** (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` **RSVP the section from the start** (from any level) · `←`/`→` previous / next section · `↑`/`↓` scroll · `space` pause/resume RSVP · `esc` **up one level** (RSVP/step → reading → heading; never to landing — the ✕ button exits).
 - **Theme** — retro-cyberpunk pixelated: dark warm palette, red/orange accents, pixel fonts, CRT scanlines. The reading font is swappable via the `--word-font` CSS variable.
 
 ## Run
