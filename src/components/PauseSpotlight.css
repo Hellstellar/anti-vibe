@@ -18,6 +18,7 @@
   line-height: 1.7;
   color: var(--fg);
   cursor: crosshair;
+  text-align: center;
 
   /* Spotlight: only content near the cursor/active word is lit. */
   -webkit-mask-image: radial-gradient(
@@ -39,15 +40,52 @@
 .pause-block {
   margin: 0.6em 0;
 }
+/* Prose blocks read centered, like the rest of the rendered view. */
+.pause-block.paragraph,
+.pause-block.blockquote {
+  text-align: center;
+}
+.pause-block.blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 0.8em;
+  color: var(--fg-dim);
+  font-style: italic;
+}
 .pause-block.heading {
   color: var(--accent);
-  font-size: 1.2em;
+  font-size: 1.4em;
+  font-weight: 700;
   letter-spacing: 0.04em;
+  text-shadow: 0 0 12px var(--glow);
+  text-align: center;
 }
 .pause-block.atomic {
   color: var(--fg-dim);
   font-style: italic;
   letter-spacing: 0.1em;
+}
+
+/* Lists: bulleted items, justified text per item. */
+.pause-block.list {
+  list-style: none;
+  margin: 0.6em auto;
+  padding: 0;
+  max-width: 60ch;
+  text-align: left;
+}
+.pause-li {
+  position: relative;
+  padding-left: 1.4em;
+  margin: 0.3em 0;
+  text-align: justify;
+  text-align-last: justify;
+}
+.pause-li::before {
+  content: '▸';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--glow);
 }
 
 .pw {
@@ -59,9 +97,6 @@
 }
 .pw.em {
   font-style: italic;
-}
-.pw.li {
-  color: var(--accent-2);
 }
 .pw:hover {
   color: var(--accent-2);

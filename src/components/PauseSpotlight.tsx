@@ -83,6 +83,31 @@ export default function PauseSpotlight() {
   )
 }
 
+/** Flatten an mdast node to plain text (for atomic heading labels). */
+function nodeText(node: any): string {
+  if (!node) return ''
+  if (typeof node.value === 'string') return node.value
+  if (Array.isArray(node.children)) return node.children.map(nodeText).join('')
+  return ''
+}
+
+/** One clickable word span carrying its global token index for resume. */
+function Word({ w, active }: { w: WordToken; active: boolean }) {
+  const cls = [
+    'pw',
+    active ? 'active' : '',
+    w.emphasis.includes('strong') ? 'strong' : '',
+    w.emphasis.includes('em') ? 'em' : '',
+  ]
+    .filter(Boolean)
+    .join(' ')
+  return (
+    <span data-token-index={w.index} className={cls}>
+      {w.text}{' '}
+    </span>
+  )
+}
+
 function BlockText({
   block,
   tokens,
@@ -94,36 +119,43 @@ function BlockText({
 }) {
   const slice = tokens.slice(block.tokenStart, block.tokenEnd + 1)
 
-  // Atomic block (heading/code/table/image): show a compact placeholder.
+  // Atomic block (single token, rendered as-is during playback).
   if (slice.length === 1 && slice[0].kind === 'atomic') {
-    return (
-      <div className="pause-block atomic">
-        [ {slice[0].blockType} ]
-      </div>
-    )
+    const a = slice[0]
+    if (a.blockType === 'heading') {
+      return <h2 className="pause-block heading">{nodeText(a.node)}</h2>
+    }
+    return <div className="pause-block atomic">[ {a.blockType} ]</div>
   }
 
   const words = slice.filter((t): t is WordToken => t.kind === 'word')
-  const Tag = block.type === 'heading' ? 'h2' : 'p'
 
+  // List: split words into items on listItemStart and render bulleted + justified.
+  if (block.type === 'list') {
+    const items: WordToken[][] = []
+    for (const w of words) {
+      if (w.listItemStart || items.length === 0) items.push([])
+      items[items.length - 1].push(w)
+    }
+    return (
+      <ul className="pause-block list">
+        {items.map((item, i) => (
+          <li key={i} className="pause-li">
+            {item.map((w) => (
+              <Word key={w.index} w={w} active={w.index === currentIndex} />
+            ))}
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  const Tag = block.type === 'blockquote' ? 'blockquote' : 'p'
   return (
     <Tag className={`pause-block ${block.type}`}>
-      {words.map((w) => {
-        const cls = [
-          'pw',
-          w.index === currentIndex ? 'active' : '',
-          w.emphasis.includes('strong') ? 'strong' : '',
-          w.emphasis.includes('em') ? 'em' : '',
-          w.listItem ? 'li' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')
-        return (
-          <span key={w.index} data-token-index={w.index} className={cls}>
-            {w.text}{' '}
-          </span>
-        )
-      })}
+      {words.map((w) => (
+        <Word key={w.index} w={w} active={w.index === currentIndex} />
+      ))}
     </Tag>
   )
 }
