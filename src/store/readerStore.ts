@@ -245,8 +245,15 @@ export const useReader = create<ReaderState>((set, get) => {
         return
       }
       const sec = sections[currentSection]
-      const start = sec ? wordAtOrAfter(sec.tokenStart, sec.tokenEnd) : null
-      if (start !== null) get().rsvpFrom(start)
+      if (!sec) return
+      // Resume from where we paused (currentIndex) if it's still inside this
+      // section; otherwise start from the section's first word.
+      const { currentIndex } = get()
+      const from =
+        currentIndex >= sec.tokenStart && currentIndex <= sec.tokenEnd
+          ? wordAtOrAfter(currentIndex, sec.tokenEnd)
+          : wordAtOrAfter(sec.tokenStart, sec.tokenEnd)
+      if (from !== null) get().rsvpFrom(from)
     },
 
     setCfg: (partial) => {

@@ -76,29 +76,31 @@ function Word({ w, active }: { w: WordToken; active: boolean }) {
   )
 }
 
-/** Render one content block, showing only words up to `cutoff`. */
+/** Render one content block, showing only words within the [lo, hi] window. */
 function ContentBlock({
   block,
   tokens,
-  cutoff,
+  lo,
+  hi,
   currentIndex,
 }: {
   block: Block
   tokens: Token[]
-  cutoff: number
+  lo: number
+  hi: number
   currentIndex: number
 }) {
-  // Atomic block: render as-is if it falls before the preview cutoff.
+  // Atomic block: render as-is if it falls inside the preview window.
   if (block.type === 'heading' || block.type === 'code' || block.type === 'table') {
-    return block.tokenStart <= cutoff ? <AtomicBlock block={block} /> : null
+    return block.tokenStart >= lo && block.tokenStart <= hi ? <AtomicBlock block={block} /> : null
   }
   const slice = tokens.slice(block.tokenStart, block.tokenEnd + 1)
   if (slice.length === 1 && slice[0].kind === 'atomic') {
-    return block.tokenStart <= cutoff ? <AtomicBlock block={block} /> : null
+    return block.tokenStart >= lo && block.tokenStart <= hi ? <AtomicBlock block={block} /> : null
   }
 
   const words = slice.filter(
-    (t): t is WordToken => t.kind === 'word' && t.index <= cutoff,
+    (t): t is WordToken => t.kind === 'word' && t.index >= lo && t.index <= hi,
   )
   if (words.length === 0) return null
 
@@ -194,22 +196,25 @@ export default function SectionView() {
   const headingBlock = section.hasHeading ? blocks[section.blockStart] : null
   const contentStart = headingBlock ? headingBlock.tokenEnd + 1 : section.tokenStart
 
-  // Cutoff: token index of the last word to show within the preview budget.
-  let cutoff = section.tokenEnd
-  let truncated = false
-  let seen = 0
+  // Preview window [lo, hi] of `previewWords` words, anchored to the current
+  // position so a paused/deep spot in a big section is shown (not just the
+  // start). Earlier/later content is collapsed behind "…".
+  const contentWords: number[] = []
   for (let i = contentStart; i <= section.tokenEnd && i < tokens.length; i++) {
-    if (tokens[i].kind === 'word') {
-      seen++
-      if (seen === previewWords) {
-        cutoff = i
-        // anything word after this is hidden -> truncated
-        for (let j = i + 1; j <= section.tokenEnd; j++) {
-          if (tokens[j].kind === 'word') { truncated = true; break }
-        }
-        break
-      }
-    }
+    if (tokens[i].kind === 'word') contentWords.push(i)
+  }
+  let lo = contentStart
+  let hi = section.tokenEnd
+  let truncatedBefore = false
+  let truncatedAfter = false
+  if (contentWords.length > 0) {
+    let startPos = contentWords.findIndex((idx) => idx >= currentIndex)
+    if (startPos === -1) startPos = Math.max(0, contentWords.length - previewWords)
+    const endPos = Math.min(contentWords.length - 1, startPos + previewWords - 1)
+    lo = contentWords[startPos]
+    hi = contentWords[endPos]
+    truncatedBefore = startPos > 0
+    truncatedAfter = endPos < contentWords.length - 1
   }
 
   const contentBlocks = blocks.slice(
@@ -232,17 +237,19 @@ export default function SectionView() {
           <div className="sv-start">▸ start of document</div>
         )}
 
+        {revealed && truncatedBefore && <div className="sv-more">…</div>}
         {revealed &&
           contentBlocks.map((b) => (
             <ContentBlock
               key={b.id}
               block={b}
               tokens={tokens}
-              cutoff={cutoff}
+              lo={lo}
+              hi={hi}
               currentIndex={currentIndex}
             />
           ))}
-        {revealed && truncated && <div className="sv-more">…</div>}
+        {revealed && truncatedAfter && <div className="sv-more">…</div>}
         {revealed && !hasContent && (
           <div className="sv-empty">(no content under this heading)</div>
         )}
