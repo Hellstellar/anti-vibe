@@ -93,3 +93,21 @@ export type ReaderMode =
   | 'countdown'
   | 'section'
   | 'playing'
+  | 'stepping'
+
+/** One screen in Step mode: a sentence, list item, table row, code or image. */
+export type StepKind = 'sentence' | 'listItem' | 'tableRow' | 'code' | 'image' | 'quote'
+
+export interface StepUnit {
+  kind: StepKind
+  /** Context label shown above the unit, e.g. "PARAGRAPH", "LIST · 2/4". */
+  label: string
+  /** Source block index — lets the view detect when the block changes. */
+  groupId: number
+  /** Words for sentence / listItem units. */
+  words?: WordToken[]
+  /** mdast node for code / image / table units. */
+  node?: RootContent
+  /** For tableRow: index into the table node's children (header is 0). */
+  rowIndex?: number
+}

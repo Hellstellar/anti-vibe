@@ -1,8 +1,16 @@
 import { create } from 'zustand'
 import { parseMarkdown } from '../lib/parseMarkdown'
 import { chunkAt, chunkDelay } from '../lib/chunk'
+import { buildSteps } from '../lib/steps'
 import { DEFAULT_CONFIG } from '../lib/timing'
-import type { Block, ReaderConfig, ReaderMode, Section, Token } from '../lib/types'
+import type {
+  Block,
+  ReaderConfig,
+  ReaderMode,
+  Section,
+  StepUnit,
+  Token,
+} from '../lib/types'
 
 const CFG_KEY = 'fixate-config'
 
@@ -86,6 +94,9 @@ interface ReaderState {
   /** wordIndex where the current RSVP session began — the ramp eases in
    *  from here, so every (re)start eases in slowly. */
   rampStart: number
+  /** Step-mode units for the current section + cursor. */
+  stepUnits: StepUnit[]
+  stepIndex: number
 
   load: (src: string) => void
   exit: () => void
@@ -100,6 +111,12 @@ interface ReaderState {
   rsvpFrom: (index: number) => void
   /** Space: pause RSVP, or start it for the revealed section. */
   toggleRsvp: () => void
+  /** Cmd/Ctrl+Enter: step through the current section one unit at a time. */
+  startStepping: () => void
+  stepNext: () => void
+  stepPrev: () => void
+  /** Esc: back up one level (stepping/RSVP -> section -> heading -> exit). */
+  goBack: () => void
   setCfg: (partial: Partial<ReaderConfig>) => void
 }
 
@@ -173,6 +190,8 @@ export const useReader = create<ReaderState>((set, get) => {
     mode: 'idle',
     cfg: loadConfig(),
     rampStart: 0,
+    stepUnits: [],
+    stepIndex: 0,
 
     load: (src) => {
       clearTimer()
@@ -186,6 +205,8 @@ export const useReader = create<ReaderState>((set, get) => {
         revealed: false,
         mode: 'idle',
         rampStart: 0,
+        stepUnits: [],
+        stepIndex: 0,
       })
     },
 
@@ -200,6 +221,8 @@ export const useReader = create<ReaderState>((set, get) => {
         revealed: false,
         mode: 'idle',
         rampStart: 0,
+        stepUnits: [],
+        stepIndex: 0,
       })
     },
 
@@ -251,6 +274,39 @@ export const useReader = create<ReaderState>((set, get) => {
           ? wordAtOrAfter(currentIndex, sec.tokenEnd)
           : wordAtOrAfter(sec.tokenStart, sec.tokenEnd)
       if (from !== null) get().rsvpFrom(from)
+    },
+
+    startStepping: () => {
+      clearTimer()
+      const { tokens, blocks, sections, currentSection } = get()
+      const sec = sections[currentSection]
+      if (!sec) return
+      const units = buildSteps(tokens, blocks, sec)
+      if (units.length === 0) return // nothing to step through
+      set({ stepUnits: units, stepIndex: 0, mode: 'stepping', revealed: true })
+    },
+
+    stepNext: () => {
+      const { stepIndex, stepUnits } = get()
+      if (stepIndex < stepUnits.length - 1) set({ stepIndex: stepIndex + 1 })
+      else set({ mode: 'section', revealed: true }) // past the last unit
+    },
+
+    stepPrev: () => {
+      const { stepIndex } = get()
+      if (stepIndex > 0) set({ stepIndex: stepIndex - 1 }) // clamp; Esc is back
+    },
+
+    goBack: () => {
+      const { mode, revealed } = get()
+      if (mode === 'playing' || mode === 'stepping') {
+        clearTimer()
+        set({ mode: 'section', revealed: true })
+      } else if (mode === 'section' && revealed) {
+        set({ revealed: false })
+      } else {
+        get().exit()
+      }
     },
 
     setCfg: (partial) => {

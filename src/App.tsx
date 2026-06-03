@@ -18,13 +18,18 @@ export default function App() {
       if (s.revealed && !prev.revealed) sfx.reveal()
       if (s.currentSection !== prev.currentSection) sfx.nav()
       if (s.mode !== prev.mode) {
-        if (s.mode === 'playing') sfx.start()
-        else if (prev.mode === 'playing' && s.mode === 'section') sfx.pause()
+        if (s.mode === 'playing' || s.mode === 'stepping') sfx.start()
+        else if (
+          (prev.mode === 'playing' || prev.mode === 'stepping') &&
+          s.mode === 'section'
+        )
+          sfx.pause()
       }
       if (s.mode === 'playing' && s.currentIndex !== prev.currentIndex) {
         const t = s.tokens[s.currentIndex]
         if (t && t.kind === 'word' && t.listItemStart) sfx.listItem()
       }
+      if (s.mode === 'stepping' && s.stepIndex !== prev.stepIndex) sfx.click()
       prev = s
     })
   }, [])

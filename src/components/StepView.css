@@ -1,0 +1,149 @@
+.step {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.6rem;
+  padding: 8vh 8vw;
+  text-align: center;
+}
+
+/* Block-type / position label — the layout-awareness cue. */
+.step-context {
+  font-family: var(--ui-font);
+  font-size: 0.6rem;
+  letter-spacing: 0.25em;
+  color: var(--accent);
+  text-transform: uppercase;
+  text-shadow: 0 0 8px var(--glow);
+  animation: stepctx 0.35s ease-out;
+}
+@keyframes stepctx {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.step-body {
+  max-width: 60ch;
+  animation: stepin 0.18s ease-out;
+}
+@keyframes stepin {
+  from {
+    opacity: 0.2;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.step-text {
+  font-family: var(--word-font);
+  font-size: clamp(1.6rem, 4vw, 3rem);
+  line-height: 1.5;
+  color: var(--fg);
+  margin: 0;
+}
+.step-text .strong {
+  color: #fff;
+  font-weight: 700;
+}
+.step-text .em {
+  font-style: italic;
+}
+.step-li {
+  text-align: left;
+}
+.step-bullet {
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--glow);
+}
+
+.step-code {
+  background: var(--bg-2);
+  border: 2px solid var(--fg-dim);
+  border-radius: 4px;
+  padding: 1.2rem 1.4rem;
+  position: relative;
+  white-space: pre;
+  overflow-x: auto;
+  text-align: left;
+  font-size: 1.1rem;
+  color: var(--accent-2);
+}
+.step-code-lang {
+  position: absolute;
+  top: -0.7em;
+  left: 1rem;
+  font-family: var(--ui-font);
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  color: var(--bg);
+  background: var(--accent);
+  padding: 0.2em 0.6em;
+  border-radius: 3px;
+}
+
+.step-image img {
+  max-width: 100%;
+  max-height: 55vh;
+  border: 2px solid var(--fg-dim);
+  border-radius: 4px;
+  image-rendering: pixelated;
+}
+.step-image figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--fg-dim);
+}
+
+/* One table row shown as header→value pairs. */
+.step-record {
+  border-collapse: collapse;
+  margin: 0 auto;
+  text-align: left;
+  font-family: var(--word-font);
+  font-size: clamp(1.2rem, 2.4vw, 1.8rem);
+}
+.step-record th,
+.step-record td {
+  border: 1px solid var(--fg-dim);
+  padding: 0.4em 0.9em;
+}
+.step-record th {
+  color: var(--accent);
+  background: var(--bg-2);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.step-progress {
+  font-family: var(--ui-font);
+  font-size: 0.5rem;
+  letter-spacing: 0.15em;
+  color: var(--fg-dim);
+}
+
+.step-hint {
+  position: fixed;
+  bottom: 1.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.55rem;
+  color: var(--fg-dim);
+  letter-spacing: 0.08em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-context,
+  .step-body {
+    animation: none;
+  }
+}

@@ -283,7 +283,7 @@ export default function SectionView() {
       <div className="section-hint">
         {!revealed
           ? 'enter ▸ reveal · ↑↓ ▸ skip heading · shift+enter ▸ previous · esc ▸ exit'
-          : 'click ▸ speed-read · ↑↓ ▸ scroll · space ▸ play/pause · enter ▸ next'}
+          : 'click ▸ rsvp · cmd+enter ▸ step · ↑↓ ▸ scroll · enter ▸ next'}
       </div>
     </div>
   )
