@@ -11,6 +11,7 @@ export default function ReaderView() {
   const enterReading = useReader((s) => s.enterReading)
   const enterKey = useReader((s) => s.enterKey)
   const prevSection = useReader((s) => s.prevSection)
+  const pageSection = useReader((s) => s.pageSection)
   const toggleRsvp = useReader((s) => s.toggleRsvp)
   const exit = useReader((s) => s.exit)
 
@@ -35,6 +36,16 @@ export default function ReaderView() {
           if (e.shiftKey) prevSection()
           else enterKey()
           break
+        case 'ArrowDown':
+        case 'ArrowRight':
+          e.preventDefault()
+          pageSection(1)
+          break
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          e.preventDefault()
+          pageSection(-1)
+          break
         case 'Escape':
           e.preventDefault()
           exit()
@@ -43,7 +54,7 @@ export default function ReaderView() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [toggleRsvp, enterKey, prevSection, exit])
+  }, [toggleRsvp, enterKey, prevSection, pageSection, exit])
 
   return (
     <div className="reader">
