@@ -8,8 +8,8 @@ import './ReaderView.css'
 
 export default function ReaderView() {
   const mode = useReader((s) => s.mode)
-  const startCountdown = useReader((s) => s.startCountdown)
   const enterReading = useReader((s) => s.enterReading)
+  const beginRsvp = useReader((s) => s.beginRsvp)
   const enterKey = useReader((s) => s.enterKey)
   const prevSection = useReader((s) => s.prevSection)
   const toggleRsvp = useReader((s) => s.toggleRsvp)
@@ -19,10 +19,11 @@ export default function ReaderView() {
   const goBack = useReader((s) => s.goBack)
   const exit = useReader((s) => s.exit)
 
-  // Auto-start the countdown when the reader first opens.
+  // Open straight into the section reading view (the countdown now runs
+  // before RSVP, not at startup).
   useEffect(() => {
-    startCountdown()
-  }, [startCountdown])
+    enterReading()
+  }, [enterReading])
 
   // Keyboard shortcuts.
   useEffect(() => {
@@ -67,11 +68,13 @@ export default function ReaderView() {
 
   return (
     <div className="reader">
+      {/* one-shot CRT power-on flash when the reader (document) opens */}
+      <div className="crt-boot" aria-hidden="true" />
       <button className="exit-button" onClick={exit} title="Exit">
         ✕
       </button>
 
-      {mode === 'countdown' && <Countdown onDone={enterReading} />}
+      {mode === 'countdown' && <Countdown onDone={beginRsvp} />}
       {mode === 'playing' && <RsvpStage />}
       {mode === 'section' && <SectionView />}
       {mode === 'stepping' && <StepView />}

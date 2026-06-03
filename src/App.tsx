@@ -15,6 +15,7 @@ export default function App() {
     setSoundEnabled(prev.cfg.soundOn)
     return useReader.subscribe((s) => {
       setSoundEnabled(s.cfg.soundOn)
+      if (prev.tokens.length === 0 && s.tokens.length > 0) sfx.boot()
       if (s.revealed && !prev.revealed) sfx.reveal()
       if (s.currentSection !== prev.currentSection) sfx.nav()
       if (s.mode !== prev.mode) {

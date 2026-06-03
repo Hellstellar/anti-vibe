@@ -24,6 +24,42 @@
   box-shadow: 0 0 10px var(--glow);
 }
 
+/* CRT power-on: a bright line that snaps in, stretches to full height, fades. */
+.crt-boot {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  background: var(--fg);
+  opacity: 0;
+  transform-origin: center;
+  mix-blend-mode: screen;
+  animation: crtboot 0.55s ease-out forwards;
+}
+@keyframes crtboot {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.004) scaleX(1.2);
+  }
+  10% {
+    opacity: 0.9;
+    transform: scaleY(0.004) scaleX(1);
+  }
+  45% {
+    opacity: 0.4;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .crt-boot {
+    animation: none;
+  }
+}
+
 .finished {
   height: 100%;
   display: flex;

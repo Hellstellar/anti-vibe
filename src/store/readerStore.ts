@@ -97,6 +97,8 @@ interface ReaderState {
   /** Step-mode units for the current section + cursor. */
   stepUnits: StepUnit[]
   stepIndex: number
+  /** Token index queued to RSVP after the Ready/Set/Fixate countdown. */
+  pendingRsvp: number | null
 
   load: (src: string) => void
   exit: () => void
@@ -107,8 +109,11 @@ interface ReaderState {
   enterKey: () => void
   nextSection: () => void
   prevSection: () => void
-  /** Start RSVP for the current section from token `index`. */
+  /** Start RSVP for the current section from token `index` (runs the
+   *  Ready/Set/Fixate countdown first). */
   rsvpFrom: (index: number) => void
+  /** Called when the pre-RSVP countdown finishes — begins playback. */
+  beginRsvp: () => void
   /** Space: pause RSVP, or start it for the revealed section. */
   toggleRsvp: () => void
   /** Cmd/Ctrl+Enter: step through the current section one unit at a time. */
@@ -180,6 +185,13 @@ export const useReader = create<ReaderState>((set, get) => {
     })
   }
 
+  /** Actually start the RSVP loop from token `index` (no countdown). */
+  const startPlaying = (index: number) => {
+    clearTimer()
+    set({ currentIndex: index, mode: 'playing', rampStart: rampOriginAt(index) })
+    scheduleNext()
+  }
+
   return {
     tokens: [],
     blocks: [],
@@ -192,6 +204,7 @@ export const useReader = create<ReaderState>((set, get) => {
     rampStart: 0,
     stepUnits: [],
     stepIndex: 0,
+    pendingRsvp: null,
 
     load: (src) => {
       clearTimer()
@@ -246,10 +259,17 @@ export const useReader = create<ReaderState>((set, get) => {
     nextSection: () => gotoSection(get().currentSection + 1),
     prevSection: () => gotoSection(get().currentSection - 1),
 
+    // Clicking a word: prime the Ready/Set/Fixate countdown before RSVP.
     rsvpFrom: (index) => {
       clearTimer()
-      set({ currentIndex: index, mode: 'playing', rampStart: rampOriginAt(index) })
-      scheduleNext()
+      set({ pendingRsvp: index, mode: 'countdown' })
+    },
+
+    beginRsvp: () => {
+      const idx = get().pendingRsvp
+      set({ pendingRsvp: null })
+      if (idx !== null) startPlaying(idx)
+      else set({ mode: 'section', revealed: true })
     },
 
     toggleRsvp: () => {
@@ -267,13 +287,14 @@ export const useReader = create<ReaderState>((set, get) => {
       const sec = sections[currentSection]
       if (!sec) return
       // Resume from where we paused (currentIndex) if it's still inside this
-      // section; otherwise start from the section's first word.
+      // section; otherwise start from the section's first word. Resume plays
+      // immediately (no countdown — the countdown is for fresh starts).
       const { currentIndex } = get()
       const from =
         currentIndex >= sec.tokenStart && currentIndex <= sec.tokenEnd
           ? wordAtOrAfter(currentIndex, sec.tokenEnd)
           : wordAtOrAfter(sec.tokenStart, sec.tokenEnd)
-      if (from !== null) get().rsvpFrom(from)
+      if (from !== null) startPlaying(from)
     },
 
     startStepping: () => {
@@ -302,6 +323,10 @@ export const useReader = create<ReaderState>((set, get) => {
       if (mode === 'playing' || mode === 'stepping') {
         clearTimer()
         set({ mode: 'section', revealed: true })
+      } else if (mode === 'countdown') {
+        // cancel the pre-RSVP countdown
+        clearTimer()
+        set({ pendingRsvp: null, mode: 'section', revealed: true })
       } else if (mode === 'section' && revealed) {
         set({ revealed: false })
       } else {

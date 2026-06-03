@@ -96,4 +96,20 @@ export const sfx = {
     if (!enabled) return
     tone(focus ? 784 : 523, focus ? 0.12 : 0.07, { vol: 0.05 })
   },
+  /** Satisfying power-on chime when a document loads. */
+  boot() {
+    if (!enabled) return
+    const seq: [number, number][] = [
+      [330, 0.09],
+      [440, 0.09],
+      [554, 0.09],
+      [740, 0.18],
+    ]
+    let t = 0
+    for (const [f, d] of seq) {
+      tone(f, d, { type: 'square', vol: 0.05, at: t })
+      t += d * 0.8
+    }
+    tone(1175, 0.16, { type: 'triangle', vol: 0.035, at: t }) // sparkle
+  },
 }
