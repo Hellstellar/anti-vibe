@@ -4,7 +4,7 @@ import { chunkAt, chunkDelay } from '../lib/chunk'
 import { DEFAULT_CONFIG } from '../lib/timing'
 import type { Block, ReaderConfig, ReaderMode, Section, Token } from '../lib/types'
 
-const CFG_KEY = 'rsvp-reader-config'
+const CFG_KEY = 'fixate-config'
 
 /** Coerce a value to a finite number, falling back when NaN/Infinity/missing. */
 function num(v: unknown, fallback: number): number {

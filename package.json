@@ -1,9 +1,9 @@
 {
-  "name": "rsvp-reader",
+  "name": "fixate",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Retro-cyberpunk RSVP speed-reader for reviewing LLM/agent-generated markdown.",
+  "description": "Fixate — focused review of LLM/agent output, without the fatigue. A retro-cyberpunk RSVP reader.",
   "license": "MIT",
   "scripts": {
     "dev": "vite",

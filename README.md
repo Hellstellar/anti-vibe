@@ -1,6 +1,6 @@
-# RSVP READER
+# Fixate
 
-### Review LLM output without the fatigue.
+### Focused review, without the fatigue.
 
 A retro-cyberpunk reader for **reviewing LLM / agent output without the fatigue**. Move through generated markdown section by section, glance at each, and speed-read the parts worth it on demand — eyes still, content moving.
 
