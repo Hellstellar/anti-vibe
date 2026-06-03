@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useRef } from 'react'
+import { type CSSProperties, useEffect, useRef, useState } from 'react'
 import { useReader } from '../store/readerStore'
 import type { Block, Token, WordToken } from '../lib/types'
 import './SectionView.css'
@@ -142,8 +142,15 @@ export default function SectionView() {
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const rafRef = useRef<number | null>(null)
+  const [canScrollDown, setCanScrollDown] = useState(false)
 
   const section = sections[currentSection]
+
+  const updateScrollCue = () => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollDown(el.scrollTop + el.clientHeight < el.scrollHeight - 8)
+  }
 
   const setSpot = (el: HTMLElement, x: number, y: number) => {
     el.style.setProperty('--spot-x', `${x}px`)
@@ -215,6 +222,7 @@ export default function SectionView() {
     const active = el.querySelector<HTMLElement>('.pw.active')
     if (active) active.scrollIntoView({ block: 'center', behavior: 'smooth' })
     else el.scrollTo({ top: 0 })
+    updateScrollCue()
   }, [currentSection, revealed, currentIndex])
 
   const onClick = (e: React.MouseEvent) => {
@@ -239,6 +247,7 @@ export default function SectionView() {
         className="section-context"
         style={{ '--spot-r': `${spotlightRadius}px` } as CSSProperties}
         onMouseMove={onMove}
+        onScroll={updateScrollCue}
         onClick={onClick}
       >
         {headingBlock && <h2 className="sv-block heading">{section.title}</h2>}
@@ -259,6 +268,10 @@ export default function SectionView() {
           <div className="sv-empty">(no content under this heading)</div>
         )}
       </div>
+
+      {revealed && canScrollDown && (
+        <div className="scroll-cue" aria-hidden="true">▼</div>
+      )}
 
       <div className="section-hint">
         {!revealed

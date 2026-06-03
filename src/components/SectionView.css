@@ -190,6 +190,34 @@
   text-shadow: 0 0 16px var(--glow);
 }
 
+.scroll-cue {
+  position: fixed;
+  bottom: 3.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.1rem;
+  color: var(--accent);
+  text-shadow: 0 0 10px var(--glow);
+  pointer-events: none;
+  animation: scrollcue 1.3s ease-in-out infinite;
+}
+@keyframes scrollcue {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateX(-50%) translateY(4px);
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue {
+    animation: none;
+  }
+}
+
 .section-hint {
   position: fixed;
   bottom: 1.4rem;
