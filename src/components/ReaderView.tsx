@@ -44,6 +44,9 @@ export default function ReaderView() {
   useEffect(() => {
     let dir: HoldDir = null
     let ticks = 0
+    // After a hold crosses into a new section, ignore the still-held key until
+    // it's released so the new section doesn't instantly scroll/advance.
+    let suppress = false
     const reset = () => {
       dir = null
       ticks = 0
@@ -61,6 +64,7 @@ export default function ReaderView() {
         const { currentSection } = useReader.getState()
         gotoSectionRevealed(currentSection + (d === 'next' ? 1 : -1))
         reset()
+        suppress = true // wait for key release before acting again
         return
       }
       setHold({ dir, ticks })
@@ -69,6 +73,10 @@ export default function ReaderView() {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'TEXTAREA' || tag === 'INPUT') return
+      if (suppress && e.key.startsWith('Arrow')) {
+        e.preventDefault()
+        return
+      }
       const s = useReader.getState()
 
       switch (e.key) {
@@ -141,7 +149,10 @@ export default function ReaderView() {
     }
 
     const onUp = (e: KeyboardEvent) => {
-      if (e.key.startsWith('Arrow')) reset()
+      if (e.key.startsWith('Arrow')) {
+        reset()
+        suppress = false // key released — resume normal arrow handling
+      }
     }
     window.addEventListener('keydown', onKey)
     window.addEventListener('keyup', onUp)
