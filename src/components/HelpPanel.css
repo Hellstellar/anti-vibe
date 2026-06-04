@@ -24,7 +24,7 @@
 
 .help-body {
   margin-top: 0.6rem;
-  width: 300px;
+  width: 360px;
   padding: 1rem;
   background: var(--bg-2);
   border: 2px solid var(--fg-dim);
@@ -50,20 +50,36 @@
 .help-row {
   display: grid;
   grid-template-columns: 9.5em 1fr;
-  align-items: baseline;
-  gap: 0.6rem;
+  align-items: center;
+  gap: 0.7rem;
 }
 .help-row dt {
-  font-family: var(--ui-font);
-  font-size: 0.5rem;
-  letter-spacing: 0.04em;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.2rem;
+}
+.help-row kbd {
+  font-family: var(--word-font);
+  font-size: 0.95rem;
+  line-height: 1;
   color: var(--accent-2);
-  text-align: right;
+  background: var(--bg);
+  border: 1px solid var(--fg-dim);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0.12em 0.4em;
+  white-space: nowrap;
+}
+.help-sep {
+  color: var(--fg-dim);
+  margin: 0 0.1rem;
 }
 .help-row dd {
   margin: 0;
   font-family: var(--word-font);
-  font-size: 1rem;
+  font-size: 1.05rem;
   line-height: 1.2;
   color: var(--fg);
 }

@@ -89,7 +89,16 @@ export default function HelpPanel() {
           <dl className="help-rows">
             {view.rows.map(([keys, desc], i) => (
               <div className="help-row" key={i}>
-                {keys ? <dt>{keys}</dt> : <dt className="help-note" />}
+                <dt>
+                  {keys
+                    ? keys.split(' / ').map((k, j) => (
+                        <span key={j}>
+                          {j > 0 && <span className="help-sep">/</span>}
+                          <kbd>{k}</kbd>
+                        </span>
+                      ))
+                    : null}
+                </dt>
                 <dd className={keys ? '' : 'help-note'}>{desc}</dd>
               </div>
             ))}

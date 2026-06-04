@@ -229,9 +229,6 @@ export default function SectionView() {
           current={currentSection}
           onPick={gotoSectionRevealed}
         />
-        <div className="section-hint">
-          enter ▸ open · ↑↓ ▸ headings · cmd+enter ▸ rsvp
-        </div>
       </div>
     )
   }
@@ -262,10 +259,6 @@ export default function SectionView() {
 
       {canScrollDown && <div className="scroll-cue" aria-hidden="true">▼</div>}
       {canScrollRight && <div className="scroll-cue-x" aria-hidden="true">▶</div>}
-
-      <div className="section-hint">
-        enter ▸ step · click ▸ rsvp · ↑↓ ▸ scroll · ⌘↓ ▸ next section · esc ▸ back
-      </div>
     </div>
   )
 }

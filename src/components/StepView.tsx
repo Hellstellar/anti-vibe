@@ -104,9 +104,6 @@ export default function StepView() {
       <div className="step-progress">
         {stepIndex + 1} / {stepUnits.length}
       </div>
-      <div className="step-hint">
-        →/enter ▸ next unit · ←/shift+enter ▸ prev · ⌘→ ▸ next section · esc ▸ back
-      </div>
     </div>
   )
 }
