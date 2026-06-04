@@ -18,7 +18,7 @@ export default function App() {
       setSoundEnabled(s.cfg.soundOn)
       if (prev.tokens.length === 0 && s.tokens.length > 0) sfx.boot()
       if (s.revealed && !prev.revealed) sfx.reveal()
-      if (s.currentSection !== prev.currentSection) sfx.nav()
+      if (s.currentSection !== prev.currentSection) sfx.section()
       if (s.mode !== prev.mode) {
         if (s.mode === 'playing' || s.mode === 'stepping') sfx.start()
         else if (

@@ -70,10 +70,11 @@ export const sfx = {
     tone(330, 0.07, { vol: 0.045 })
     tone(494, 0.1, { vol: 0.045, at: 0.06 })
   },
-  /** Move between sections. */
-  nav() {
+  /** Move between sections — a quick upward sweep + tick (a "page turn"). */
+  section() {
     if (!enabled) return
-    tone(300, 0.05, { type: 'triangle', vol: 0.05, to: 380 })
+    tone(240, 0.14, { type: 'triangle', vol: 0.05, to: 660 }) // sweep up
+    tone(990, 0.06, { type: 'square', vol: 0.03, at: 0.1 }) // bright tick
   },
   /** RSVP playback starts. */
   start() {
