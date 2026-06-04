@@ -60,6 +60,46 @@
   }
 }
 
+/* Appears at the bottom once a section is finished — click to go next. */
+.advance-btn {
+  position: fixed;
+  bottom: 1.8rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000; /* above the CRT overlay */
+  width: 2.6rem;
+  height: 2.6rem;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--accent);
+  background: var(--bg-2);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 12px var(--glow);
+  animation: advancein 0.25s ease-out, advancebob 1.6s ease-in-out 0.25s infinite;
+}
+.advance-btn:hover {
+  background: var(--accent);
+  color: var(--bg);
+}
+.advance-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  margin-top: -2px;
+}
+@keyframes advancein {
+  from { opacity: 0; transform: translateX(-50%) translateY(6px) scale(0.8); }
+  to { opacity: 1; transform: translateX(-50%); }
+}
+@keyframes advancebob {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(3px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .advance-btn {
+    animation: none;
+  }
+}
 
 .finished {
   height: 100%;

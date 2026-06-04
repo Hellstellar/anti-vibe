@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useReader } from '../store/readerStore'
 import Countdown from './Countdown'
 import RsvpStage from './RsvpStage'
@@ -8,6 +8,8 @@ import './ReaderView.css'
 
 const sectionPane = () => document.querySelector<HTMLElement>('.section-context')
 const stepPane = () => document.querySelector<HTMLElement>('.step-scroll')
+const atBottom = (el: HTMLElement) =>
+  el.scrollTop + el.clientHeight >= el.scrollHeight - 8
 
 export default function ReaderView() {
   const mode = useReader((s) => s.mode)
@@ -23,10 +25,39 @@ export default function ReaderView() {
   const toggleRsvp = useReader((s) => s.toggleRsvp)
   const goBack = useReader((s) => s.goBack)
   const exit = useReader((s) => s.exit)
+  const revealed = useReader((s) => s.revealed)
+  const currentSection = useReader((s) => s.currentSection)
+  const sectionCount = useReader((s) => s.sections.length)
+  const stepIndex = useReader((s) => s.stepIndex)
+  const stepCount = useReader((s) => s.stepUnits.length)
+
+  // True once the current view is "done" — scrolled to the bottom of the
+  // reading view, so the advance button can appear.
+  const [readingDone, setReadingDone] = useState(false)
 
   useEffect(() => {
     enterReading()
   }, [enterReading])
+
+  useEffect(() => {
+    if (mode !== 'section' || !revealed) {
+      setReadingDone(false)
+      return
+    }
+    const el = sectionPane()
+    if (!el) {
+      setReadingDone(false)
+      return
+    }
+    const upd = () => setReadingDone(atBottom(el))
+    upd()
+    const t = setTimeout(upd, 60)
+    el.addEventListener('scroll', upd)
+    return () => {
+      el.removeEventListener('scroll', upd)
+      clearTimeout(t)
+    }
+  }, [mode, revealed, currentSection])
 
   const crossSection = (delta: 1 | -1) =>
     gotoSectionRevealed(useReader.getState().currentSection + delta)
@@ -107,6 +138,14 @@ export default function ReaderView() {
     goBack,
   ])
 
+  // Advance button: shown only once the section is "done" (reading scrolled to
+  // the bottom, or the last step reached) and another section follows.
+  const hasNext = currentSection < sectionCount - 1
+  const done =
+    (mode === 'section' && revealed && readingDone) ||
+    (mode === 'stepping' && stepIndex >= stepCount - 1)
+  const showAdvance = hasNext && done
+
   return (
     <div className="reader">
       <div className="crt-boot" aria-hidden="true" />
@@ -118,6 +157,16 @@ export default function ReaderView() {
       {mode === 'playing' && <RsvpStage />}
       {mode === 'section' && <SectionView />}
       {mode === 'stepping' && <StepView />}
+
+      {showAdvance && (
+        <button
+          className="advance-btn"
+          title="Next section"
+          onClick={() => crossSection(1)}
+        >
+          <span className="advance-icon">⌄</span>
+        </button>
+      )}
     </div>
   )
 }
