@@ -4,6 +4,7 @@ import { sfx, setSoundEnabled } from './lib/sfx'
 import LandingView from './components/LandingView'
 import ReaderView from './components/ReaderView'
 import SettingsPanel from './components/SettingsPanel'
+import HelpPanel from './components/HelpPanel'
 import CrtOverlay from './components/CrtOverlay'
 
 export default function App() {
@@ -39,6 +40,7 @@ export default function App() {
     <>
       {hasContent ? <ReaderView /> : <LandingView />}
       <SettingsPanel />
+      <HelpPanel />
       <CrtOverlay />
     </>
   )
