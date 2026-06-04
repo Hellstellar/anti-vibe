@@ -85,10 +85,10 @@
   gap: 0.1rem;
 }
 .edge-nav.y.next {
-  bottom: 1.6rem;
+  bottom: 3.6rem; /* clear of the shortcuts hint line */
 }
 .edge-nav.y.prev {
-  top: 1.6rem;
+  top: 1.8rem;
   flex-direction: column-reverse;
 }
 .edge-nav.x {
@@ -102,12 +102,12 @@
   left: 2.2vw;
 }
 .edge-glyph {
-  font-size: 1.5rem;
+  font-size: 1.9rem;
   line-height: 0.7;
 }
 .edge-combo {
   font-family: var(--ui-font);
-  font-size: 0.45rem;
+  font-size: 0.6rem;
   letter-spacing: 0.1em;
 }
 
