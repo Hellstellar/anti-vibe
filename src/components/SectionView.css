@@ -142,13 +142,14 @@
   display: none;
 }
 .hl-row {
-  font-size: clamp(0.8rem, 1.6vw, 1.05rem);
-  line-height: 1.3;
-  padding: 0.45em 0;
+  font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+  line-height: 1.35;
+  padding: 0.4em 0;
   color: var(--fg-dim);
-  opacity: 0.55;
+  opacity: 0.7;
   letter-spacing: 0.03em;
-  transition: color 0.15s ease, font-size 0.15s ease, opacity 0.15s ease;
+  /* no font-size transition — size snaps so layout is stable when we center */
+  transition: color 0.15s ease, opacity 0.15s ease;
 }
 .hl-row:hover {
   color: var(--accent-2);
@@ -156,7 +157,7 @@
 }
 .hl-row.active {
   color: var(--accent);
-  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-size: clamp(2.4rem, 5vw, 3.6rem);
   font-weight: 700;
   opacity: 1;
   text-shadow: 0 0 16px var(--glow);

@@ -281,9 +281,13 @@ function HeadingList({
 }) {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
-    ref.current
-      ?.querySelector<HTMLElement>('.hl-row.active')
-      ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    // rAF so the active row's (larger) size is laid out before we center it.
+    const id = requestAnimationFrame(() => {
+      ref.current
+        ?.querySelector<HTMLElement>('.hl-row.active')
+        ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    })
+    return () => cancelAnimationFrame(id)
   }, [current])
 
   return (
