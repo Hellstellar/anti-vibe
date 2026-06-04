@@ -164,7 +164,7 @@ export default function ReaderView() {
           title="Next section"
           onClick={() => crossSection(1)}
         >
-          <span className="advance-icon">⌄</span>
+          <span className="advance-icon">↓</span>
         </button>
       )}
     </div>
