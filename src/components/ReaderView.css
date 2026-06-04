@@ -60,66 +60,91 @@
   }
 }
 
-/* Hold-to-advance cue: fills as you hold the arrow at a section edge. */
-.hold-cue {
+/* Cross-section cue: a ring gauge around an arrow. Shows a steady hint at an
+   edge, then fills as you hold the arrow to cross into the next/prev section. */
+.cross-cue {
   position: fixed;
-  z-index: 55;
+  z-index: 10000; /* above the CRT overlay so the vignette doesn't dim it */
   pointer-events: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.4rem;
-  color: var(--accent);
-  text-shadow: 0 0 10px var(--glow);
+  gap: 0.5rem;
+  padding: 0.7rem 1rem;
+  border-radius: 10px;
+  background: rgba(10, 7, 5, 0.72);
+  border: 1px solid rgba(255, 138, 61, 0.25);
 }
-.hold-cue.y.next {
-  bottom: 2.6rem;
+.cross-cue.y.next {
+  bottom: 4.5rem;
   left: 50%;
   transform: translateX(-50%);
 }
-.hold-cue.y.prev {
-  top: 2.6rem;
+.cross-cue.y.prev {
+  top: 4.5rem;
   left: 50%;
   transform: translateX(-50%);
 }
-.hold-cue.x.next {
-  right: 4vw;
+.cross-cue.x.next {
+  right: 3.5vw;
   top: 50%;
   transform: translateY(-50%);
 }
-.hold-cue.x.prev {
-  left: 4vw;
+.cross-cue.x.prev {
+  left: 3.5vw;
   top: 50%;
   transform: translateY(-50%);
 }
-.hold-arrow {
+
+.cross-ring {
+  --p: 0;
+  position: relative;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  /* filled arc (accent) over an unfilled track */
+  background: conic-gradient(
+    var(--accent) calc(var(--p) * 1%),
+    rgba(255, 138, 61, 0.4) 0
+  );
+  box-shadow: 0 0 10px var(--glow);
+  animation: crosspulse 1.1s ease-in-out infinite;
+}
+.cross-ring.holding {
+  animation: none;
+}
+.cross-ring::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+.cross-glyph {
+  position: relative;
+  z-index: 1;
   font-size: 1.3rem;
-  animation: holdpulse 0.5s ease-in-out infinite;
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--glow);
 }
-@keyframes holdpulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+@keyframes crosspulse {
+  0%, 100% { box-shadow: 0 0 6px var(--glow); opacity: 0.85; }
+  50% { box-shadow: 0 0 16px var(--glow); opacity: 1; }
 }
-.hold-bar {
-  width: 90px;
-  height: 4px;
-  background: var(--bg-2);
-  border: 1px solid var(--fg-dim);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.hold-fill {
-  height: 100%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--glow);
-  transition: width 0.06s linear;
-}
-.hold-label {
+.cross-label {
   font-family: var(--ui-font);
-  font-size: 0.45rem;
+  font-size: 0.5rem;
   letter-spacing: 0.12em;
-  color: var(--fg-dim);
+  color: var(--accent-2);
   text-transform: uppercase;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cross-ring {
+    animation: none;
+  }
 }
 
 .finished {

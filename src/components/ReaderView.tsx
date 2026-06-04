@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { type CSSProperties, useEffect, useState } from 'react'
 import { useReader } from '../store/readerStore'
 import Countdown from './Countdown'
 import RsvpStage from './RsvpStage'
@@ -30,16 +30,45 @@ export default function ReaderView() {
   const toggleRsvp = useReader((s) => s.toggleRsvp)
   const goBack = useReader((s) => s.goBack)
   const exit = useReader((s) => s.exit)
+  const revealed = useReader((s) => s.revealed)
+  const currentSection = useReader((s) => s.currentSection)
+  const sectionCount = useReader((s) => s.sections.length)
+  const stepIndex = useReader((s) => s.stepIndex)
+  const stepCount = useReader((s) => s.stepUnits.length)
 
   // Hold-to-advance state (filling progress shown on the edge cue).
   const [hold, setHold] = useState<{ dir: HoldDir; ticks: number }>({
     dir: null,
     ticks: 0,
   })
+  // Whether the reading pane is at its top / bottom (for the cross hint).
+  const [edge, setEdge] = useState({ top: false, bottom: false })
 
   useEffect(() => {
     enterReading()
   }, [enterReading])
+
+  // Track scroll edges of the reading pane so we can show a "hold to cross"
+  // hint the moment the user reaches the bottom (or top).
+  useEffect(() => {
+    if (mode !== 'section' || !revealed) {
+      setEdge({ top: false, bottom: false })
+      return
+    }
+    const el = sectionPane()
+    if (!el) {
+      setEdge({ top: false, bottom: false })
+      return
+    }
+    const upd = () => setEdge({ top: atTop(el), bottom: atBottom(el) })
+    upd()
+    const t = setTimeout(upd, 60) // after layout settles
+    el.addEventListener('scroll', upd)
+    return () => {
+      el.removeEventListener('scroll', upd)
+      clearTimeout(t)
+    }
+  }, [mode, revealed, currentSection])
 
   useEffect(() => {
     let dir: HoldDir = null
@@ -172,8 +201,24 @@ export default function ReaderView() {
     goBack,
   ])
 
+  // Which boundary can be crossed right now (drives the persistent hint).
+  const hasNext = currentSection < sectionCount - 1
+  const hasPrev = currentSection > 0
+  let cross: { dir: 'next' | 'prev'; axis: 'x' | 'y' } | null = null
+  if (mode === 'section' && revealed) {
+    if (edge.bottom && hasNext) cross = { dir: 'next', axis: 'y' }
+    else if (edge.top && hasPrev) cross = { dir: 'prev', axis: 'y' }
+  } else if (mode === 'stepping') {
+    if (stepIndex >= stepCount - 1 && hasNext) cross = { dir: 'next', axis: 'x' }
+    else if (stepIndex <= 0 && hasPrev) cross = { dir: 'prev', axis: 'x' }
+  }
+  const dir = hold.dir ?? cross?.dir ?? null
+  const axis = cross?.axis ?? (mode === 'stepping' ? 'x' : 'y')
   const progress = hold.dir ? hold.ticks / HOLD_TICKS : 0
-  const holdAxis = mode === 'stepping' ? 'x' : 'y'
+  const holding = hold.dir !== null
+  const arrow =
+    axis === 'x' ? (dir === 'next' ? '▶' : '◀') : dir === 'next' ? '▼' : '▲'
+  const hintKey = axis === 'x' ? (dir === 'next' ? '→' : '←') : dir === 'next' ? '↓' : '↑'
 
   return (
     <div className="reader">
@@ -187,15 +232,17 @@ export default function ReaderView() {
       {mode === 'section' && <SectionView />}
       {mode === 'stepping' && <StepView />}
 
-      {hold.dir && (
-        <div className={`hold-cue ${hold.dir} ${holdAxis}`} aria-hidden="true">
-          <div className="hold-arrow">
-            {holdAxis === 'x' ? (hold.dir === 'next' ? '▶' : '◀') : hold.dir === 'next' ? '▼' : '▲'}
+      {(cross || holding) && dir && (
+        <div className={`cross-cue ${dir} ${axis}`} aria-hidden="true">
+          <div
+            className={`cross-ring${holding ? ' holding' : ''}`}
+            style={{ '--p': `${Math.round(progress * 100)}` } as CSSProperties}
+          >
+            <span className="cross-glyph">{arrow}</span>
           </div>
-          <div className="hold-bar">
-            <div className="hold-fill" style={{ width: `${progress * 100}%` }} />
+          <div className="cross-label">
+            {holding ? 'keep holding' : `hold ${hintKey}`} · {dir} section
           </div>
-          <div className="hold-label">hold · {hold.dir} section</div>
         </div>
       )}
     </div>
