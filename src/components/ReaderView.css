@@ -60,57 +60,6 @@
   }
 }
 
-/* Minimal next/prev hint: a small arrow + shortcut at the reachable edge. */
-.edge-nav {
-  position: fixed;
-  z-index: 10000; /* above the CRT overlay so the vignette doesn't dim it */
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.5rem;
-  background: none;
-  border: none;
-  color: var(--fg-dim);
-  opacity: 0.85;
-  transition: opacity 0.15s ease, color 0.15s ease;
-}
-.edge-nav:hover {
-  opacity: 1;
-  color: var(--accent);
-}
-.edge-nav.y {
-  left: 50%;
-  transform: translateX(-50%);
-  flex-direction: column;
-  gap: 0.25rem;
-}
-.edge-nav.y.next {
-  bottom: 3.6rem; /* clear of the shortcuts hint line */
-}
-.edge-nav.y.prev {
-  top: 1.8rem;
-  flex-direction: column-reverse;
-}
-.edge-nav.x {
-  top: 50%;
-  transform: translateY(-50%);
-}
-.edge-nav.x.next {
-  right: 2.2vw;
-}
-.edge-nav.x.prev {
-  left: 2.2vw;
-}
-.edge-glyph {
-  font-size: 1.9rem;
-  line-height: 0.7;
-}
-.edge-combo {
-  font-family: var(--ui-font);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  color: var(--accent-2);
-}
 
 .finished {
   height: 100%;

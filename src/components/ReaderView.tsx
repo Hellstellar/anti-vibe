@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useReader } from '../store/readerStore'
 import Countdown from './Countdown'
 import RsvpStage from './RsvpStage'
@@ -8,9 +8,6 @@ import './ReaderView.css'
 
 const sectionPane = () => document.querySelector<HTMLElement>('.section-context')
 const stepPane = () => document.querySelector<HTMLElement>('.step-scroll')
-const atBottom = (el: HTMLElement) =>
-  el.scrollTop + el.clientHeight >= el.scrollHeight - 8
-const atTop = (el: HTMLElement) => el.scrollTop <= 2
 
 export default function ReaderView() {
   const mode = useReader((s) => s.mode)
@@ -26,38 +23,10 @@ export default function ReaderView() {
   const toggleRsvp = useReader((s) => s.toggleRsvp)
   const goBack = useReader((s) => s.goBack)
   const exit = useReader((s) => s.exit)
-  const revealed = useReader((s) => s.revealed)
-  const currentSection = useReader((s) => s.currentSection)
-  const sectionCount = useReader((s) => s.sections.length)
-  const stepIndex = useReader((s) => s.stepIndex)
-  const stepCount = useReader((s) => s.stepUnits.length)
-
-  const [edge, setEdge] = useState({ top: false, bottom: false })
 
   useEffect(() => {
     enterReading()
   }, [enterReading])
-
-  // Track reading-pane scroll edges (for the minimal next/prev hint).
-  useEffect(() => {
-    if (mode !== 'section' || !revealed) {
-      setEdge({ top: false, bottom: false })
-      return
-    }
-    const el = sectionPane()
-    if (!el) {
-      setEdge({ top: false, bottom: false })
-      return
-    }
-    const upd = () => setEdge({ top: atTop(el), bottom: atBottom(el) })
-    upd()
-    const t = setTimeout(upd, 60)
-    el.addEventListener('scroll', upd)
-    return () => {
-      el.removeEventListener('scroll', upd)
-      clearTimeout(t)
-    }
-  }, [mode, revealed, currentSection])
 
   const crossSection = (delta: 1 | -1) =>
     gotoSectionRevealed(useReader.getState().currentSection + delta)
@@ -138,24 +107,6 @@ export default function ReaderView() {
     goBack,
   ])
 
-  // Minimal edge hint: a small arrow + shortcut, shown when a cross is possible.
-  const hasNext = currentSection < sectionCount - 1
-  const hasPrev = currentSection > 0
-  let hint:
-    | { axis: 'x' | 'y'; dir: 'next' | 'prev'; glyph: string; combo: string }
-    | null = null
-  if (mode === 'section' && revealed) {
-    if (edge.bottom && hasNext)
-      hint = { axis: 'y', dir: 'next', glyph: '⌄', combo: '⌘↓' }
-    else if (edge.top && hasPrev)
-      hint = { axis: 'y', dir: 'prev', glyph: '⌃', combo: '⌘↑' }
-  } else if (mode === 'stepping') {
-    if (stepIndex >= stepCount - 1 && hasNext)
-      hint = { axis: 'x', dir: 'next', glyph: '›', combo: '⌘→' }
-    else if (stepIndex <= 0 && hasPrev)
-      hint = { axis: 'x', dir: 'prev', glyph: '‹', combo: '⌘←' }
-  }
-
   return (
     <div className="reader">
       <div className="crt-boot" aria-hidden="true" />
@@ -167,17 +118,6 @@ export default function ReaderView() {
       {mode === 'playing' && <RsvpStage />}
       {mode === 'section' && <SectionView />}
       {mode === 'stepping' && <StepView />}
-
-      {hint && (
-        <button
-          className={`edge-nav ${hint.dir} ${hint.axis}`}
-          title={`${hint.dir} section (${hint.combo})`}
-          onClick={() => crossSection(hint!.dir === 'next' ? 1 : -1)}
-        >
-          <span className="edge-glyph">{hint.glyph}</span>
-          <span className="edge-combo">{hint.combo}</span>
-        </button>
-      )}
     </div>
   )
 }
