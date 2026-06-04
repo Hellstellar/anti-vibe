@@ -60,87 +60,55 @@
   }
 }
 
-/* Cross-section cue: a ring gauge around an arrow. Shows a steady hint at an
-   edge, then fills as you hold the arrow to cross into the next/prev section. */
-.cross-cue {
+/* Minimal next/prev hint: a small arrow + shortcut at the reachable edge. */
+.edge-nav {
   position: fixed;
   z-index: 10000; /* above the CRT overlay so the vignette doesn't dim it */
-  pointer-events: none;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.4rem;
+  padding: 0.3rem 0.5rem;
+  background: none;
+  border: none;
+  color: var(--fg-dim);
+  opacity: 0.7;
+  transition: opacity 0.15s ease, color 0.15s ease;
 }
-.cross-cue.y.next {
-  bottom: 4.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.cross-cue.y.prev {
-  top: 4.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-}
-.cross-cue.x.next {
-  right: 3.5vw;
-  top: 50%;
-  transform: translateY(-50%);
-}
-.cross-cue.x.prev {
-  left: 3.5vw;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.cross-ring {
-  --p: 0;
-  position: relative;
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  /* filled arc (accent) over an unfilled track */
-  background: conic-gradient(
-    var(--accent) calc(var(--p) * 1%),
-    rgba(255, 138, 61, 0.4) 0
-  );
-  box-shadow: 0 0 10px var(--glow);
-  animation: crosspulse 1.1s ease-in-out infinite;
-}
-.cross-ring.holding {
-  animation: none;
-}
-.cross-ring::before {
-  content: '';
-  position: absolute;
-  inset: 4px;
-  border-radius: 50%;
-  background: var(--bg);
-}
-.cross-glyph {
-  position: relative;
-  z-index: 1;
-  font-size: 1.3rem;
+.edge-nav:hover {
+  opacity: 1;
   color: var(--accent);
-  text-shadow: 0 0 8px var(--glow);
 }
-@keyframes crosspulse {
-  0%, 100% { box-shadow: 0 0 6px var(--glow); opacity: 0.85; }
-  50% { box-shadow: 0 0 16px var(--glow); opacity: 1; }
+.edge-nav.y {
+  left: 50%;
+  transform: translateX(-50%);
+  flex-direction: column;
+  gap: 0.1rem;
 }
-.cross-label {
+.edge-nav.y.next {
+  bottom: 1.6rem;
+}
+.edge-nav.y.prev {
+  top: 1.6rem;
+  flex-direction: column-reverse;
+}
+.edge-nav.x {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.edge-nav.x.next {
+  right: 2.2vw;
+}
+.edge-nav.x.prev {
+  left: 2.2vw;
+}
+.edge-glyph {
+  font-size: 1.5rem;
+  line-height: 0.7;
+}
+.edge-combo {
   font-family: var(--ui-font);
-  font-size: 0.5rem;
-  letter-spacing: 0.12em;
-  color: var(--accent-2);
-  text-transform: uppercase;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .cross-ring {
-    animation: none;
-  }
+  font-size: 0.45rem;
+  letter-spacing: 0.1em;
 }
 
 .finished {

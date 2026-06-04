@@ -1,14 +1,10 @@
-import { type CSSProperties, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useReader } from '../store/readerStore'
 import Countdown from './Countdown'
 import RsvpStage from './RsvpStage'
 import SectionView from './SectionView'
 import StepView from './StepView'
 import './ReaderView.css'
-
-const HOLD_TICKS = 10 // key-repeats needed to advance to the next/prev section
-
-type HoldDir = 'next' | 'prev' | null
 
 const sectionPane = () => document.querySelector<HTMLElement>('.section-context')
 const stepPane = () => document.querySelector<HTMLElement>('.step-scroll')
@@ -36,20 +32,13 @@ export default function ReaderView() {
   const stepIndex = useReader((s) => s.stepIndex)
   const stepCount = useReader((s) => s.stepUnits.length)
 
-  // Hold-to-advance state (filling progress shown on the edge cue).
-  const [hold, setHold] = useState<{ dir: HoldDir; ticks: number }>({
-    dir: null,
-    ticks: 0,
-  })
-  // Whether the reading pane is at its top / bottom (for the cross hint).
   const [edge, setEdge] = useState({ top: false, bottom: false })
 
   useEffect(() => {
     enterReading()
   }, [enterReading])
 
-  // Track scroll edges of the reading pane so we can show a "hold to cross"
-  // hint the moment the user reaches the bottom (or top).
+  // Track reading-pane scroll edges (for the minimal next/prev hint).
   useEffect(() => {
     if (mode !== 'section' || !revealed) {
       setEdge({ top: false, bottom: false })
@@ -62,7 +51,7 @@ export default function ReaderView() {
     }
     const upd = () => setEdge({ top: atTop(el), bottom: atBottom(el) })
     upd()
-    const t = setTimeout(upd, 60) // after layout settles
+    const t = setTimeout(upd, 60)
     el.addEventListener('scroll', upd)
     return () => {
       el.removeEventListener('scroll', upd)
@@ -70,48 +59,29 @@ export default function ReaderView() {
     }
   }, [mode, revealed, currentSection])
 
-  useEffect(() => {
-    let dir: HoldDir = null
-    let ticks = 0
-    // After a hold crosses into a new section, ignore the still-held key until
-    // it's released so the new section doesn't instantly scroll/advance.
-    let suppress = false
-    const reset = () => {
-      dir = null
-      ticks = 0
-      setHold({ dir: null, ticks: 0 })
-    }
-    // Accumulate a hold toward advancing a section; fire at the threshold.
-    const tick = (d: HoldDir) => {
-      if (dir !== d) {
-        dir = d
-        ticks = 1
-      } else {
-        ticks++
-      }
-      if (ticks >= HOLD_TICKS) {
-        const { currentSection } = useReader.getState()
-        gotoSectionRevealed(currentSection + (d === 'next' ? 1 : -1))
-        reset()
-        suppress = true // wait for key release before acting again
-        return
-      }
-      setHold({ dir, ticks })
-    }
+  const crossSection = (delta: 1 | -1) =>
+    gotoSectionRevealed(useReader.getState().currentSection + delta)
 
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'TEXTAREA' || tag === 'INPUT') return
-      if (suppress && e.key.startsWith('Arrow')) {
+      const s = useReader.getState()
+      const meta = e.metaKey || e.ctrlKey
+
+      // Cmd/Ctrl + arrow: jump to the next/prev section (reveal view).
+      if (meta && e.key.startsWith('Arrow')) {
         e.preventDefault()
+        if (e.repeat) return // one press = one section
+        if (e.key === 'ArrowDown' || e.key === 'ArrowRight') crossSection(1)
+        else crossSection(-1)
         return
       }
-      const s = useReader.getState()
 
       switch (e.key) {
         case 'Enter':
           e.preventDefault()
-          if (e.metaKey || e.ctrlKey) rsvpSection()
+          if (meta) rsvpSection()
           else if (e.shiftKey) stepPrev()
           else fixateDeeper()
           break
@@ -121,7 +91,6 @@ export default function ReaderView() {
           break
         case 'Escape':
           e.preventDefault()
-          reset()
           goBack()
           break
 
@@ -130,20 +99,10 @@ export default function ReaderView() {
           e.preventDefault()
           const down = e.key === 'ArrowDown'
           if (s.mode === 'section' && !s.revealed) {
-            // heading view: navigate headings
-            if (down) nextSection()
-            else prevSection()
-            reset()
+            down ? nextSection() : prevSection() // heading list
           } else if (s.mode === 'section') {
             const el = sectionPane()
-            if (!el) break
-            const edge = down ? atBottom(el) : atTop(el)
-            if (!edge) {
-              el.scrollBy({ top: (down ? 1 : -1) * el.clientHeight * 0.45 })
-              reset()
-            } else {
-              tick(down ? 'next' : 'prev')
-            }
+            if (el) el.scrollBy({ top: (down ? 1 : -1) * el.clientHeight * 0.45 })
           } else if (s.mode === 'stepping') {
             const el = stepPane()
             if (el) el.scrollBy({ top: (down ? 1 : -1) * el.clientHeight * 0.45 })
@@ -156,19 +115,8 @@ export default function ReaderView() {
           e.preventDefault()
           const fwd = e.key === 'ArrowRight'
           if (s.mode === 'stepping') {
-            const last = s.stepIndex >= s.stepUnits.length - 1
-            const first = s.stepIndex <= 0
-            if (fwd && !last) {
-              stepNext()
-              reset()
-            } else if (!fwd && !first) {
-              stepPrev()
-              reset()
-            } else {
-              tick(fwd ? 'next' : 'prev') // at a boundary -> hold to change section
-            }
+            fwd ? stepNext() : stepPrev() // unit nav (clamps at ends)
           } else if (s.mode === 'section' && s.revealed) {
-            // horizontal scroll (wide tables/code); never jumps sections
             const el = sectionPane()
             if (el) el.scrollBy({ left: (fwd ? 1 : -1) * el.clientWidth * 0.5 })
           }
@@ -176,19 +124,8 @@ export default function ReaderView() {
         }
       }
     }
-
-    const onUp = (e: KeyboardEvent) => {
-      if (e.key.startsWith('Arrow')) {
-        reset()
-        suppress = false // key released — resume normal arrow handling
-      }
-    }
     window.addEventListener('keydown', onKey)
-    window.addEventListener('keyup', onUp)
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('keyup', onUp)
-    }
+    return () => window.removeEventListener('keydown', onKey)
   }, [
     fixateDeeper,
     stepNext,
@@ -201,24 +138,23 @@ export default function ReaderView() {
     goBack,
   ])
 
-  // Which boundary can be crossed right now (drives the persistent hint).
+  // Minimal edge hint: a small arrow + shortcut, shown when a cross is possible.
   const hasNext = currentSection < sectionCount - 1
   const hasPrev = currentSection > 0
-  let cross: { dir: 'next' | 'prev'; axis: 'x' | 'y' } | null = null
+  let hint:
+    | { axis: 'x' | 'y'; dir: 'next' | 'prev'; glyph: string; combo: string }
+    | null = null
   if (mode === 'section' && revealed) {
-    if (edge.bottom && hasNext) cross = { dir: 'next', axis: 'y' }
-    else if (edge.top && hasPrev) cross = { dir: 'prev', axis: 'y' }
+    if (edge.bottom && hasNext)
+      hint = { axis: 'y', dir: 'next', glyph: '⌄', combo: '⌘↓' }
+    else if (edge.top && hasPrev)
+      hint = { axis: 'y', dir: 'prev', glyph: '⌃', combo: '⌘↑' }
   } else if (mode === 'stepping') {
-    if (stepIndex >= stepCount - 1 && hasNext) cross = { dir: 'next', axis: 'x' }
-    else if (stepIndex <= 0 && hasPrev) cross = { dir: 'prev', axis: 'x' }
+    if (stepIndex >= stepCount - 1 && hasNext)
+      hint = { axis: 'x', dir: 'next', glyph: '›', combo: '⌘→' }
+    else if (stepIndex <= 0 && hasPrev)
+      hint = { axis: 'x', dir: 'prev', glyph: '‹', combo: '⌘←' }
   }
-  const dir = hold.dir ?? cross?.dir ?? null
-  const axis = cross?.axis ?? (mode === 'stepping' ? 'x' : 'y')
-  const progress = hold.dir ? hold.ticks / HOLD_TICKS : 0
-  const holding = hold.dir !== null
-  const arrow =
-    axis === 'x' ? (dir === 'next' ? '▶' : '◀') : dir === 'next' ? '▼' : '▲'
-  const hintKey = axis === 'x' ? (dir === 'next' ? '→' : '←') : dir === 'next' ? '↓' : '↑'
 
   return (
     <div className="reader">
@@ -232,18 +168,15 @@ export default function ReaderView() {
       {mode === 'section' && <SectionView />}
       {mode === 'stepping' && <StepView />}
 
-      {(cross || holding) && dir && (
-        <div className={`cross-cue ${dir} ${axis}`} aria-hidden="true">
-          <div
-            className={`cross-ring${holding ? ' holding' : ''}`}
-            style={{ '--p': `${Math.round(progress * 100)}` } as CSSProperties}
-          >
-            <span className="cross-glyph">{arrow}</span>
-          </div>
-          <div className="cross-label">
-            {holding ? 'keep holding' : `hold ${hintKey}`} · {dir} section
-          </div>
-        </div>
+      {hint && (
+        <button
+          className={`edge-nav ${hint.dir} ${hint.axis}`}
+          title={`${hint.dir} section (${hint.combo})`}
+          onClick={() => crossSection(hint!.dir === 'next' ? 1 : -1)}
+        >
+          <span className="edge-glyph">{hint.glyph}</span>
+          <span className="edge-combo">{hint.combo}</span>
+        </button>
       )}
     </div>
   )

@@ -264,7 +264,7 @@ export default function SectionView() {
       {canScrollRight && <div className="scroll-cue-x" aria-hidden="true">▶</div>}
 
       <div className="section-hint">
-        enter ▸ step · click ▸ rsvp · cmd+enter ▸ rsvp · ↑↓ ▸ scroll · ← → ▸ scroll · esc ▸ back
+        enter ▸ step · click ▸ rsvp · ↑↓ ▸ scroll · ⌘↓ ▸ next section · esc ▸ back
       </div>
     </div>
   )
