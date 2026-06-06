@@ -132,13 +132,6 @@
   white-space: nowrap;
 }
 
-.step-progress {
-  font-family: var(--ui-font);
-  font-size: 0.5rem;
-  letter-spacing: 0.15em;
-  color: var(--fg-dim);
-}
-
 .step-hint {
   position: fixed;
   bottom: 1.4rem;

@@ -46,17 +46,17 @@ describe('buildSteps', () => {
     expect(u.every((x) => x.label === 'PARAGRAPH')).toBe(true)
   })
 
-  it('makes one unit per list item with position labels', () => {
+  it('makes one unit per list item (no position counts)', () => {
     const u = build('# H\n\n- alpha beta\n- gamma\n- delta')
     expect(u.map((x) => x.kind)).toEqual(['listItem', 'listItem', 'listItem'])
-    expect(u.map((x) => x.label)).toEqual(['LIST · 1/3', 'LIST · 2/3', 'LIST · 3/3'])
+    expect(u.map((x) => x.label)).toEqual(['LIST', 'LIST', 'LIST'])
   })
 
-  it('makes one unit per table body row (skipping the header)', () => {
+  it('makes one unit per table body row (skipping the header, no counts)', () => {
     const md = '# H\n\n| A | B |\n| - | - |\n| 1 | 2 |\n| 3 | 4 |'
     const u = build(md)
     expect(u.map((x) => x.kind)).toEqual(['tableRow', 'tableRow'])
-    expect(u.map((x) => x.label)).toEqual(['TABLE · ROW 1/2', 'TABLE · ROW 2/2'])
+    expect(u.map((x) => x.label)).toEqual(['TABLE ROW', 'TABLE ROW'])
     expect(u.map((x) => x.rowIndex)).toEqual([1, 2])
   })
 

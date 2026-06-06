@@ -54,10 +54,10 @@ export function buildSteps(
           if (w.listItemStart || items.length === 0) items.push([])
           items[items.length - 1].push(w)
         }
-        items.forEach((it, i) =>
+        items.forEach((it) =>
           units.push({
             kind: 'listItem',
-            label: `LIST · ${i + 1}/${items.length}`,
+            label: 'LIST',
             groupId: bi,
             words: it,
           }),
@@ -66,11 +66,10 @@ export function buildSteps(
       }
       case 'table': {
         const rows = ((b.node as { children?: unknown[] }).children ?? []) as unknown[]
-        const bodyCount = Math.max(0, rows.length - 1) // first row is the header
         for (let i = 1; i < rows.length; i++) {
           units.push({
             kind: 'tableRow',
-            label: `TABLE · ROW ${i}/${bodyCount}`,
+            label: 'TABLE ROW',
             groupId: bi,
             node: b.node,
             rowIndex: i,

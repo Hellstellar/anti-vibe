@@ -100,10 +100,6 @@ export default function StepView() {
       <div key={stepIndex} className="step-body step-scroll">
         <UnitBody unit={unit} />
       </div>
-
-      <div className="step-progress">
-        {stepIndex + 1} / {stepUnits.length}
-      </div>
     </div>
   )
 }
