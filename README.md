@@ -14,8 +14,9 @@ LLMs and agents generate walls of text, and the cost of reviewing it is real —
 - **Lower inertia to review** — section-by-section navigation means you commit to one small chunk at a time instead of facing the whole document. Glance at a heading, decide, skip it or speed-read it.
 - **Faster review** — opt-in RSVP blasts through the sections worth reading at your target WPM; review keeps pace with how much AI output you now generate.
 - **Less screen time** — faster, gentler review means fewer hours staring at walls of text.
+- **Easier to focus (great for ADHD)** — one word, one sentence, or one section at a time, fixed in place, with everything else dimmed away. By removing the wall of text — and any progress counter or sense of how much is left — Fixate keeps attention on the single thing in front of you, which can make focusing and *starting* far easier for ADHD and other attention/focus challenges.
 
-The goal is review tooling that's **easier on your eyes and attention**, not only quicker — a small health/wellbeing angle baked into a speed tool. See [`docs/VISION.md`](./docs/VISION.md) for where it could go.
+The goal is review tooling that's **easier on your eyes and attention**, not only quicker — a focus and wellbeing angle baked into a speed tool. See [`docs/VISION.md`](./docs/VISION.md) for where it could go.
 
 ## Screenshots
 
