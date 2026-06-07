@@ -67,6 +67,39 @@ Vite · React · TypeScript · [unified](https://unifiedjs.com/) / remark (markd
 
 Markdown is parsed once (`src/lib/parseMarkdown.ts`) into a flat **token stream** with a global index — word tokens and atomic-block tokens. That index is the single source of truth linking RSVP playback to click-to-resume in the pause view. The playback loop is a self-rescheduling `setTimeout` in a Zustand store (`src/store/readerStore.ts`); per-word timing lives in `src/lib/timing.ts`.
 
+## MCP server
+
+Fixate ships an [MCP](https://modelcontextprotocol.io) STDIO server (`mcp/`) so an AI agent can push its output straight into the reader for review — no copy-paste.
+
+Because Fixate is a static SPA with no backend, the MCP process also runs a tiny **localhost bridge**: it serves the built app from its own origin and live-pushes documents to the open tab over Server-Sent Events. One tool today:
+
+- **`review_markdown`** — `{ markdown, title? }` → normalizes the markdown (CRLF→LF, optional `# title`), validates it parses, sends it to the reader, and opens the tab on first use. Returns `{ documentId, sectionCount, wordCount, url }`.
+
+### Setup
+
+```bash
+npm install      # installs the MCP SDK too
+npm run build    # the bridge serves dist/, so build at least once
+```
+
+Add it to your MCP client (Claude Desktop `claude_desktop_config.json`, or `claude mcp add`):
+
+```json
+{
+  "mcpServers": {
+    "fixate": {
+      "command": "npx",
+      "args": ["tsx", "/absolute/path/to/fixate/mcp/server.ts"],
+      "env": { "FIXATE_MCP_PORT": "7777" }
+    }
+  }
+}
+```
+
+Then ask the agent to "send this to Fixate for review". The first call opens `http://127.0.0.1:7777`; later calls update the same tab. `FIXATE_MCP_PORT` (default `7777`) is also the review URL. Run `npm run mcp` to launch it standalone for testing.
+
+> The bridge listens on loopback only. The browser-side receiver is a silent no-op anywhere except behind the bridge, so the deployed app and `npm run dev` are unaffected.
+
 ## Roadmap
 
 - Global hotkey to capture selected text from any app (beyond clipboard paste).

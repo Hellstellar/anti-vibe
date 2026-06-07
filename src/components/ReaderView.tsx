@@ -7,7 +7,7 @@ import StepView from './StepView'
 import './ReaderView.css'
 
 const sectionPane = () => document.querySelector<HTMLElement>('.section-context')
-const stepPane = () => document.querySelector<HTMLElement>('.step-scroll')
+const stepPane = () => document.querySelector<HTMLElement>('.step-code')
 const atBottom = (el: HTMLElement) =>
   el.scrollTop + el.clientHeight >= el.scrollHeight - 8
 

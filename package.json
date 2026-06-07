@@ -12,6 +12,8 @@
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "mcp": "tsx mcp/server.ts",
+    "typecheck:mcp": "tsc -p mcp/tsconfig.json --noEmit",
     "deploy": "npm run build && wrangler pages deploy dist --project-name=fixate"
   },
   "dependencies": {

@@ -1,6 +1,9 @@
+import { useLayoutEffect, useRef } from 'react'
 import { useReader } from '../store/readerStore'
 import type { StepUnit, WordToken } from '../lib/types'
 import './StepView.css'
+
+const MIN_FONT_PX = 16
 
 function nodeText(node: any): string {
   if (!node) return ''
@@ -12,14 +15,17 @@ function nodeText(node: any): string {
 function words(ws: WordToken[]) {
   return ws.map((w) => {
     const cls = [
+      'sw',
       w.emphasis.includes('strong') ? 'strong' : '',
       w.emphasis.includes('em') ? 'em' : '',
     ]
       .filter(Boolean)
       .join(' ')
     return (
-      <span key={w.index} className={cls}>
-        {w.text}{' '}
+      <span key={w.index}>
+        <span data-token-index={w.index} className={cls}>
+          {w.text}
+        </span>{' '}
       </span>
     )
   })
@@ -86,9 +92,35 @@ function UnitBody({ unit }: { unit: StepUnit }) {
 export default function StepView() {
   const stepUnits = useReader((s) => s.stepUnits)
   const stepIndex = useReader((s) => s.stepIndex)
+  const rsvpFrom = useReader((s) => s.rsvpFrom)
 
+  const bodyRef = useRef<HTMLDivElement>(null)
   const unit = stepUnits[stepIndex]
+
+  // Shrink the sentence/list-item text so the whole unit fits one screen —
+  // no scrolling. (For a huge one, click a word to speed-read it instead.)
+  useLayoutEffect(() => {
+    const body = bodyRef.current
+    if (!body) return
+    const text = body.querySelector<HTMLElement>('.step-text')
+    if (!text) return
+    text.style.fontSize = ''
+    let guard = 0
+    while (text.scrollHeight > body.clientHeight && guard < 60) {
+      const cur = parseFloat(getComputedStyle(text).fontSize)
+      if (cur <= MIN_FONT_PX) break
+      text.style.fontSize = `${Math.max(MIN_FONT_PX, cur * 0.93)}px`
+      guard++
+    }
+  }, [stepIndex, unit])
+
   if (!unit) return null
+
+  // Click a word -> RSVP from there (escape hatch for very long units).
+  const onClick = (e: React.MouseEvent) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>('[data-token-index]')
+    if (el) rsvpFrom(Number(el.dataset.tokenIndex))
+  }
 
   return (
     <div className="step">
@@ -97,7 +129,7 @@ export default function StepView() {
         {unit.label}
       </div>
 
-      <div key={stepIndex} className="step-body step-scroll">
+      <div key={stepIndex} ref={bodyRef} className="step-body" onClick={onClick}>
         <UnitBody unit={unit} />
       </div>
     </div>

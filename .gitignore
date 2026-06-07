@@ -7,3 +7,6 @@ dist-ssr
 *.log
 dev-dist
 .wrangler
+
+# local agent state
+.claude
