@@ -1,0 +1,36 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fixate icon: RSVP word row with a red ORP pivot, pinned to a reticle. -->
+  <rect width="512" height="512" fill="#0a0705"/>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="42%" r="62%">
+      <stop offset="0%" stop-color="#140d09"/>
+      <stop offset="100%" stop-color="#0a0705"/>
+    </radialGradient>
+  </defs>
+
+  <!-- faint scanline grid -->
+  <g fill="#ff8a3d" opacity="0.06">
+    <rect x="0" y="120" width="512" height="2"/>
+    <rect x="0" y="200" width="512" height="2"/>
+    <rect x="0" y="280" width="512" height="2"/>
+    <rect x="0" y="360" width="512" height="2"/>
+  </g>
+
+  <!-- reticle ticks aligned to the pivot column (center x = 184) -->
+  <g fill="#ff4a2e">
+    <rect x="180" y="150" width="8" height="56" rx="2"/>
+    <rect x="180" y="306" width="8" height="56" rx="2"/>
+  </g>
+
+  <!-- word row: 5 pixel blocks, the 2nd is the red ORP pivot -->
+  <g>
+    <rect x="84"  y="228" width="56" height="56" rx="6" fill="#e9d9c2"/>
+    <!-- pivot glow + block -->
+    <rect x="144" y="216" width="80" height="80" rx="8" fill="#ff2f1f" opacity="0.28"/>
+    <rect x="156" y="228" width="56" height="56" rx="6" fill="#ff2f1f"/>
+    <rect x="228" y="228" width="56" height="56" rx="6" fill="#e9d9c2"/>
+    <rect x="300" y="228" width="56" height="56" rx="6" fill="#e9d9c2"/>
+    <rect x="372" y="228" width="56" height="56" rx="6" fill="#8a6f55"/>
+  </g>
+</svg>
