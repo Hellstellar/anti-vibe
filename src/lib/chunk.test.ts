@@ -13,6 +13,7 @@ function word(text: string, index: number, blockId = 0): WordToken {
     listItem: false,
     listItemStart: false,
     breakBefore: false,
+    crumbs: [],
     index,
     wordIndex: index,
   }

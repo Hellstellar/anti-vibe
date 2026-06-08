@@ -83,6 +83,7 @@ export function parseMarkdown(src: string): ParseResult {
     blockId: number,
     emphasis: Emphasis[],
     listItem: boolean,
+    crumbs: string[],
   ) => {
     if (!text.trim()) {
       return
@@ -100,6 +101,7 @@ export function parseMarkdown(src: string): ParseResult {
       listItem,
       listItemStart,
       breakBefore,
+      crumbs,
       index: tokens.length,
       wordIndex: wordCount++,
     }
@@ -126,6 +128,7 @@ export function parseMarkdown(src: string): ParseResult {
     blockId: number,
     emphasis: Emphasis[],
     listItem: boolean,
+    crumbs: string[],
   ) => {
     for (const child of children) {
       switch (child.type) {
@@ -137,7 +140,7 @@ export function parseMarkdown(src: string): ParseResult {
           lines.forEach((line, li) => {
             if (li > 0) pendingBreak = true
             for (const w of line.split(/\s+/)) {
-              pushWord(w, blockId, emphasis, listItem)
+              pushWord(w, blockId, emphasis, listItem, crumbs)
             }
           })
           break
@@ -147,10 +150,10 @@ export function parseMarkdown(src: string): ParseResult {
           pendingBreak = true
           break
         case 'emphasis':
-          walkInline(child.children, blockId, [...emphasis, 'em'], listItem)
+          walkInline(child.children, blockId, [...emphasis, 'em'], listItem, crumbs)
           break
         case 'strong':
-          walkInline(child.children, blockId, [...emphasis, 'strong'], listItem)
+          walkInline(child.children, blockId, [...emphasis, 'strong'], listItem, crumbs)
           break
         case 'delete':
         case 'link':
@@ -160,10 +163,11 @@ export function parseMarkdown(src: string): ParseResult {
             blockId,
             emphasis,
             listItem,
+            crumbs,
           )
           break
         case 'image':
-          if (child.alt) pushWord(child.alt, blockId, emphasis, listItem)
+          if (child.alt) pushWord(child.alt, blockId, emphasis, listItem, crumbs)
           break
         default:
           // break, html, footnoteRef, etc. — skip for MVP
@@ -177,7 +181,13 @@ export function parseMarkdown(src: string): ParseResult {
    * and for blocks nested inside list items / blockquotes, so nested code,
    * tables, headings and images are not silently dropped.
    */
-  const emitNode = (node: RootContent, blockId: number, listItem: boolean) => {
+  // `trail` is the containment breadcrumb of the current node (e.g. ['LIST']).
+  const emitNode = (
+    node: RootContent,
+    blockId: number,
+    listItem: boolean,
+    trail: string[],
+  ) => {
     pendingBreak = false // breaks don't carry across blocks
     switch (node.type) {
       case 'heading':
@@ -193,21 +203,35 @@ export function parseMarkdown(src: string): ParseResult {
         if (isImageOnly(node)) {
           pushAtomic('image', node, blockId)
         } else {
-          walkInline(node.children, blockId, [], listItem)
+          // a stand-alone paragraph adds a PARAGRAPH leaf to its trail
+          const crumbs = trail.length ? [...trail, 'PARAGRAPH'] : ['PARAGRAPH']
+          walkInline(node.children, blockId, [], listItem, crumbs)
         }
         break
       case 'list':
         for (const item of (node as List).children) {
+          const itemTrail = [...trail, 'LIST']
           pendingListStart = true
-          for (const child of item.children) {
-            emitNode(child, blockId, true)
-          }
+          item.children.forEach((child, ci) => {
+            // the item's own first paragraph reads AS the list item (crumbs end
+            // in LIST); anything else (sub-paragraph, nested list) recurses.
+            if (ci === 0 && child.type === 'paragraph' && !isImageOnly(child)) {
+              walkInline(child.children, blockId, [], true, itemTrail)
+            } else {
+              emitNode(child, blockId, true, itemTrail)
+            }
+          })
         }
         break
       case 'blockquote':
-        for (const child of (node as Blockquote).children) {
-          emitNode(child, blockId, listItem)
-        }
+        (node as Blockquote).children.forEach((child, ci) => {
+          const qTrail = [...trail, 'QUOTE']
+          if (ci === 0 && child.type === 'paragraph' && !isImageOnly(child)) {
+            walkInline(child.children, blockId, [], listItem, qTrail)
+          } else {
+            emitNode(child, blockId, listItem, qTrail)
+          }
+        })
         break
       default:
         // thematicBreak, html, definition, etc. — skip
@@ -219,7 +243,7 @@ export function parseMarkdown(src: string): ParseResult {
     const blockId = blocks.length
     const tokenStart = tokens.length
 
-    emitNode(node, blockId, false)
+    emitNode(node, blockId, false, [])
 
     const tokenEnd = tokens.length - 1
     if (tokenEnd >= tokenStart) {

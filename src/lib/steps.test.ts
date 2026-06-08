@@ -13,6 +13,7 @@ function word(text: string, i: number): WordToken {
     listItem: false,
     listItemStart: false,
     breakBefore: false,
+    crumbs: [],
     index: i,
     wordIndex: i,
   }
@@ -50,6 +51,25 @@ describe('buildSteps', () => {
     const u = build('# H\n\n- alpha beta\n- gamma\n- delta')
     expect(u.map((x) => x.kind)).toEqual(['listItem', 'listItem', 'listItem'])
     expect(u.map((x) => x.label)).toEqual(['LIST', 'LIST', 'LIST'])
+  })
+
+  it('shows hierarchy breadcrumbs for nested lists and sub-paragraphs', () => {
+    const md =
+      '# H\n\n- top item\n  - nested item\n\n    a sub paragraph here\n- second top'
+    const u = build(md)
+    // top item -> LIST, nested item -> LIST › LIST, sub-paragraph ->
+    // LIST › LIST › PARAGRAPH, then back to a top item -> LIST
+    expect(u.map((x) => x.label)).toEqual([
+      'LIST',
+      'LIST › LIST',
+      'LIST › LIST › PARAGRAPH',
+      'LIST',
+    ])
+  })
+
+  it('labels a top-level paragraph PARAGRAPH and a blockquote QUOTE', () => {
+    expect(build('# H\n\nplain text.')[0].label).toBe('PARAGRAPH')
+    expect(build('# H\n\n> quoted text')[0].label).toBe('QUOTE')
   })
 
   it('makes one unit per table body row (skipping the header, no counts)', () => {

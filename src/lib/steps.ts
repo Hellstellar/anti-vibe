@@ -15,10 +15,15 @@ export function splitSentences(words: WordToken[]): WordToken[][] {
   return out
 }
 
+/** Hierarchy breadcrumb label for a word, e.g. "LIST › LIST". */
+const crumbLabel = (w: WordToken) =>
+  (w.crumbs.length ? w.crumbs : ['PARAGRAPH']).join(' › ')
+
 /**
  * Build the Step-mode units for a section (sentence granularity):
- * paragraphs/quotes -> one unit per sentence, lists -> one per item,
- * tables -> one per body row, code/image -> one unit each.
+ * paragraphs/quotes -> one unit per sentence, lists -> one per item (split
+ * further on nesting/sub-paragraph changes), tables -> one per body row,
+ * code/image -> one unit each. Labels show the containment breadcrumb.
  */
 export function buildSteps(
   tokens: Token[],
@@ -42,26 +47,41 @@ export function buildSteps(
           units.push({ kind: 'image', label: 'IMAGE', groupId: bi, node: b.node })
           break
         }
-        const label = b.type === 'blockquote' ? 'QUOTE' : 'PARAGRAPH'
         for (const s of splitSentences(words)) {
-          units.push({ kind: 'sentence', label, groupId: bi, words: s })
+          units.push({
+            kind: 'sentence',
+            label: crumbLabel(s[0]),
+            groupId: bi,
+            words: s,
+          })
         }
         break
       }
       case 'list': {
+        // A list block is flattened (nested lists + sub-paragraphs share it).
+        // Split into units whenever a list item starts OR the breadcrumb
+        // changes (nesting depth or a sub-paragraph), so each unit's label
+        // reflects its place in the hierarchy.
         const items: WordToken[][] = []
+        let prevKey = ''
         for (const w of words) {
-          if (w.listItemStart || items.length === 0) items.push([])
+          const key = w.crumbs.join('>')
+          if (w.listItemStart || key !== prevKey || items.length === 0) {
+            items.push([])
+          }
+          prevKey = key
           items[items.length - 1].push(w)
         }
-        items.forEach((it) =>
+        items.forEach((it) => {
+          // a sub-paragraph inside a list reads as prose (no bullet)
+          const leaf = it[0].crumbs[it[0].crumbs.length - 1]
           units.push({
-            kind: 'listItem',
-            label: 'LIST',
+            kind: leaf === 'PARAGRAPH' ? 'sentence' : 'listItem',
+            label: crumbLabel(it[0]),
             groupId: bi,
             words: it,
-          }),
-        )
+          })
+        })
         break
       }
       case 'table': {

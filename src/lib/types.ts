@@ -20,6 +20,10 @@ export interface WordToken {
   listItemStart: boolean
   /** True when a line break (soft or hard) precedes this word in the source. */
   breakBefore: boolean
+  /** Containment breadcrumb, outermost→innermost (e.g. ['LIST','LIST'] for a
+   *  nested item, ['LIST','PARAGRAPH'] for a sub-paragraph). Drives the
+   *  step-view hierarchy label. */
+  crumbs: string[]
   /** Position in the global token stream (counts atomic tokens too). */
   index: number
   /** Ordinal among WORD tokens only — drives the WPM ramp. */
