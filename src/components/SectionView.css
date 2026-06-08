@@ -137,10 +137,8 @@
   margin: 0 0 0.5em;
 }
 
-.sv-block.list {
-  list-style: none;
+.sv-list {
   margin: 0.6em auto;
-  padding: 0;
   max-width: 60ch;
   text-align: left;
 }
@@ -156,6 +154,12 @@
   left: 0;
   color: var(--accent);
   text-shadow: 0 0 8px var(--glow);
+}
+/* A paragraph nested inside a list item — prose, no bullet, slightly dim. */
+.sv-li-para {
+  margin: 0.2em 0 0.5em;
+  text-align: left;
+  color: var(--fg-dim);
 }
 
 .sv-more {

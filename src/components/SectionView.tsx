@@ -99,21 +99,37 @@ function ContentBlock({
   if (words.length === 0) return null
 
   if (block.type === 'list') {
-    const items: WordToken[][] = []
+    // The list block is flattened (nested lists + sub-paragraphs share it).
+    // Segment on item start OR breadcrumb change, then indent each segment by
+    // its nesting depth so sub-lists and sub-paragraphs read as a hierarchy.
+    const segs: WordToken[][] = []
+    let prev = ''
     for (const w of words) {
-      if (w.listItemStart || items.length === 0) items.push([])
-      items[items.length - 1].push(w)
+      const key = w.crumbs.join('>')
+      if (w.listItemStart || key !== prev || segs.length === 0) segs.push([])
+      prev = key
+      segs[segs.length - 1].push(w)
     }
     return (
-      <ul className="sv-block list">
-        {items.map((item, i) => (
-          <li key={i} className="sv-li">
-            {item.map((w) => (
-              <Word key={w.index} w={w} active={w.index === currentIndex} />
-            ))}
-          </li>
-        ))}
-      </ul>
+      <div className="sv-block sv-list">
+        {segs.map((seg, i) => {
+          const cr = seg[0].crumbs
+          const depth = Math.max(1, cr.filter((c) => c === 'LIST').length)
+          const isPara = cr[cr.length - 1] === 'PARAGRAPH'
+          const indent = (isPara ? depth : depth - 1) * 1.6
+          return (
+            <div
+              key={i}
+              className={isPara ? 'sv-li-para' : 'sv-li'}
+              style={{ marginLeft: `${indent}em` }}
+            >
+              {seg.map((w) => (
+                <Word key={w.index} w={w} active={w.index === currentIndex} />
+              ))}
+            </div>
+          )
+        })}
+      </div>
     )
   }
 
