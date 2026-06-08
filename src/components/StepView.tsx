@@ -93,6 +93,8 @@ export default function StepView() {
   const stepUnits = useReader((s) => s.stepUnits)
   const stepIndex = useReader((s) => s.stepIndex)
   const rsvpFrom = useReader((s) => s.rsvpFrom)
+  const stepNext = useReader((s) => s.stepNext)
+  const stepPrev = useReader((s) => s.stepPrev)
 
   const bodyRef = useRef<HTMLDivElement>(null)
   const unit = stepUnits[stepIndex]
@@ -132,6 +134,17 @@ export default function StepView() {
       <div key={stepIndex} ref={bodyRef} className="step-body" onClick={onClick}>
         <UnitBody unit={unit} />
       </div>
+
+      {stepIndex > 0 && (
+        <button className="step-nav prev" title="Previous (←)" onClick={stepPrev}>
+          ‹
+        </button>
+      )}
+      {stepIndex < stepUnits.length - 1 && (
+        <button className="step-nav next" title="Next (→)" onClick={stepNext}>
+          ›
+        </button>
+      )}
     </div>
   )
 }

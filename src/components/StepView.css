@@ -140,6 +140,32 @@
   white-space: nowrap;
 }
 
+/* Side affordances: arrow-key unit navigation. */
+.step-nav {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 10000; /* above the CRT overlay */
+  background: none;
+  border: none;
+  color: var(--fg-dim);
+  opacity: 0.55;
+  font-size: 2.4rem;
+  line-height: 1;
+  padding: 0.5rem 0.8rem;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+.step-nav:hover {
+  opacity: 1;
+  color: var(--accent);
+}
+.step-nav.prev {
+  left: 1.5vw;
+}
+.step-nav.next {
+  right: 1.5vw;
+}
+
 .step-hint {
   position: fixed;
   bottom: 1.4rem;
