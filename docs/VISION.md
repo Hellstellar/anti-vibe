@@ -20,7 +20,7 @@ LLMs and agents generate large volumes of text. Reviewing it has real cost:
 Reduce the *cost* of reviewing, not just the time:
 
 - **Lower fatigue** — RSVP keeps the eyes still (content moves, gaze doesn't);
-  the spotlight + CRT fade limit what's on screen at once, easing the load.
+  the CRT top/bottom fade keeps focus on the middle of the screen, easing the load.
 - **Lower inertia** — section-by-section navigation means you commit to one small
   chunk at a time instead of facing the whole document. Glance at a heading,
   decide, move on or speed-read it.

@@ -79,8 +79,6 @@ export interface ReaderConfig {
   rampWords: number
   /** Words shown per flash. */
   chunkSize: number
-  /** Radius (px) of the fully-lit core of the cursor spotlight. */
-  spotlightRadius: number
   /** Chiptune sound effects on interactions. */
   soundOn: boolean
   multipliers: {

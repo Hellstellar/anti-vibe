@@ -5,7 +5,6 @@ export const DEFAULT_CONFIG: ReaderConfig = {
   targetWpm: 300,
   rampWords: 20,
   chunkSize: 1,
-  spotlightRadius: 130,
   soundOn: true,
   multipliers: {
     longWordPerChar: 0.04,

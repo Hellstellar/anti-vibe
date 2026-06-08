@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useReader } from '../store/readerStore'
 import type { Block, Token, WordToken } from '../lib/types'
 import './SectionView.css'
@@ -136,11 +136,8 @@ export default function SectionView() {
   const currentIndex = useReader((s) => s.currentIndex)
   const rsvpFrom = useReader((s) => s.rsvpFrom)
   const gotoSectionRevealed = useReader((s) => s.gotoSectionRevealed)
-  const spotlightRadius = useReader((s) => s.cfg.spotlightRadius)
-  const setCfg = useReader((s) => s.setCfg)
 
   const scrollRef = useRef<HTMLDivElement>(null)
-  const rafRef = useRef<number | null>(null)
   const [canScrollDown, setCanScrollDown] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
   const [hasX, setHasX] = useState(false)
@@ -154,45 +151,6 @@ export default function SectionView() {
     setHasX(el.scrollWidth > el.clientWidth + 4)
     setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8)
   }
-
-  const setSpot = (el: HTMLElement, x: number, y: number) => {
-    el.style.setProperty('--spot-x', `${x}px`)
-    el.style.setProperty('--spot-y', `${y}px`)
-  }
-
-  // Cursor is the light source — update CSS vars off the React path.
-  const onMove = (e: React.MouseEvent) => {
-    const el = scrollRef.current
-    if (!el) return
-    const cr = el.getBoundingClientRect()
-    const x = e.clientX - cr.left
-    const y = e.clientY - cr.top
-    if (rafRef.current !== null) return
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = null
-      setSpot(el, x, y)
-    })
-  }
-
-  // Cmd/Ctrl + scroll adjusts the illumination radius (instead of scrolling).
-  useEffect(() => {
-    const el = scrollRef.current
-    if (!el) return
-    const onWheel = (e: WheelEvent) => {
-      if (!e.metaKey && !e.ctrlKey) return
-      e.preventDefault()
-      const step = e.deltaY > 0 ? -12 : 12
-      // Read the live value so rapid wheels don't all compute off a stale base.
-      const cur = useReader.getState().cfg.spotlightRadius
-      setCfg({ spotlightRadius: cur + step })
-    }
-    el.addEventListener('wheel', onWheel, { passive: false })
-    return () => el.removeEventListener('wheel', onWheel)
-  }, [setCfg])
-
-  useEffect(() => () => {
-    if (rafRef.current !== null) cancelAnimationFrame(rafRef.current)
-  }, [])
 
   // On reveal / section change reset scroll to top; when paused mid-section,
   // bring the active (current) word into view.
@@ -238,8 +196,6 @@ export default function SectionView() {
       <div
         ref={scrollRef}
         className={`section-context${hasX ? ' has-x' : ''}`}
-        style={{ '--spot-r': `${spotlightRadius}px` } as CSSProperties}
-        onMouseMove={onMove}
         onScroll={updateScrollCue}
         onClick={onClick}
       >

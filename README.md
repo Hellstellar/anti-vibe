@@ -10,7 +10,7 @@ A retro-cyberpunk reader for **reviewing LLM / agent output without the fatigue*
 
 LLMs and agents generate walls of text, and the cost of reviewing it is real — not just the time. This app attacks that cost from several sides:
 
-- **Less reading fatigue** — RSVP keeps your eyes still (the content moves, your gaze doesn't), and the cursor spotlight + CRT fade limit what's on screen at once, easing the load.
+- **Less reading fatigue** — RSVP keeps your eyes still (the content moves, your gaze doesn't), and the CRT top/bottom fade keeps the focus on the middle of the screen, easing the load.
 - **Lower inertia to review** — section-by-section navigation means you commit to one small chunk at a time instead of facing the whole document. Glance at a heading, decide, skip it or speed-read it.
 - **Faster review** — opt-in RSVP blasts through the sections worth reading at your target WPM; review keeps pace with how much AI output you now generate.
 - **Less screen time** — faster, gentler review means fewer hours staring at walls of text.
@@ -23,7 +23,7 @@ The goal is review tooling that's **easier on your eyes and attention**, not onl
 |                                                   |                                                            |                                                  |
 | ------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
 | ![Landing](docs/screenshots/landing.png)          | ![Section reading view](docs/screenshots/reading.png)      | ![RSVP word flash](docs/screenshots/rsvp.png)    |
-| **Landing** — paste or open a `.md` file          | **Reading view** — section under a cursor spotlight + CRT fade | **RSVP** — one word at a time, ORP pivot in red |
+| **Landing** — paste or open a `.md` file          | **Reading view** — a section with a CRT top/bottom fade | **RSVP** — one word at a time, ORP pivot in red |
 
 ## Features
 
@@ -31,11 +31,11 @@ The goal is review tooling that's **easier on your eyes and attention**, not onl
 - **Section navigation** — the doc is split into heading-delimited sections. You land on a heading; **Enter** reveals a focus-sized preview of its content, **Enter** again moves to the next section, **Shift+Enter** goes back. Skim heading-to-heading without reading everything.
 - **Opt-in RSVP** — when a section looks worth speed-reading, **click any word** and RSVP plays that section from there. Words flash centered with the ORP/pivot letter pinned to a reticle; speed ramps from slow to your target WPM (and re-ramps on each start). `space` pauses back to the reading view.
 - **Step mode** — for the gentlest read, **Cmd/Ctrl + Enter** steps through a section one unit at a time: a sentence, a list item, or a table row (shown as header→value pairs), with a context label (`PARAGRAPH`, `LIST · 2/4`, `TABLE · ROW 1/3`) so you always know where you are in the layout. `Enter` advances, `Shift+Enter` goes back.
-- **CRT reading view** — a revealed section shows in full inside a scrollable pane that dissolves toward the top and bottom edges (CRT-style fade), under a cursor spotlight that lights the text you point at. Scroll with the arrow keys; **Cmd/Ctrl + scroll** resizes the spotlight.
+- **CRT reading view** — a revealed section shows in full inside a scrollable pane that dissolves toward the top and bottom edges (CRT-style fade). Scroll with the arrow keys.
 - **Markdown-aware** — headings, lists, blockquotes, fenced code, tables, and images render as styled markdown; prose centered, list items bulleted, line breaks preserved.
 - **Help** — a `?` icon beside the settings gear opens a menu of the shortcuts for the current view.
 - **Sound** — chiptune blips on interactions (synthesized, no audio files); toggle in settings.
-- **Configurable** — target/start WPM, words-per-flash, and spotlight illumination radius (saved to localStorage; settings reachable from the landing page and the reader).
+- **Configurable** — target/start WPM and words-per-flash (saved to localStorage; settings reachable from the landing page and the reader).
 - **Keyboard** — one axis of focus: `enter` **fixate deeper** (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` **RSVP the section from the start** (any level) · `space` pause/resume RSVP · `esc` **up one level** (never to landing — the ✕ exits). Arrows are contextual: in the **heading list** `↑`/`↓` move between headings; in the **reading view** `↑`/`↓` scroll and `←`/`→` scroll wide content; in **step mode** `←`/`→` move between units. To jump across sections, **`⌘`/`ctrl` + arrow** (down/right = next, up/left = prev) — always landing in the next section's reading view. Once you finish a section (scrolled to the bottom, or reached the last step), a small **advance button** appears at the bottom — click it to go to the next section.
 - **Theme** — retro-cyberpunk pixelated: dark warm palette, red/orange accents, pixel fonts, CRT scanlines. The reading font is swappable via the `--word-font` CSS variable.
 
