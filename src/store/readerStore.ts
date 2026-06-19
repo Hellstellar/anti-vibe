@@ -3,6 +3,7 @@ import { parseMarkdown } from '../lib/parseMarkdown'
 import { chunkAt, chunkDelay } from '../lib/chunk'
 import { buildSteps } from '../lib/steps'
 import { DEFAULT_CONFIG } from '../lib/timing'
+import { isThemeId, DEFAULT_THEME } from '../lib/theme'
 import type {
   Block,
   ReaderConfig,
@@ -38,6 +39,7 @@ function sanitizeConfig(cfg: ReaderConfig): ReaderConfig {
     rampWords: Math.max(0, Math.round(num(cfg.rampWords, DEFAULT_CONFIG.rampWords))),
     chunkSize: Math.max(1, Math.round(num(cfg.chunkSize, DEFAULT_CONFIG.chunkSize))),
     soundOn: typeof cfg.soundOn === 'boolean' ? cfg.soundOn : DEFAULT_CONFIG.soundOn,
+    theme: isThemeId(cfg.theme) ? cfg.theme : DEFAULT_THEME,
   }
 }
 

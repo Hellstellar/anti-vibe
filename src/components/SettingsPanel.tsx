@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useReader } from '../store/readerStore'
+import { THEMES } from '../lib/theme'
 import './SettingsPanel.css'
 
 export default function SettingsPanel() {
@@ -19,6 +20,21 @@ export default function SettingsPanel() {
 
       {open && (
         <div className="settings-body">
+          <div className="setting">
+            <span>theme</span>
+            <div className="theme-row">
+              {THEMES.map((t) => (
+                <button
+                  key={t.id}
+                  className={`theme-btn ${cfg.theme === t.id ? 'active' : ''}`}
+                  onClick={() => setCfg({ theme: t.id })}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <label className="setting">
             <span>
               target wpm <b>{cfg.targetWpm}</b>

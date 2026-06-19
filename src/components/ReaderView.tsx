@@ -148,7 +148,7 @@ export default function ReaderView() {
 
   return (
     <div className="reader">
-      <div className="crt-boot" aria-hidden="true" />
+      <div className="screen-boot" aria-hidden="true" />
       <button className="exit-button" onClick={exit} title="Exit to landing">
         ✕
       </button>

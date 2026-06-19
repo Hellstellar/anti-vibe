@@ -21,13 +21,12 @@
   line-height: 1;
   white-space: nowrap;
   color: var(--fg);
-  text-shadow: 0 0 10px rgba(233, 217, 194, 0.15);
   will-change: transform;
   animation: flashin 0.09s ease-out;
 }
 .rsvp-word.is-strong {
   font-weight: 700;
-  color: #fff;
+  color: var(--fg-strong);
 }
 .rsvp-word.is-em {
   font-style: italic;
@@ -73,7 +72,7 @@
   45% {
     opacity: 1;
     transform: translateX(0) scale(2) rotate(8deg);
-    color: #fff;
+    color: var(--fg-strong);
     text-shadow: 0 0 28px var(--accent), 0 0 48px var(--glow);
   }
   70% {

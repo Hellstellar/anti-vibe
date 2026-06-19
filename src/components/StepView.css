@@ -13,7 +13,7 @@
 /* Block-type / position label — the layout-awareness cue. */
 .step-context {
   font-family: var(--ui-font);
-  font-size: 0.6rem;
+  font-size: clamp(0.72rem, 1.6vw, 1.05rem);
   letter-spacing: 0.25em;
   color: var(--accent);
   text-transform: uppercase;
@@ -32,13 +32,13 @@
 }
 
 .step-body {
-  max-width: 60ch;
   width: 100%;
-  height: 62vh;
+  max-width: 60rem; /* comfortable measure; scales down with the screen */
+  max-height: 68vh; /* size to content so the label hugs it; cap for fit */
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden; /* text shrinks to fit; no scrolling */
+  overflow: hidden; /* text wraps/shrinks to fit; no scrolling */
   animation: stepin 0.18s ease-out;
 }
 @keyframes stepin {
@@ -56,6 +56,11 @@
   line-height: 1.5;
   color: var(--fg);
   margin: 0;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0; /* allow the flex child to shrink below content width */
+  overflow-wrap: break-word; /* break long unbreakable tokens vs. clipping */
+  word-break: break-word;
 }
 .step-text .sw {
   border-radius: 3px;
@@ -67,7 +72,7 @@
   background-color: var(--accent);
 }
 .step-text .strong {
-  color: #fff;
+  color: var(--fg-strong);
   font-weight: 700;
 }
 .step-text .em {
@@ -112,7 +117,6 @@
   max-height: 55vh;
   border: 2px solid var(--fg-dim);
   border-radius: 4px;
-  image-rendering: pixelated;
 }
 .step-image figcaption {
   margin-top: 0.5rem;

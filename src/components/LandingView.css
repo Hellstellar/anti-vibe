@@ -69,10 +69,10 @@
   color: var(--accent);
   background: transparent;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--bg), 0 0 16px rgba(255, 74, 46, 0.25);
+  box-shadow: 0 0 0 3px var(--bg), 0 0 16px var(--glow);
 }
 .big-button.alt:hover {
-  background: rgba(255, 74, 46, 0.1);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .big-button-glow {
@@ -96,6 +96,62 @@
   100% {
     transform: translateX(120%);
   }
+}
+
+/* ---- Cream: soft, rounded, raised "pillow" buttons (no retro glow). The CRT
+   theme keeps the sharp 4px look above; only cream gets the 3D treatment. ---- */
+[data-theme='cream'] .big-button {
+  border: none;
+  border-radius: 18px;
+  color: #fff;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--accent) 82%, #fff) 0%,
+    var(--accent) 52%,
+    var(--accent-2) 100%
+  );
+  /* top inner highlight + bottom inner shade + soft cast shadow = depth */
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 6px rgba(74, 40, 16, 0.25),
+    0 6px 14px rgba(74, 58, 40, 0.28),
+    0 2px 4px rgba(74, 58, 40, 0.18);
+  text-shadow: 0 1px 1px rgba(74, 40, 16, 0.3);
+}
+[data-theme='cream'] .big-button:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 6px rgba(74, 40, 16, 0.25),
+    0 12px 24px rgba(74, 58, 40, 0.32),
+    0 4px 8px rgba(74, 58, 40, 0.2);
+}
+[data-theme='cream'] .big-button:active {
+  transform: translateY(1px) scale(0.99);
+  box-shadow:
+    inset 0 2px 5px rgba(74, 40, 16, 0.32),
+    0 2px 6px rgba(74, 58, 40, 0.22);
+}
+/* Secondary action: outlined, same rounding, lightly lifted. */
+[data-theme='cream'] .big-button.alt {
+  color: var(--accent);
+  background: var(--bg);
+  border: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 4px 10px rgba(74, 58, 40, 0.16);
+  text-shadow: none;
+}
+[data-theme='cream'] .big-button.alt:hover {
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg));
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 8px 16px rgba(74, 58, 40, 0.2);
+}
+/* The arcade sheen sweep belongs to the CRT look — calm it for cream. */
+[data-theme='cream'] .big-button-glow {
+  display: none;
 }
 
 .fallback {

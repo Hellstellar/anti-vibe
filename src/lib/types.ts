@@ -3,6 +3,10 @@ import type { RootContent } from 'mdast'
 /** Inline emphasis marks carried by a word, for styling the giant flash. */
 export type Emphasis = 'em' | 'strong'
 
+/** Selectable look-and-feel. Each id has a matching [data-theme] block in
+ *  theme.css and an entry in the THEMES registry (lib/theme.ts). */
+export type ThemeId = 'crt' | 'cream'
+
 /** A single word (or punctuation-attached chunk) shown during RSVP playback. */
 export interface WordToken {
   kind: 'word'
@@ -79,8 +83,10 @@ export interface ReaderConfig {
   rampWords: number
   /** Words shown per flash. */
   chunkSize: number
-  /** Chiptune sound effects on interactions. */
+  /** Sound effects on interactions (waveform palette follows the theme). */
   soundOn: boolean
+  /** Active visual + sound theme. */
+  theme: ThemeId
   multipliers: {
     longWordPerChar: number
     softPunct: number

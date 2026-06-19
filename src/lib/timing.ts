@@ -6,6 +6,7 @@ export const DEFAULT_CONFIG: ReaderConfig = {
   rampWords: 20,
   chunkSize: 1,
   soundOn: true,
+  theme: 'crt',
   multipliers: {
     longWordPerChar: 0.04,
     softPunct: 1.5,

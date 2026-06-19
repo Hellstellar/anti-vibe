@@ -1,22 +1,59 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+/* Fonts for every theme in one request.
+   CRT  : Press Start 2P (UI chrome) + VT323 (reading).
+   Cream: Inter (UI chrome, Claude-app feel) + Source Serif 4 (reading prose,
+          a Tiempos-like serif close to Claude's chat copy). */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Press+Start+2P&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=VT323&display=swap');
 
-:root {
-  /* Theme palette — retro cyberpunk handheld (warm dark + red/orange). */
+/*
+  Theming is data-driven: every color/font/effect is a CSS variable, and a
+  theme is just a [data-theme] block that redefines them. The active theme is
+  set on <html data-theme="..."> by lib/theme.ts. Components never hardcode a
+  palette — add a new theme by adding a block here + an entry in THEMES.
+*/
+
+/* ---- CRT (default): retro cyberpunk handheld, warm dark + red/orange. ---- */
+:root,
+[data-theme='crt'] {
   --bg: #0a0705;
   --bg-2: #140d09;
   --fg: #e9d9c2;
   --fg-dim: #8a6f55;
+  --fg-strong: #fff7ea;
   --accent: #ff4a2e;
   --accent-2: #ff8a3d;
   --glow: rgba(255, 74, 46, 0.55);
   --orp: #ff2f1f;
   --grid: rgba(255, 138, 61, 0.12);
 
-  /* Fonts — word font is customizable; UI chrome stays pixel. */
   --word-font: 'VT323', monospace;
   --ui-font: 'Press Start 2P', monospace;
 
+  /* Subtle radial vignette baked into the background. */
+  --bg-image: radial-gradient(circle at 50% 40%, var(--bg-2), var(--bg) 70%);
+
   color-scheme: dark;
+}
+
+/* ---- Cream: calm, creamy paper with warm brown ink. Fixed light (a theme
+   you pick on purpose), gentle effects, Claude-like type. ---- */
+[data-theme='cream'] {
+  --bg: #f3ead6;
+  --bg-2: #e9dcc0;
+  --fg: #4a3a28;
+  --fg-dim: #8a7458;
+  --fg-strong: #2c2014;
+  --accent: #a85a28;
+  --accent-2: #7d5320;
+  --glow: transparent; /* no glow — keeps shadows that use it as no-ops */
+  --orp: #9c4a1e;
+  --grid: rgba(74, 58, 40, 0.1);
+
+  --word-font: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --ui-font: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --bg-image: none;
+
+  color-scheme: light;
 }
 
 * {
@@ -31,10 +68,15 @@ body,
 }
 
 body {
-  background: radial-gradient(circle at 50% 40%, var(--bg-2), var(--bg) 70%);
+  background-color: var(--bg);
+  background-image: var(--bg-image);
   color: var(--fg);
   font-family: var(--ui-font);
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* Smoothly cross-fade palette when the theme is switched at runtime. */
+  transition: background-color 0.45s ease, color 0.45s ease;
 }
 
 button {
@@ -42,25 +84,27 @@ button {
   cursor: pointer;
 }
 
-/* ---- CRT scanline overlay ---- */
+/* ---- Ambient overlay. One element, styled per theme. ---- */
 .crt-overlay {
   pointer-events: none;
   position: fixed;
   inset: 0;
   z-index: 9999;
-  background:
-    repeating-linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0) 0px,
-      rgba(0, 0, 0, 0) 2px,
-      rgba(0, 0, 0, 0.18) 3px,
-      rgba(0, 0, 0, 0.18) 4px
-    );
   mix-blend-mode: multiply;
+}
+
+/* CRT: animated scanlines + heavy vignette. */
+[data-theme='crt'] .crt-overlay {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0px,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.18) 3px,
+    rgba(0, 0, 0, 0.18) 4px
+  );
   animation: flicker 4s infinite steps(60);
 }
-.crt-overlay::after {
-  /* vignette */
+[data-theme='crt'] .crt-overlay::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -70,6 +114,16 @@ button {
     rgba(0, 0, 0, 0.55) 100%
   );
 }
+
+/* Cream: no scanlines — a soft warm vignette that just settles the edges. */
+[data-theme='cream'] .crt-overlay {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(74, 58, 40, 0) 62%,
+    rgba(74, 58, 40, 0.16) 100%
+  );
+}
+
 @keyframes flicker {
   0%,
   100% {
@@ -80,8 +134,73 @@ button {
   }
 }
 
+/* ---- Screen "power-on" when a document loads. Theme-scoped feel. ---- */
+.screen-boot {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0;
+}
+/* CRT: a bright line snaps in, stretches to full height, fades. */
+[data-theme='crt'] .screen-boot {
+  background: var(--fg);
+  transform-origin: center;
+  mix-blend-mode: screen;
+  animation: crtboot 0.55s ease-out forwards;
+}
+@keyframes crtboot {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.004) scaleX(1.2);
+  }
+  10% {
+    opacity: 0.9;
+    transform: scaleY(0.004) scaleX(1);
+  }
+  45% {
+    opacity: 0.4;
+    transform: scaleY(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleY(1);
+  }
+}
+/* Cream: a soft paper wash fades away to reveal the page. */
+[data-theme='cream'] .screen-boot {
+  background: var(--bg);
+  animation: softboot 0.7s ease-out forwards;
+}
+@keyframes softboot {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Cream RSVP words ease in a touch more gently than the CRT snap. */
+[data-theme='cream'] .rsvp-word {
+  animation: softflashin 0.16s ease-out;
+}
+@keyframes softflashin {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .crt-overlay {
+  [data-theme='crt'] .crt-overlay,
+  .screen-boot,
+  [data-theme='cream'] .rsvp-word {
     animation: none;
+  }
+  body {
+    transition: none;
   }
 }

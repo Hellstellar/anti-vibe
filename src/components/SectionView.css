@@ -219,7 +219,6 @@
   max-height: 40vh;
   border: 2px solid var(--fg-dim);
   border-radius: 4px;
-  image-rendering: pixelated;
 }
 .sv-image figcaption {
   margin-top: 0.4rem;
@@ -232,7 +231,7 @@
   transition: color 0.12s ease, background-color 0.12s ease, box-shadow 0.12s ease;
 }
 .pw.strong {
-  color: #fff;
+  color: var(--fg-strong);
   font-weight: 700;
 }
 .pw.em {

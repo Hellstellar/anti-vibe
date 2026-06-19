@@ -108,7 +108,13 @@ export default function StepView() {
     if (!text) return
     text.style.fontSize = ''
     let guard = 0
-    while (text.scrollHeight > body.clientHeight && guard < 60) {
+    // Shrink until the unit fits both ways — tall units (many lines) and wide
+    // ones (long unbreakable tokens) both get scaled down before wrapping.
+    while (
+      (text.scrollHeight > body.clientHeight ||
+        body.scrollWidth > body.clientWidth + 1) &&
+      guard < 60
+    ) {
       const cur = parseFloat(getComputedStyle(text).fontSize)
       if (cur <= MIN_FONT_PX) break
       text.style.fontSize = `${Math.max(MIN_FONT_PX, cur * 0.93)}px`
