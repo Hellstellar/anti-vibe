@@ -17,7 +17,7 @@
 }
 
 .landing-sub {
-  font-size: 0.7rem;
+  font-size: clamp(0.95rem, 2vw, 1.25rem);
   color: var(--fg-dim);
   letter-spacing: 0.1em;
 }

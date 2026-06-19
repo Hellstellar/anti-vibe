@@ -7,6 +7,12 @@ export type Emphasis = 'em' | 'strong'
  *  theme.css and an entry in the THEMES registry (lib/theme.ts). */
 export type ThemeId = 'crt' | 'cream'
 
+/** Reading-prose text alignment. Drives the [data-align] attribute and thus
+ *  the --text-align CSS variable. Each theme has a default (see ThemeMeta).
+ *  The value set is defined once here (RS-20.5) and referenced everywhere. */
+export const TEXT_ALIGNS = ['left', 'center'] as const
+export type TextAlign = (typeof TEXT_ALIGNS)[number]
+
 /** A single word (or punctuation-attached chunk) shown during RSVP playback. */
 export interface WordToken {
   kind: 'word'
@@ -87,6 +93,9 @@ export interface ReaderConfig {
   soundOn: boolean
   /** Active visual + sound theme. */
   theme: ThemeId
+  /** Reading-prose alignment. Defaults to the active theme's default on theme
+   *  switch, but is an independent, user-overridable setting. */
+  align: TextAlign
   multipliers: {
     longWordPerChar: number
     softPunct: number

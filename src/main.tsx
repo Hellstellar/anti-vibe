@@ -3,10 +3,11 @@ import { createRoot } from 'react-dom/client'
 import './theme.css'
 import App from './App'
 import { connectBridge } from './bridge/receiver'
-import { applyTheme, getStoredThemeId } from './lib/theme'
+import { applyStoredDisplay } from './lib/theme'
 
-// Apply the saved theme before first paint so there's no flash of the default.
-applyTheme(getStoredThemeId())
+// Apply the saved theme + alignment before first paint so there's no flash of
+// the defaults (single localStorage parse).
+applyStoredDisplay()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

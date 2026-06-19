@@ -1,15 +1,19 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useReader } from '../store/readerStore'
 import { THEMES } from '../lib/theme'
+import { TEXT_ALIGNS } from '../lib/types'
+import { useClickOutside } from './useClickOutside'
 import './SettingsPanel.css'
 
 export default function SettingsPanel() {
   const cfg = useReader((s) => s.cfg)
   const setCfg = useReader((s) => s.setCfg)
   const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useClickOutside(ref, open, () => setOpen(false))
 
   return (
-    <div className={`settings ${open ? 'open' : ''}`}>
+    <div ref={ref} className={`settings ${open ? 'open' : ''}`}>
       <button
         className="settings-toggle"
         onClick={() => setOpen((o) => !o)}
@@ -30,6 +34,21 @@ export default function SettingsPanel() {
                   onClick={() => setCfg({ theme: t.id })}
                 >
                   {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="setting">
+            <span>align</span>
+            <div className="theme-row">
+              {TEXT_ALIGNS.map((a) => (
+                <button
+                  key={a}
+                  className={`theme-btn ${cfg.align === a ? 'active' : ''}`}
+                  onClick={() => setCfg({ align: a })}
+                >
+                  {a}
                 </button>
               ))}
             </div>

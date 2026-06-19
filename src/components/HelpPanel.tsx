@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useReader } from '../store/readerStore'
+import { useClickOutside } from './useClickOutside'
 import './HelpPanel.css'
 
 type Row = [keys: string, desc: string]
@@ -64,6 +65,8 @@ export default function HelpPanel() {
   const revealed = useReader((s) => s.revealed)
   const hasContent = useReader((s) => s.tokens.length > 0)
   const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  useClickOutside(ref, open, () => setOpen(false))
 
   let key = 'landing'
   if (hasContent) {
@@ -74,7 +77,7 @@ export default function HelpPanel() {
   const view = VIEWS[key]
 
   return (
-    <div className={`help ${open ? 'open' : ''}`}>
+    <div ref={ref} className={`help ${open ? 'open' : ''}`}>
       <button
         className="help-toggle"
         onClick={() => setOpen((o) => !o)}

@@ -3,7 +3,14 @@ import { parseMarkdown } from '../lib/parseMarkdown'
 import { chunkAt, chunkDelay } from '../lib/chunk'
 import { buildSteps } from '../lib/steps'
 import { DEFAULT_CONFIG } from '../lib/timing'
-import { isThemeId, DEFAULT_THEME } from '../lib/theme'
+import {
+  isThemeId,
+  isTextAlign,
+  defaultAlignFor,
+  alignForThemeSwitch,
+  DEFAULT_THEME,
+} from '../lib/theme'
+import { CFG_KEY } from '../lib/storageKeys'
 import type {
   Block,
   ReaderConfig,
@@ -12,8 +19,6 @@ import type {
   StepUnit,
   Token,
 } from '../lib/types'
-
-const CFG_KEY = 'fixate-config'
 
 /** Coerce a value to a finite number, falling back when NaN/Infinity/missing. */
 function num(v: unknown, fallback: number): number {
@@ -32,6 +37,7 @@ function sanitizeConfig(cfg: ReaderConfig): ReaderConfig {
     targetWpm,
     Math.max(10, num(cfg.startWpm, DEFAULT_CONFIG.startWpm)),
   )
+  const theme = isThemeId(cfg.theme) ? cfg.theme : DEFAULT_THEME
   return {
     ...cfg,
     startWpm,
@@ -39,7 +45,8 @@ function sanitizeConfig(cfg: ReaderConfig): ReaderConfig {
     rampWords: Math.max(0, Math.round(num(cfg.rampWords, DEFAULT_CONFIG.rampWords))),
     chunkSize: Math.max(1, Math.round(num(cfg.chunkSize, DEFAULT_CONFIG.chunkSize))),
     soundOn: typeof cfg.soundOn === 'boolean' ? cfg.soundOn : DEFAULT_CONFIG.soundOn,
-    theme: isThemeId(cfg.theme) ? cfg.theme : DEFAULT_THEME,
+    theme,
+    align: isTextAlign(cfg.align) ? cfg.align : defaultAlignFor(theme),
   }
 }
 
@@ -51,6 +58,10 @@ function loadConfig(): ReaderConfig {
       return sanitizeConfig({
         ...DEFAULT_CONFIG,
         ...parsed,
+        // Pass the raw align through (undefined for blobs saved before this
+        // field existed) so sanitizeConfig falls back to the theme's default
+        // instead of DEFAULT_CONFIG.align masking it with 'center'.
+        align: parsed.align,
         multipliers: { ...DEFAULT_CONFIG.multipliers, ...parsed.multipliers },
       })
     }
@@ -366,7 +377,10 @@ export const useReader = create<ReaderState>((set, get) => {
     },
 
     setCfg: (partial) => {
-      const next = sanitizeConfig({ ...get().cfg, ...partial })
+      const next = sanitizeConfig({
+        ...get().cfg,
+        ...alignForThemeSwitch(get().cfg, partial),
+      })
       saveConfig(next)
       set({ cfg: next })
     },

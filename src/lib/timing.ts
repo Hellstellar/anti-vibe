@@ -7,6 +7,7 @@ export const DEFAULT_CONFIG: ReaderConfig = {
   chunkSize: 1,
   soundOn: true,
   theme: 'crt',
+  align: 'center',
   multipliers: {
     longWordPerChar: 0.04,
     softPunct: 1.5,

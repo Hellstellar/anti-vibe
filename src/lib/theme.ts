@@ -4,7 +4,9 @@
 // no component code needs to change.
 
 import { setSoundProfile, type SoundProfile } from './sfx'
-import type { ThemeId } from './types'
+import { TEXT_ALIGNS } from './types'
+import type { ReaderConfig, TextAlign, ThemeId } from './types'
+import { CFG_KEY } from './storageKeys'
 
 export interface ThemeMeta {
   id: ThemeId
@@ -12,11 +14,13 @@ export interface ThemeMeta {
   label: string
   /** Which synthesized sound palette this theme plays. */
   sound: SoundProfile
+  /** Reading-prose alignment this theme adopts when selected. */
+  defaultAlign: TextAlign
 }
 
 export const THEMES: ThemeMeta[] = [
-  { id: 'crt', label: 'CRT', sound: 'chiptune' },
-  { id: 'cream', label: 'Cream', sound: 'soft' },
+  { id: 'crt', label: 'CRT', sound: 'chiptune', defaultAlign: 'center' },
+  { id: 'cream', label: 'Cream', sound: 'soft', defaultAlign: 'left' },
 ]
 
 export const DEFAULT_THEME: ThemeId = 'crt'
@@ -25,6 +29,31 @@ const BY_ID = new Map(THEMES.map((t) => [t.id, t]))
 
 export function isThemeId(v: unknown): v is ThemeId {
   return typeof v === 'string' && BY_ID.has(v as ThemeId)
+}
+
+export function isTextAlign(v: unknown): v is TextAlign {
+  return typeof v === 'string' && (TEXT_ALIGNS as readonly string[]).includes(v)
+}
+
+/** The alignment a theme adopts when selected (falls back to the default theme). */
+export function defaultAlignFor(id: ThemeId): TextAlign {
+  return (BY_ID.get(id) ?? BY_ID.get(DEFAULT_THEME)!).defaultAlign
+}
+
+/**
+ * Theme→alignment policy: when a config change switches to a *different* theme
+ * without explicitly naming an alignment, adopt the new theme's default. Lives
+ * next to defaultAlignFor so the whole theme↔align relationship is in one place
+ * (the load/corrupt-time fallback is sanitizeConfig's defaultAlignFor).
+ */
+export function alignForThemeSwitch(
+  prev: ReaderConfig,
+  patch: Partial<ReaderConfig>,
+): Partial<ReaderConfig> {
+  if (patch.theme && patch.theme !== prev.theme && patch.align === undefined) {
+    return { ...patch, align: defaultAlignFor(patch.theme) }
+  }
+  return patch
 }
 
 /**
@@ -39,19 +68,43 @@ export function applyTheme(id: ThemeId): void {
   setSoundProfile(meta.sound)
 }
 
-// Mirrors CFG_KEY in readerStore. Read directly so the theme can be applied
-// before React mounts, avoiding a flash of the default theme on first paint.
-const CFG_KEY = 'fixate-config'
+/**
+ * Apply the reading alignment: sets the root data-align attribute, which the
+ * --text-align CSS variable keys off (see theme.css). Callers pass an
+ * already-sanitized value (mirrors applyTheme, which trusts its ThemeId).
+ */
+export function applyAlign(align: TextAlign): void {
+  document.documentElement.dataset.align = align
+}
 
-export function getStoredThemeId(): ThemeId {
+/**
+ * Read the persisted theme + alignment in a SINGLE localStorage parse. Align
+ * falls back to the resolved theme's default when unset/corrupt — matching the
+ * reader store's load path so first paint can't disagree with it. Returns
+ * defaults (no throw) on missing/corrupt storage.
+ */
+function getStoredDisplay(): { theme: ThemeId; align: TextAlign } {
+  let theme: ThemeId = DEFAULT_THEME
+  let align: TextAlign | null = null
   try {
     const raw = localStorage.getItem(CFG_KEY)
     if (raw) {
-      const t = (JSON.parse(raw) as { theme?: unknown }).theme
-      if (isThemeId(t)) return t
+      const parsed = JSON.parse(raw) as { theme?: unknown; align?: unknown }
+      if (isThemeId(parsed.theme)) theme = parsed.theme
+      if (isTextAlign(parsed.align)) align = parsed.align
     }
   } catch {
     /* ignore corrupt storage */
   }
-  return DEFAULT_THEME
+  return { theme, align: align ?? defaultAlignFor(theme) }
+}
+
+/**
+ * Apply the persisted theme + alignment before React mounts, so there's no
+ * flash of the defaults on first paint. The single pre-mount entry point.
+ */
+export function applyStoredDisplay(): void {
+  const { theme, align } = getStoredDisplay()
+  applyTheme(theme)
+  applyAlign(align)
 }

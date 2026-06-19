@@ -6,6 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Fixate is a retro-cyberpunk **RSVP reader** for reviewing LLM/agent markdown output without fatigue. You move through a document heading-by-heading, reveal a section, optionally speed-read it (RSVP: one word flashed at a time with an ORP pivot), or step through it one sentence/list-item/table-row at a time. Single-page Vite + React + TypeScript app, no backend.
 
+## Development standards
+
+Before writing or changing code, follow these repo-root docs:
+
+- **`react-standards.md`** — React/TypeScript conventions for this codebase. Match them in every component, hook, and store change.
+- **`AGENTS.md`** — agent working agreement (workflow, conventions, do/don't). Follow it for all development tasks.
+
+When the two conflict, `AGENTS.md` wins.
+
 ## Commands
 
 ```bash

@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useReader } from './store/readerStore'
 import { sfx, setSoundEnabled } from './lib/sfx'
-import { applyTheme } from './lib/theme'
+import { applyTheme, applyAlign } from './lib/theme'
 import LandingView from './components/LandingView'
 import ReaderView from './components/ReaderView'
 import SettingsPanel from './components/SettingsPanel'
@@ -16,9 +16,11 @@ export default function App() {
     let prev = useReader.getState()
     setSoundEnabled(prev.cfg.soundOn)
     applyTheme(prev.cfg.theme)
+    applyAlign(prev.cfg.align)
     return useReader.subscribe((s) => {
       setSoundEnabled(s.cfg.soundOn)
       if (s.cfg.theme !== prev.cfg.theme) applyTheme(s.cfg.theme)
+      if (s.cfg.align !== prev.cfg.align) applyAlign(s.cfg.align)
       if (prev.tokens.length === 0 && s.tokens.length > 0) sfx.boot()
       if (s.revealed && !prev.revealed) sfx.reveal()
       if (s.currentSection !== prev.currentSection) sfx.section()

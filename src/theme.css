@@ -56,6 +56,20 @@
   color-scheme: light;
 }
 
+/* Reading alignment, set on <html data-align="..."> by lib/theme.ts.
+   Independent of the theme; each theme just supplies a default (see THEMES).
+   --text-align aligns prose text; --block-margin-inline places centered blocks
+   (e.g. the list group) so they follow the same axis instead of a special case. */
+:root,
+[data-align='center'] {
+  --text-align: center;
+  --block-margin-inline: auto;
+}
+[data-align='left'] {
+  --text-align: left;
+  --block-margin-inline: 0 auto;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -181,11 +195,103 @@ button {
   }
 }
 
-/* Cream RSVP words ease in a touch more gently than the CRT snap. */
-[data-theme='cream'] .rsvp-word {
-  animation: softflashin 0.16s ease-out;
+/* ============================================================
+   Cream — calm motion system.
+
+   Soothing, paper-and-ink feel: slow ease-outs, gentle rise, and
+   blur→focus "ink settling" instead of the CRT's punchy snaps. Tuned to
+   keep a reader relaxed and drawn forward rather than jolted. Everything
+   here is cream-scoped (CRT keeps its own motion) and disabled wholesale
+   under prefers-reduced-motion at the foot of this block.
+
+   Shared easing: cubic-bezier(0.22, 0.61, 0.36, 1) — a soft, settling
+   ease-out with no overshoot. ------------------------------------------ */
+
+/* Ambient — the warm vignette breathes (~16s), so the page feels alive
+   and restful without ever pulling focus from the words. */
+[data-theme='cream'] .crt-overlay {
+  animation: creambreath 16s ease-in-out infinite alternate;
 }
-@keyframes softflashin {
+@keyframes creambreath {
+  from {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* RSVP word — ink blooms onto the page: blur→focus + fade. No transform,
+   so the pivot-centering inline translateX on .rsvp-word always wins. */
+[data-theme='cream'] .rsvp-word {
+  animation: inkbloom 0.34s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes inkbloom {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+/* ORP pivot — the focal letter settles its warm ink a beat after the word
+   lands, so the eye is gently led to the fixation point. */
+[data-theme='cream'] .rsvp-pivot {
+  animation: inksettle 0.5s ease-out;
+}
+@keyframes inksettle {
+  from {
+    color: var(--fg);
+  }
+  to {
+    color: var(--orp);
+  }
+}
+
+/* List bullet — a calm fade-and-grow in place of the CRT's bouncy pop. */
+[data-theme='cream'] .rsvp-word.is-list-start .rsvp-bullet {
+  animation: inkbullet 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes inkbullet {
+  from {
+    opacity: 0;
+    transform: translateX(-0.25em) scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Countdown — a slow breath in (no bounce), letters drawing together as
+   they focus. Sets the unhurried pace before reading begins. */
+[data-theme='cream'] .countdown-word {
+  animation: creamcount 0.7s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes creamcount {
+  from {
+    opacity: 0;
+    transform: scale(0.86);
+    letter-spacing: 0.5em;
+  }
+  to {
+    opacity: 0.9;
+    transform: scale(1);
+    letter-spacing: 0.2em;
+  }
+}
+
+/* Section reveal — the page settles in: the prose softly fades up, then its
+   blocks rise in a gentle stagger like ink rising off the paper. The blocks
+   are keyed per source-block, so the stagger replays each time a new section
+   is opened — the small recurring reward that keeps a reader moving on. */
+[data-theme='cream'] .section-context {
+  animation: pagefade 0.45s ease-out;
+}
+@keyframes pagefade {
   from {
     opacity: 0;
   }
@@ -193,12 +299,77 @@ button {
     opacity: 1;
   }
 }
+[data-theme='cream'] .section-context > * {
+  animation: inkrise 0.6s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+[data-theme='cream'] .section-context > *:nth-child(1) {
+  animation-delay: 0.04s;
+}
+[data-theme='cream'] .section-context > *:nth-child(2) {
+  animation-delay: 0.11s;
+}
+[data-theme='cream'] .section-context > *:nth-child(3) {
+  animation-delay: 0.18s;
+}
+[data-theme='cream'] .section-context > *:nth-child(4) {
+  animation-delay: 0.25s;
+}
+[data-theme='cream'] .section-context > *:nth-child(n + 5) {
+  animation-delay: 0.3s;
+}
+@keyframes inkrise {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Step view — each unit eases up gently (the body is keyed by step index, so
+   this plays on every step), and its context label drifts down to meet it. */
+[data-theme='cream'] .step-body {
+  animation: inkrise 0.5s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+[data-theme='cream'] .step-context {
+  animation: labeldrift 0.5s ease-out;
+}
+@keyframes labeldrift {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Heading navigator — a calmer, slower colour/opacity fade as the selection
+   moves. Deliberately NOT animating font-size: the row size must stay stable
+   so the active-row scroll-into-center measurement (see HeadingList) is exact. */
+[data-theme='cream'] .hl-row {
+  transition: color 0.4s ease, opacity 0.4s ease;
+}
 
 @media (prefers-reduced-motion: reduce) {
   [data-theme='crt'] .crt-overlay,
   .screen-boot,
-  [data-theme='cream'] .rsvp-word {
+  [data-theme='cream'] .crt-overlay,
+  [data-theme='cream'] .rsvp-word,
+  [data-theme='cream'] .rsvp-pivot,
+  [data-theme='cream'] .rsvp-word.is-list-start .rsvp-bullet,
+  [data-theme='cream'] .countdown-word,
+  [data-theme='cream'] .section-context,
+  [data-theme='cream'] .section-context > *,
+  [data-theme='cream'] .step-body,
+  [data-theme='cream'] .step-context {
     animation: none;
+  }
+  [data-theme='cream'] .hl-row {
+    transition: none;
   }
   body {
     transition: none;
