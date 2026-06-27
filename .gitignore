@@ -8,5 +8,9 @@ dist-ssr
 dev-dist
 .wrangler
 
+# built fixate-mcp package artifacts
+mcp/bin
+mcp/app
+
 # local agent state
 .claude

@@ -3,11 +3,12 @@ import { chunkAt, chunkDelay } from './chunk'
 import { wordDelay, DEFAULT_CONFIG } from './timing'
 import type { AtomicToken, Token, WordToken } from './types'
 
-function word(text: string, index: number, blockId = 0): WordToken {
+function word(text: string, index: number, blockId = 0, code = false): WordToken {
   return {
     kind: 'word',
     text,
     clean: text.replace(/[^\p{L}\p{N}]/gu, ''),
+    code,
     blockId,
     emphasis: [],
     listItem: false,
@@ -85,6 +86,20 @@ describe('chunkAt', () => {
       word('x', 1),
     ]
     expect(chunkAt(tokens, 0, 2)!.listItem).toBe(true)
+  })
+
+  it('flashes a code span solo (never grouped with neighbours)', () => {
+    const tokens: Token[] = [word('src/lib.ts', 0, 0, true), word('next', 1)]
+    const c = chunkAt(tokens, 0, 5)!
+    expect(c.words.map((w) => w.text)).toEqual(['src/lib.ts'])
+    expect(c.end).toBe(0)
+  })
+
+  it('stops before a code span when gathering a chunk', () => {
+    const tokens: Token[] = [word('a', 0), word('code()', 1, 0, true)]
+    const c = chunkAt(tokens, 0, 5)!
+    expect(c.words.map((w) => w.text)).toEqual(['a'])
+    expect(c.end).toBe(0)
   })
 })
 

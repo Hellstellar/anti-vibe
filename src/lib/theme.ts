@@ -4,8 +4,8 @@
 // no component code needs to change.
 
 import { setSoundProfile, type SoundProfile } from './sfx'
-import { TEXT_ALIGNS } from './types'
-import type { ReaderConfig, TextAlign, ThemeId } from './types'
+import { TEXT_ALIGNS, SYMBOL_MODES } from './types'
+import type { ReaderConfig, SymbolMode, TextAlign, ThemeId } from './types'
 import { CFG_KEY } from './storageKeys'
 
 export interface ThemeMeta {
@@ -33,6 +33,10 @@ export function isThemeId(v: unknown): v is ThemeId {
 
 export function isTextAlign(v: unknown): v is TextAlign {
   return typeof v === 'string' && (TEXT_ALIGNS as readonly string[]).includes(v)
+}
+
+export function isSymbolMode(v: unknown): v is SymbolMode {
+  return typeof v === 'string' && (SYMBOL_MODES as readonly string[]).includes(v)
 }
 
 /** The alignment a theme adopts when selected (falls back to the default theme). */

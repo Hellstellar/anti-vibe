@@ -1,6 +1,5 @@
 import http from 'node:http'
-import { promises as fs } from 'node:fs'
-import { createReadStream } from 'node:fs'
+import { promises as fs, createReadStream, existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
@@ -12,7 +11,27 @@ export const BRIDGE_URL = `http://${HOST}:${PORT}/`
 
 const HEALTH_MARKER = 'fixate-bridge'
 const here = path.dirname(fileURLToPath(import.meta.url))
-const DIST_DIR = path.resolve(here, '..', 'dist')
+
+/**
+ * Locate the built Fixate SPA. Works in two layouts: the published npm package
+ * (bundled `bin/fixate-mcp.mjs` next to a copied `app/`) and the source repo
+ * (`mcp/server.ts` run via tsx, with the build in `../dist`). `FIXATE_DIST_DIR`
+ * overrides everything.
+ */
+function resolveDistDir(): string {
+  const candidates = [
+    process.env.FIXATE_DIST_DIR,
+    path.resolve(here, '..', 'app'), // packaged: bin/ -> ../app
+    path.resolve(here, 'app'), // packaged (flat)
+    path.resolve(here, '..', 'dist'), // source repo: mcp/ -> ../dist
+  ].filter((c): c is string => Boolean(c))
+  for (const c of candidates) {
+    if (existsSync(path.join(c, 'index.html'))) return c
+  }
+  return candidates[candidates.length - 1]
+}
+
+const DIST_DIR = resolveDistDir()
 
 /** STDOUT is the MCP protocol channel — all diagnostics MUST go to stderr. */
 export function log(...args: unknown[]): void {

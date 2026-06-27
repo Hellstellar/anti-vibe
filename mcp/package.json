@@ -1,0 +1,32 @@
+{
+  "name": "fixate-mcp",
+  "version": "0.1.0",
+  "description": "MCP server that pushes agent-generated markdown into the Fixate reader for fatigue-free, heading-by-heading review.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "fixate-mcp": "./bin/fixate-mcp.mjs"
+  },
+  "files": [
+    "bin",
+    "app",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "rsvp",
+    "markdown",
+    "review"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "remark-gfm": "^4.0.0",
+    "remark-parse": "^11.0.0",
+    "unified": "^11.0.5",
+    "zod": "^4.4.3"
+  }
+}

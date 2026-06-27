@@ -56,6 +56,10 @@
   line-height: 1.5;
   color: var(--fg);
   margin: 0;
+  /* Follow the reading-alignment setting like SectionView prose; the .step
+     container is center, so prose must opt back in to --text-align. List items
+     (.step-li) keep their own left alignment below. */
+  text-align: var(--text-align);
   width: 100%;
   max-width: 100%;
   min-width: 0; /* allow the flex child to shrink below content width */
@@ -70,6 +74,12 @@
 .step-text .sw:hover {
   color: var(--bg);
   background-color: var(--accent);
+}
+.step-text .sw-code {
+  color: var(--accent-2);
+  background-color: var(--bg-2);
+  padding: 0 0.25em;
+  white-space: pre;
 }
 .step-text .strong {
   color: var(--fg-strong);

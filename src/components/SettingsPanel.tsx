@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { useReader } from '../store/readerStore'
 import { THEMES } from '../lib/theme'
-import { TEXT_ALIGNS } from '../lib/types'
+import { TEXT_ALIGNS, SYMBOL_MODES } from '../lib/types'
 import { useClickOutside } from './useClickOutside'
 import './SettingsPanel.css'
 
@@ -49,6 +49,21 @@ export default function SettingsPanel() {
                   onClick={() => setCfg({ align: a })}
                 >
                   {a}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="setting">
+            <span>symbols</span>
+            <div className="theme-row">
+              {SYMBOL_MODES.map((m) => (
+                <button
+                  key={m}
+                  className={`theme-btn ${cfg.symbols === m ? 'active' : ''}`}
+                  onClick={() => setCfg({ symbols: m })}
+                >
+                  {m}
                 </button>
               ))}
             </div>

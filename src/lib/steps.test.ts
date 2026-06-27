@@ -8,6 +8,7 @@ function word(text: string, i: number): WordToken {
     kind: 'word',
     text,
     clean: text.replace(/[^\p{L}\p{N}]/gu, ''),
+    code: false,
     blockId: 0,
     emphasis: [],
     listItem: false,

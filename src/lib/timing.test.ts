@@ -4,6 +4,11 @@ import {
   wpmAt,
   wordDelay,
   splitPivot,
+  segmentText,
+  stripWrappingSymbols,
+  codeHoldDelay,
+  CODE_HOLD_MIN_MS,
+  CODE_HOLD_MAX_MS,
   DEFAULT_CONFIG,
 } from './timing'
 import type { ReaderConfig, WordToken } from './types'
@@ -13,6 +18,7 @@ function word(text: string, overrides: Partial<WordToken> = {}): WordToken {
     kind: 'word',
     text,
     clean: text.replace(/[^\p{L}\p{N}]/gu, ''),
+    code: false,
     blockId: 0,
     emphasis: [],
     listItem: false,
@@ -105,6 +111,12 @@ describe('wordDelay', () => {
       wordDelay(word('cat'), 999, cfg),
     )
   })
+  it('holds a code word for its code dwell, ignoring the ramp', () => {
+    const codeWord = word('src/lib/timing.ts', { code: true })
+    // Same delay regardless of ramp position (no ease-in for code).
+    expect(wordDelay(codeWord, 0, cfg)).toBe(wordDelay(codeWord, 999, cfg))
+    expect(wordDelay(codeWord, 0, cfg)).toBe(codeHoldDelay('src/lib/timing.ts', cfg))
+  })
 })
 
 describe('splitPivot', () => {
@@ -127,5 +139,63 @@ describe('splitPivot', () => {
       const { pre, pivot, post } = splitPivot(w)
       expect(pre + pivot + post).toBe(w)
     }
+  })
+})
+
+describe('segmentText', () => {
+  it('splits into alternating word vs symbol runs', () => {
+    expect(segmentText('(hi)')).toEqual([
+      { text: '(', sym: true },
+      { text: 'hi', sym: false },
+      { text: ')', sym: true },
+    ])
+  })
+  it('groups consecutive symbols into one run', () => {
+    expect(segmentText('a---b')).toEqual([
+      { text: 'a', sym: false },
+      { text: '---', sym: true },
+      { text: 'b', sym: false },
+    ])
+  })
+  it('reassembles to the original text', () => {
+    for (const w of ['(hi)', 'and/or', 'state-of-the-art', 'plain', '"q"']) {
+      expect(segmentText(w).map((s) => s.text).join('')).toBe(w)
+    }
+  })
+  it('handles empty input', () => {
+    expect(segmentText('')).toEqual([])
+  })
+})
+
+describe('stripWrappingSymbols', () => {
+  it('removes leading and trailing wrapping punctuation', () => {
+    expect(stripWrappingSymbols('(note)')).toBe('note')
+    expect(stripWrappingSymbols('"quoted"')).toBe('quoted')
+    expect(stripWrappingSymbols('[ref].')).toBe('ref')
+  })
+  it('keeps interior punctuation', () => {
+    expect(stripWrappingSymbols('well-known')).toBe('well-known')
+    expect(stripWrappingSymbols("don't")).toBe("don't")
+    expect(stripWrappingSymbols('and/or')).toBe('and/or')
+  })
+  it('falls back to the original for pure-symbol text', () => {
+    expect(stripWrappingSymbols('—')).toBe('—')
+    expect(stripWrappingSymbols('...')).toBe('...')
+  })
+})
+
+describe('codeHoldDelay', () => {
+  const cfg: ReaderConfig = DEFAULT_CONFIG
+  it('floors short spans at the minimum', () => {
+    expect(codeHoldDelay('x', cfg)).toBe(CODE_HOLD_MIN_MS)
+  })
+  it('caps long spans at the maximum', () => {
+    expect(codeHoldDelay('x'.repeat(500), cfg)).toBe(CODE_HOLD_MAX_MS)
+  })
+  it('grows with length between the bounds', () => {
+    const shorter = codeHoldDelay('src/lib', cfg)
+    const longer = codeHoldDelay('src/lib/timing.ts', cfg)
+    expect(longer).toBeGreaterThan(shorter)
+    expect(longer).toBeLessThanOrEqual(CODE_HOLD_MAX_MS)
   })
 })

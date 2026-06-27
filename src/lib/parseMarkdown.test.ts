@@ -33,11 +33,13 @@ describe('parseMarkdown — atomic blocks', () => {
     expect(a[0].blockType).toBe('image')
   })
 
-  it('keeps inline code as words, not an atomic block', () => {
+  it('keeps an inline code span whole as a single code-flagged word', () => {
+    // not an atomic block; not split on whitespace; flagged code=true
     expect(atomics('use `npm run dev` to start')).toHaveLength(0)
-    expect(words('use `npm run dev` to start').map((w) => w.text)).toContain(
-      'npm',
-    )
+    const w = words('use `npm run dev` to start')
+    expect(w.map((t) => t.text)).toEqual(['use', 'npm run dev', 'to', 'start'])
+    expect(w.find((t) => t.text === 'npm run dev')!.code).toBe(true)
+    expect(w.find((t) => t.text === 'use')!.code).toBe(false)
   })
 
   it('emits a fenced code block nested inside a list item as atomic (not dropped)', () => {
@@ -98,6 +100,15 @@ describe('parseMarkdown — words', () => {
     const w = words('**Status:** open\n**Owner:** sooraj')
     expect(w.map((t) => t.text)).toEqual(['Status:', 'open', 'Owner:', 'sooraj'])
     expect(w.map((t) => t.breakBefore)).toEqual([false, false, true, false])
+  })
+
+  it('folds an orphan symbol token onto the previous word (no lone flash)', () => {
+    // "well — known": the standalone em-dash rides along on "well".
+    expect(words('well — known').map((t) => t.text)).toEqual(['well—', 'known'])
+  })
+
+  it('keeps a leading orphan symbol when there is no previous word', () => {
+    expect(words('→ go now').map((t) => t.text)).toEqual(['→', 'go', 'now'])
   })
 
   it('captures emphasis marks', () => {

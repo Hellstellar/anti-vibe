@@ -13,6 +13,13 @@ export type ThemeId = 'crt' | 'cream'
 export const TEXT_ALIGNS = ['left', 'center'] as const
 export type TextAlign = (typeof TEXT_ALIGNS)[number]
 
+/** How in-text symbols (brackets, dashes, quotes) are presented during RSVP.
+ *  'show' = verbatim; 'dim' = recessed but visible (no info loss); 'strip' =
+ *  wrapping punctuation removed from the flash (lossy, opt-in). Defined once
+ *  (RS-20.5) and referenced everywhere. */
+export const SYMBOL_MODES = ['show', 'dim', 'strip'] as const
+export type SymbolMode = (typeof SYMBOL_MODES)[number]
+
 /** A single word (or punctuation-attached chunk) shown during RSVP playback. */
 export interface WordToken {
   kind: 'word'
@@ -20,6 +27,9 @@ export interface WordToken {
   text: string
   /** Letters/digits only, used for ORP pivot + length-based timing. */
   clean: string
+  /** True for an inline code span (`like.this()`): kept whole (not split on
+   *  whitespace), flashed solo as a monospace hold frame during RSVP. */
+  code: boolean
   /** Index into the parallel blocks[] array. */
   blockId: number
   /** Active inline emphasis marks. */
@@ -96,6 +106,8 @@ export interface ReaderConfig {
   /** Reading-prose alignment. Defaults to the active theme's default on theme
    *  switch, but is an independent, user-overridable setting. */
   align: TextAlign
+  /** How in-text symbols are presented during RSVP playback. */
+  symbols: SymbolMode
   multipliers: {
     longWordPerChar: number
     softPunct: number

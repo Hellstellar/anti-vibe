@@ -8,6 +8,7 @@ export const DEFAULT_CONFIG: ReaderConfig = {
   soundOn: true,
   theme: 'crt',
   align: 'center',
+  symbols: 'dim',
   multipliers: {
     longWordPerChar: 0.04,
     softPunct: 1.5,
@@ -48,6 +49,9 @@ export function wordDelay(
   i: number,
   cfg: ReaderConfig,
 ): number {
+  // A code span is held whole for a length-scaled dwell (no ramp/punct bonuses).
+  if (token.code) return codeHoldDelay(token.text, cfg)
+
   const wpm = wpmAt(i, cfg.startWpm, cfg.targetWpm, cfg.rampWords)
   let ms = 60000 / wpm
 
@@ -87,4 +91,53 @@ export function splitPivot(text: string): {
   }
   // No alphanumerics (pure punctuation) — highlight the first char.
   return { pre: '', pivot: text.slice(0, 1), post: text.slice(1) }
+}
+
+/** A single non-(letter/digit) character — a "symbol" for display purposes. */
+const SYMBOL_CHAR = /[^\p{L}\p{N}]/u
+/** A leading or trailing run of symbol characters (wrapping punctuation). */
+const WRAPPING_SYMBOLS = /^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu
+
+/**
+ * Split display text into maximal alternating runs of word-chars vs symbols, so
+ * the RSVP stage can recess the symbol runs ('dim' mode). Iterates by code point
+ * so emoji/combined characters aren't split. Letters/digits get sym=false;
+ * brackets, dashes, quotes, spaces get sym=true.
+ */
+export function segmentText(text: string): { text: string; sym: boolean }[] {
+  const out: { text: string; sym: boolean }[] = []
+  for (const ch of text) {
+    const sym = SYMBOL_CHAR.test(ch)
+    const last = out[out.length - 1]
+    if (last && last.sym === sym) last.text += ch
+    else out.push({ text: ch, sym })
+  }
+  return out
+}
+
+/**
+ * Remove only the leading and trailing symbol runs (wrapping punctuation like
+ * "(", ")", quotes) while keeping interior punctuation (apostrophes, hyphens).
+ * Used by the lossy 'strip' symbol mode. Falls back to the original text if
+ * stripping would leave nothing (e.g. a pure-symbol token).
+ */
+export function stripWrappingSymbols(text: string): string {
+  const stripped = text.replace(WRAPPING_SYMBOLS, '')
+  return stripped || text
+}
+
+/** Floor/ceiling for how long an inline-code span holds before auto-resuming. */
+export const CODE_HOLD_MIN_MS = 400
+export const CODE_HOLD_MAX_MS = 2500
+const CODE_CHARS_PER_WORD = 4
+
+/**
+ * Dwell for an inline-code hold frame: scales with length (≈4 chars per "word"
+ * at target pace), clamped to a sane min/max. Holds at target WPM — the ease-in
+ * ramp doesn't apply to atomic tokens.
+ */
+export function codeHoldDelay(code: string, cfg: ReaderConfig): number {
+  const base = 60000 / cfg.targetWpm
+  const ms = base * (1 + code.length / CODE_CHARS_PER_WORD)
+  return Math.min(CODE_HOLD_MAX_MS, Math.max(CODE_HOLD_MIN_MS, ms))
 }

@@ -84,9 +84,21 @@ export function parseMarkdown(src: string): ParseResult {
     emphasis: Emphasis[],
     listItem: boolean,
     crumbs: string[],
+    code = false,
   ) => {
     if (!text.trim()) {
       return
+    }
+    // Orphan punctuation (a pure-symbol token like "—" or "→") gets no flash of
+    // its own: fold it onto the previous word in the same block so it rides
+    // along instead of breaking RSVP flow. (Leading orphans with no previous
+    // word fall through and keep their own token. Code spans are never folded.)
+    if (!code && clean(text) === '') {
+      const prev = tokens[tokens.length - 1]
+      if (prev && prev.kind === 'word' && prev.blockId === blockId && !prev.code) {
+        prev.text += text
+        return
+      }
     }
     const listItemStart = listItem && pendingListStart
     if (listItemStart) pendingListStart = false
@@ -96,6 +108,7 @@ export function parseMarkdown(src: string): ParseResult {
       kind: 'word',
       text,
       clean: clean(text),
+      code,
       blockId,
       emphasis: [...emphasis],
       listItem,
@@ -132,8 +145,7 @@ export function parseMarkdown(src: string): ParseResult {
   ) => {
     for (const child of children) {
       switch (child.type) {
-        case 'text':
-        case 'inlineCode': {
+        case 'text': {
           // Preserve soft line breaks (single \n) inside the text: the first
           // word of each line after the first is flagged with a break.
           const lines = child.value.split('\n')
@@ -145,6 +157,13 @@ export function parseMarkdown(src: string): ParseResult {
           })
           break
         }
+        case 'inlineCode':
+          // An inline code span (a path, call, identifier) is symbol-dense and
+          // reads as code, not prose — keep it whole (don't split on whitespace)
+          // and flag it so RSVP flashes it solo as a held monospace frame, while
+          // the reading + step views show it inline.
+          pushWord(child.value, blockId, emphasis, listItem, crumbs, true)
+          break
         case 'break':
           // Hard line break (trailing spaces or backslash).
           pendingBreak = true

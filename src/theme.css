@@ -45,7 +45,9 @@
   --accent: #a85a28;
   --accent-2: #7d5320;
   --glow: transparent; /* no glow — keeps shadows that use it as no-ops */
-  --orp: #9c4a1e;
+  /* Vivid vermilion: must stand clear of the brown body ink (--fg) so the ORP
+     pivot reads at a glance on the cream paper. */
+  --orp: #d6360f;
   --grid: rgba(74, 58, 40, 0.1);
 
   --word-font: 'Source Serif 4', Georgia, 'Times New Roman', serif;
@@ -237,18 +239,13 @@ button {
   }
 }
 
-/* ORP pivot — the focal letter settles its warm ink a beat after the word
-   lands, so the eye is gently led to the fixation point. */
+/* ORP pivot — bolder so the focal letter is unmistakable on the cream paper
+   (no glow to lean on like the CRT theme has). No separate fade: the pivot is a
+   child of .rsvp-word and already blooms in WITH the word, so it reaches full
+   --orp strength exactly when the word does. A separate, slower fade made it lag
+   and stay dim at reading speed — which read as "no highlight". */
 [data-theme='cream'] .rsvp-pivot {
-  animation: inksettle 0.5s ease-out;
-}
-@keyframes inksettle {
-  from {
-    color: var(--fg);
-  }
-  to {
-    color: var(--orp);
-  }
+  font-weight: 600;
 }
 
 /* List bullet — a calm fade-and-grow in place of the CRT's bouncy pop. */
@@ -359,7 +356,6 @@ button {
   .screen-boot,
   [data-theme='cream'] .crt-overlay,
   [data-theme='cream'] .rsvp-word,
-  [data-theme='cream'] .rsvp-pivot,
   [data-theme='cream'] .rsvp-word.is-list-start .rsvp-bullet,
   [data-theme='cream'] .countdown-word,
   [data-theme='cream'] .section-context,

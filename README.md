@@ -75,12 +75,9 @@ Because Fixate is a static SPA with no backend, the MCP process also runs a tiny
 
 - **`review_markdown`** — `{ markdown, title? }` → normalizes the markdown (CRLF→LF, optional `# title`), validates it parses, sends it to the reader, and opens the tab on first use. Returns `{ documentId, sectionCount, wordCount, url }`.
 
-### Setup
+The server ships as a separate self-contained npm package, [`fixate-mcp`](./mcp), that bundles a built copy of the web app — so the bridge always serves a matching front-end with no clone or build step for end users.
 
-```bash
-npm install      # installs the MCP SDK too
-npm run build    # the bridge serves dist/, so build at least once
-```
+### Use it (end users)
 
 Add it to your MCP client (Claude Desktop `claude_desktop_config.json`, or `claude mcp add`):
 
@@ -89,16 +86,33 @@ Add it to your MCP client (Claude Desktop `claude_desktop_config.json`, or `clau
   "mcpServers": {
     "fixate": {
       "command": "npx",
-      "args": ["tsx", "/absolute/path/to/fixate/mcp/server.ts"],
+      "args": ["-y", "fixate-mcp"],
       "env": { "FIXATE_MCP_PORT": "7777" }
     }
   }
 }
 ```
 
-Then ask the agent to "send this to Fixate for review". The first call opens `http://127.0.0.1:7777`; later calls update the same tab. `FIXATE_MCP_PORT` (default `7777`) is also the review URL. Run `npm run mcp` to launch it standalone for testing.
+Then ask the agent to "send this to Fixate for review". The first call opens `http://127.0.0.1:7777`; later calls update the same tab. `FIXATE_MCP_PORT` (default `7777`) is also the review URL.
 
-> The bridge listens on loopback only. The browser-side receiver is a silent no-op anywhere except behind the bridge, so the deployed app and `npm run dev` are unaffected.
+### Run from source (contributors)
+
+Cloning this repo auto-registers the server via the committed `.mcp.json` (it runs `mcp/server.ts` with `tsx`). Just install and build once so the bridge has a front-end to serve:
+
+```bash
+npm install
+npm run build    # the bridge serves dist/
+npm run mcp      # optional: launch the server standalone for testing
+```
+
+### Publishing the package
+
+```bash
+npm run build:mcp      # vite build -> dist/, bundle mcp/server.ts -> mcp/bin, copy dist -> mcp/app
+npm run release:mcp    # build:mcp then `npm publish mcp`
+```
+
+> The bridge listens on loopback only. The browser-side receiver is a silent no-op anywhere except behind the bridge, so the deployed app and `npm run dev` are unaffected. The web app and the `fixate-mcp` package are versioned and shipped independently.
 
 ## Roadmap
 

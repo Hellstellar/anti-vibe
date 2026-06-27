@@ -37,6 +37,30 @@
   text-shadow: 0 0 14px var(--glow);
 }
 
+/* 'dim' symbol mode: in-text symbols (brackets, dashes, quotes) stay visible —
+   no information loss — but recede so they stop competing with the pivot. */
+.rsvp-sym {
+  opacity: 0.3;
+  font-size: 0.55em;
+}
+
+/* Inline-code hold frame: the span is shown whole and briefly, then RSVP
+   auto-resumes. Styled to match the reading view's atomic code (.sv-code). */
+.rsvp-code {
+  font-family: var(--word-font);
+  font-size: clamp(1.5rem, 6vw, 4rem);
+  line-height: 1;
+  color: var(--accent-2);
+  background: var(--bg-2);
+  border: 2px solid var(--fg-dim);
+  border-radius: 4px;
+  padding: 0.3em 0.5em;
+  max-width: 90vw;
+  white-space: pre;
+  overflow-x: auto;
+  animation: flashin 0.09s ease-out;
+}
+
 /* List-item flash: distinct color tint; the bullet does the flourish so it
    never fights the pivot-pinning transform on .rsvp-word. */
 .rsvp-word.is-list .rsvp-pre,
@@ -88,7 +112,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rsvp-word,
-  .rsvp-bullet {
+  .rsvp-bullet,
+  .rsvp-code {
     animation: none;
   }
 }

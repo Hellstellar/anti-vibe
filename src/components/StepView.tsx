@@ -16,6 +16,7 @@ function words(ws: WordToken[]) {
   return ws.map((w) => {
     const cls = [
       'sw',
+      w.code ? 'sw-code' : '',
       w.emphasis.includes('strong') ? 'strong' : '',
       w.emphasis.includes('em') ? 'em' : '',
     ]

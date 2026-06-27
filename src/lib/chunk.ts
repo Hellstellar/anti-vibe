@@ -29,11 +29,15 @@ export function chunkAt(
 
   const words: WordToken[] = [first]
   let end = start
-  for (let i = start + 1; i < tokens.length && words.length < chunkSize; i++) {
-    const t = tokens[i]
-    if (t.kind !== 'word' || t.blockId !== first.blockId) break
-    words.push(t)
-    end = i
+  // A code span is always flashed solo (its own held frame); never group it with
+  // surrounding prose words, in either direction.
+  if (!first.code) {
+    for (let i = start + 1; i < tokens.length && words.length < chunkSize; i++) {
+      const t = tokens[i]
+      if (t.kind !== 'word' || t.blockId !== first.blockId || t.code) break
+      words.push(t)
+      end = i
+    }
   }
 
   return {

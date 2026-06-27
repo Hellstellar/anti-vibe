@@ -6,6 +6,7 @@ import { DEFAULT_CONFIG } from '../lib/timing'
 import {
   isThemeId,
   isTextAlign,
+  isSymbolMode,
   defaultAlignFor,
   alignForThemeSwitch,
   DEFAULT_THEME,
@@ -47,6 +48,7 @@ function sanitizeConfig(cfg: ReaderConfig): ReaderConfig {
     soundOn: typeof cfg.soundOn === 'boolean' ? cfg.soundOn : DEFAULT_CONFIG.soundOn,
     theme,
     align: isTextAlign(cfg.align) ? cfg.align : defaultAlignFor(theme),
+    symbols: isSymbolMode(cfg.symbols) ? cfg.symbols : DEFAULT_CONFIG.symbols,
   }
 }
 
