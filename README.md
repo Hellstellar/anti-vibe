@@ -22,10 +22,12 @@ The goal is review tooling that's **easier on your eyes and attention**, not onl
 
 ## Screenshots
 
-|                                                   |                                                            |                                                  |
-| ------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
-| ![Landing](docs/screenshots/landing.png)          | ![Section reading view](docs/screenshots/reading.png)      | ![RSVP word flash](docs/screenshots/rsvp.png)    |
-| **Landing** — paste or open a `.md` file          | **Reading view** — a section with a CRT top/bottom fade | **RSVP** — one word at a time, ORP pivot in red |
+Two built-in themes — **CRT** (dark, pixel, scanlines) and **Cream** (warm, soft, left-aligned prose).
+
+|           | Landing — paste or open a `.md` file              | Reading view — a section with a top/bottom fade        | RSVP — one word at a time, ORP pivot accented    |
+| --------- | ------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------ |
+| **CRT**   | ![CRT landing](docs/screenshots/landing.png)      | ![CRT reading view](docs/screenshots/reading.png)      | ![CRT RSVP](docs/screenshots/rsvp.png)           |
+| **Cream** | ![Cream landing](docs/screenshots/landing-cream.png) | ![Cream reading view](docs/screenshots/reading-cream.png) | ![Cream RSVP](docs/screenshots/rsvp-cream.png) |
 
 ## Features
 
