@@ -42,8 +42,8 @@ export default function LandingView() {
 
   return (
     <div className="landing">
-      <div className="landing-title">FIXATE</div>
-      <div className="landing-sub">focused review, without the fatigue</div>
+      <div className="landing-title">ANTI-VIBE</div>
+      <div className="landing-sub">Don't just vibe. Review what your agent writes.</div>
 
       {!fallback ? (
         <div className="landing-actions">

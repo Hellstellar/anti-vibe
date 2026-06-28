@@ -4,7 +4,7 @@ Drop the images here with these exact filenames — the root `README.md` embeds 
 
 | Filename       | What to capture                                                                 |
 | -------------- | ------------------------------------------------------------------------------- |
-| `landing.png`  | The landing screen — **FIXATE** title, tagline, **PASTE & READ** + **OPEN .MD FILE** buttons. |
+| `landing.png`  | The landing screen — **ANTI-VIBE** title, tagline, **PASTE & READ** + **OPEN .MD FILE** buttons. |
 | `reading.png`  | A revealed section in the reading view — heading + content under the cursor spotlight, with the CRT top/bottom fade and the red **▼** scroll cue. |
 | `rsvp.png`     | RSVP playback — a single giant word centered on the reticle with the ORP pivot letter in red and the `wpm` readout. |
 

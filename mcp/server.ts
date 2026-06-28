@@ -7,12 +7,12 @@ import { makeDoc, setDoc } from './doc-store'
 import { startBridge, probeBridge, postIngest, BRIDGE_URL, PORT, log } from './bridge'
 
 const DESCRIPTION = [
-  'Send markdown to the Fixate reader so a human can review it without fatigue,',
+  'Send markdown to the Anti-Vibe reader so a human can review it without fatigue,',
   'moving heading-by-heading and optionally speed-reading each section.',
   'Provide your output as well-structured Markdown — use `#`/`##`/`###` headings to',
-  'break it into sections (Fixate navigates by heading), plus normal Markdown for',
+  'break it into sections (Anti-Vibe navigates by heading), plus normal Markdown for',
   'lists, tables, code blocks and emphasis. Pass the full content in `markdown`.',
-  'Opens the Fixate tab on first use and live-updates it on later calls.',
+  'Opens the Anti-Vibe tab on first use and live-updates it on later calls.',
 ].join(' ')
 
 /** True when this process bound the bridge port; false when it forwards to a sibling. */
@@ -25,10 +25,10 @@ async function ensureBridge(): Promise<void> {
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code
     if (code === 'EADDRINUSE' && (await probeBridge())) {
-      log(`reusing existing Fixate bridge on ${BRIDGE_URL}`)
+      log(`reusing existing Anti-Vibe bridge on ${BRIDGE_URL}`)
       ownsBridge = false
     } else if (code === 'EADDRINUSE') {
-      log(`port ${PORT} is in use by another program. Set FIXATE_MCP_PORT to a free port.`)
+      log(`port ${PORT} is in use by another program. Set ANTIVIBE_MCP_PORT to a free port.`)
     } else {
       throw err
     }
@@ -38,12 +38,12 @@ async function ensureBridge(): Promise<void> {
 async function main(): Promise<void> {
   await ensureBridge()
 
-  const server = new McpServer({ name: 'fixate', version: '0.1.0' })
+  const server = new McpServer({ name: 'anti-vibe', version: '0.1.0' })
 
   server.registerTool(
     'review_markdown',
     {
-      title: 'Send markdown to Fixate for review',
+      title: 'Send markdown to Anti-Vibe for review',
       description: DESCRIPTION,
       inputSchema: {
         markdown: z.string().min(1).describe('The full document as Markdown, ideally with #/## headings.'),
@@ -84,7 +84,7 @@ async function main(): Promise<void> {
           content: [
             {
               type: 'text',
-              text: `Sent nothing — the Fixate bridge is unreachable on ${BRIDGE_URL} (${String(err)}). Is it running?`,
+              text: `Sent nothing — the Anti-Vibe bridge is unreachable on ${BRIDGE_URL} (${String(err)}). Is it running?`,
             },
           ],
         }
@@ -92,9 +92,9 @@ async function main(): Promise<void> {
 
       const noHeadings = !parsed.sections.some((s) => s.hasHeading)
       const hint = noHeadings
-        ? ' Note: no headings found — add `##` headings so Fixate can split it into reviewable sections.'
+        ? ' Note: no headings found — add `##` headings so Anti-Vibe can split it into reviewable sections.'
         : ''
-      const text = `Sent to Fixate (${sectionCount} section${sectionCount === 1 ? '' : 's'}, ${wordCount} words). Review at ${BRIDGE_URL}.${hint}`
+      const text = `Sent to Anti-Vibe (${sectionCount} section${sectionCount === 1 ? '' : 's'}, ${wordCount} words). Review at ${BRIDGE_URL}.${hint}`
 
       return {
         content: [{ type: 'text', text }],

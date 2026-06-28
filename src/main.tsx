@@ -15,5 +15,5 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// Receive documents pushed by the Fixate MCP bridge (no-op off the bridge).
+// Receive documents pushed by the Anti-Vibe MCP bridge (no-op off the bridge).
 connectBridge()

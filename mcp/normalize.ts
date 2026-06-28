@@ -1,7 +1,7 @@
 /**
  * Light, NON-destructive cleanup of agent-supplied markdown. We deliberately do
  * not infer headings or restructure content — the agent owns content semantics
- * (the tool description instructs it to use #/## headings); Fixate owns
+ * (the tool description instructs it to use #/## headings); Anti-Vibe owns
  * presentation. We only: normalize line endings, trim outer blank space, and —
  * if a title was given and the doc has no leading H1 — prepend `# {title}` so
  * the document gets at least one named section.

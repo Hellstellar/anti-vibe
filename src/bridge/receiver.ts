@@ -1,10 +1,10 @@
 import { useReader } from '../store/readerStore'
 
 /**
- * Receives documents pushed by the Fixate MCP bridge and loads them into the
+ * Receives documents pushed by the Anti-Vibe MCP bridge and loads them into the
  * reader. The bridge serves this very app from its own origin, so all requests
  * are relative (no CORS). When the app is served from anywhere else (the
- * deployed PWA, `vite dev` on :5173), the `/__fixate/*` routes don't exist — the
+ * deployed PWA, `vite dev` on :5173), the `/__antivibe/*` routes don't exist — the
  * catch-up probe fails and we never open the SSE stream, so this is a silent
  * no-op everywhere except behind the bridge.
  */
@@ -27,7 +27,7 @@ function loadDoc(doc: PushedDoc | null): void {
 }
 
 function subscribe(): void {
-  const es = new EventSource('/__fixate/events')
+  const es = new EventSource('/__antivibe/events')
   es.addEventListener('document', (ev) => {
     try {
       loadDoc(JSON.parse((ev as MessageEvent).data))
@@ -44,7 +44,7 @@ export function connectBridge(): void {
   // Probe the catch-up endpoint first. A 200 (even with a null body) means we're
   // served by the bridge → hydrate any pending doc and subscribe to live pushes.
   // Any failure means we're not behind the bridge → do nothing.
-  fetch('/__fixate/doc')
+  fetch('/__antivibe/doc')
     .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no bridge'))))
     .then((doc: PushedDoc | null) => {
       loadDoc(doc)

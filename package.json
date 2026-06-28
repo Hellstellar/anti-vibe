@@ -1,9 +1,9 @@
 {
-  "name": "fixate",
+  "name": "anti-vibe",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Fixate — focused review of LLM/agent output, without the fatigue. A retro-cyberpunk RSVP reader.",
+  "description": "Anti-Vibe — don't just vibe, review what your agent writes. A retro-cyberpunk RSVP reader for LLM/agent output.",
   "license": "MIT",
   "scripts": {
     "dev": "vite",
@@ -16,7 +16,7 @@
     "typecheck:mcp": "tsc -p mcp/tsconfig.json --noEmit",
     "build:mcp": "npm run build && node mcp/scripts/bundle.mjs",
     "release:mcp": "npm run build:mcp && npm publish mcp",
-    "deploy": "npm run build && wrangler pages deploy dist --project-name=fixate"
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=anti-vibe"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

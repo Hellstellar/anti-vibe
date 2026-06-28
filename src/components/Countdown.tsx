@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { sfx } from '../lib/sfx'
 import './Countdown.css'
 
-const STEPS = ['READY', 'SET', 'FIXATE']
+const STEPS = ['READY', 'SET', 'FOCUS']
 const STEP_MS = 700
 
-/** Ready → Set → Fixate sequence, then fires onDone to begin playback. */
+/** Ready → Set → Focus sequence, then fires onDone to begin playback. */
 export default function Countdown({ onDone }: { onDone: () => void }) {
   const [i, setI] = useState(0)
 
@@ -14,7 +14,7 @@ export default function Countdown({ onDone }: { onDone: () => void }) {
       onDone()
       return
     }
-    sfx.tick(i === STEPS.length - 1) // brighter beep on the final "FIXATE"
+    sfx.tick(i === STEPS.length - 1) // brighter beep on the final "FOCUS"
     const t = setTimeout(() => setI((n) => n + 1), STEP_MS)
     return () => clearTimeout(t)
   }, [i, onDone])

@@ -1,6 +1,6 @@
-# Fixate
+# Anti-Vibe
 
-### Focused review, without the fatigue.
+### Don't just vibe. Review what your agent writes.
 
 A retro-cyberpunk reader for **reviewing LLM / agent output without the fatigue**. Move through generated markdown section by section, glance at each, and speed-read the parts worth it on demand — eyes still, content moving.
 
@@ -14,7 +14,7 @@ LLMs and agents generate walls of text, and the cost of reviewing it is real —
 - **Lower inertia to review** — section-by-section navigation means you commit to one small chunk at a time instead of facing the whole document. Glance at a heading, decide, skip it or speed-read it.
 - **Faster review** — opt-in RSVP blasts through the sections worth reading at your target WPM; review keeps pace with how much AI output you now generate.
 - **Less screen time** — faster, gentler review means fewer hours staring at walls of text.
-- **Easier to focus (great for ADHD)** — one word, one sentence, or one section at a time, fixed in place, with everything else dimmed away. By removing the wall of text — and any progress counter or sense of how much is left — Fixate keeps attention on the single thing in front of you, which can make focusing and *starting* far easier for ADHD and other attention/focus challenges.
+- **Easier to focus (great for ADHD)** — one word, one sentence, or one section at a time, fixed in place, with everything else dimmed away. By removing the wall of text — and any progress counter or sense of how much is left — Anti-Vibe keeps attention on the single thing in front of you, which can make focusing and *starting* far easier for ADHD and other attention/focus challenges.
 
 The goal is review tooling that's **easier on your eyes and attention**, not only quicker — a focus and wellbeing angle baked into a speed tool. See [`docs/VISION.md`](./docs/VISION.md) for where it could go.
 
@@ -36,7 +36,7 @@ The goal is review tooling that's **easier on your eyes and attention**, not onl
 - **Help** — a `?` icon beside the settings gear opens a menu of the shortcuts for the current view.
 - **Sound** — chiptune blips on interactions (synthesized, no audio files); toggle in settings.
 - **Configurable** — target/start WPM and words-per-flash (saved to localStorage; settings reachable from the landing page and the reader).
-- **Keyboard** — one axis of focus: `enter` **fixate deeper** (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` **RSVP the section from the start** (any level) · `space` pause/resume RSVP · `esc` **up one level** (never to landing — the ✕ exits). Arrows are contextual: in the **heading list** `↑`/`↓` move between headings; in the **reading view** `↑`/`↓` scroll and `←`/`→` scroll wide content; in **step mode** `←`/`→` move between units. To jump across sections, **`⌘`/`ctrl` + arrow** (down/right = next, up/left = prev) — always landing in the next section's reading view. Once you finish a section (scrolled to the bottom, or reached the last step), a small **advance button** appears at the bottom — click it to go to the next section.
+- **Keyboard** — one axis of focus: `enter` **focus deeper** (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` **RSVP the section from the start** (any level) · `space` pause/resume RSVP · `esc` **up one level** (never to landing — the ✕ exits). Arrows are contextual: in the **heading list** `↑`/`↓` move between headings; in the **reading view** `↑`/`↓` scroll and `←`/`→` scroll wide content; in **step mode** `←`/`→` move between units. To jump across sections, **`⌘`/`ctrl` + arrow** (down/right = next, up/left = prev) — always landing in the next section's reading view. Once you finish a section (scrolled to the bottom, or reached the last step), a small **advance button** appears at the bottom — click it to go to the next section.
 - **Theme** — retro-cyberpunk pixelated: dark warm palette, red/orange accents, pixel fonts, CRT scanlines. The reading font is swappable via the `--word-font` CSS variable.
 
 ## Run
@@ -69,13 +69,13 @@ Markdown is parsed once (`src/lib/parseMarkdown.ts`) into a flat **token stream*
 
 ## MCP server
 
-Fixate ships an [MCP](https://modelcontextprotocol.io) STDIO server (`mcp/`) so an AI agent can push its output straight into the reader for review — no copy-paste.
+Anti-Vibe ships an [MCP](https://modelcontextprotocol.io) STDIO server (`mcp/`) so an AI agent can push its output straight into the reader for review — no copy-paste.
 
-Because Fixate is a static SPA with no backend, the MCP process also runs a tiny **localhost bridge**: it serves the built app from its own origin and live-pushes documents to the open tab over Server-Sent Events. One tool today:
+Because Anti-Vibe is a static SPA with no backend, the MCP process also runs a tiny **localhost bridge**: it serves the built app from its own origin and live-pushes documents to the open tab over Server-Sent Events. One tool today:
 
 - **`review_markdown`** — `{ markdown, title? }` → normalizes the markdown (CRLF→LF, optional `# title`), validates it parses, sends it to the reader, and opens the tab on first use. Returns `{ documentId, sectionCount, wordCount, url }`.
 
-The server ships as a separate self-contained npm package, [`fixate-mcp`](./mcp), that bundles a built copy of the web app — so the bridge always serves a matching front-end with no clone or build step for end users.
+The server ships as a separate self-contained npm package, [`anti-vibe-mcp`](./mcp), that bundles a built copy of the web app — so the bridge always serves a matching front-end with no clone or build step for end users.
 
 ### Use it (end users)
 
@@ -84,16 +84,16 @@ Add it to your MCP client (Claude Desktop `claude_desktop_config.json`, or `clau
 ```json
 {
   "mcpServers": {
-    "fixate": {
+    "anti-vibe": {
       "command": "npx",
-      "args": ["-y", "fixate-mcp"],
-      "env": { "FIXATE_MCP_PORT": "7777" }
+      "args": ["-y", "anti-vibe-mcp"],
+      "env": { "ANTIVIBE_MCP_PORT": "7777" }
     }
   }
 }
 ```
 
-Then ask the agent to "send this to Fixate for review". The first call opens `http://127.0.0.1:7777`; later calls update the same tab. `FIXATE_MCP_PORT` (default `7777`) is also the review URL.
+Then ask the agent to "send this to Anti-Vibe for review". The first call opens `http://127.0.0.1:7777`; later calls update the same tab. `ANTIVIBE_MCP_PORT` (default `7777`) is also the review URL.
 
 ### Run from source (contributors)
 
@@ -112,7 +112,7 @@ npm run build:mcp      # vite build -> dist/, bundle mcp/server.ts -> mcp/bin, c
 npm run release:mcp    # build:mcp then `npm publish mcp`
 ```
 
-> The bridge listens on loopback only. The browser-side receiver is a silent no-op anywhere except behind the bridge, so the deployed app and `npm run dev` are unaffected. The web app and the `fixate-mcp` package are versioned and shipped independently.
+> The bridge listens on loopback only. The browser-side receiver is a silent no-op anywhere except behind the bridge, so the deployed app and `npm run dev` are unaffected. The web app and the `anti-vibe-mcp` package are versioned and shipped independently.
 
 ## Roadmap
 

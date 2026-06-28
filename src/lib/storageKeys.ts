@@ -3,4 +3,4 @@
 // never desync across the two.
 
 /** Persisted ReaderConfig blob. */
-export const CFG_KEY = 'fixate-config'
+export const CFG_KEY = 'antivibe-config'

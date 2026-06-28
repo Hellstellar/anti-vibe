@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "anti-vibe": {
+      "command": "npx",
+      "args": ["tsx", "mcp/server.ts"],
+      "env": { "ANTIVIBE_MCP_PORT": "7777" }
+    }
+  }
+}

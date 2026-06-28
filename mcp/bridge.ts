@@ -3,24 +3,24 @@ import { promises as fs, createReadStream, existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { getDoc, onDocument, setDoc, type FixateDoc } from './doc-store'
+import { getDoc, onDocument, setDoc, type AntiVibeDoc } from './doc-store'
 
 export const HOST = '127.0.0.1'
-export const PORT = Number(process.env.FIXATE_MCP_PORT) || 7777
+export const PORT = Number(process.env.ANTIVIBE_MCP_PORT) || 7777
 export const BRIDGE_URL = `http://${HOST}:${PORT}/`
 
-const HEALTH_MARKER = 'fixate-bridge'
+const HEALTH_MARKER = 'antivibe-bridge'
 const here = path.dirname(fileURLToPath(import.meta.url))
 
 /**
- * Locate the built Fixate SPA. Works in two layouts: the published npm package
- * (bundled `bin/fixate-mcp.mjs` next to a copied `app/`) and the source repo
- * (`mcp/server.ts` run via tsx, with the build in `../dist`). `FIXATE_DIST_DIR`
+ * Locate the built Anti-Vibe SPA. Works in two layouts: the published npm package
+ * (bundled `bin/anti-vibe-mcp.mjs` next to a copied `app/`) and the source repo
+ * (`mcp/server.ts` run via tsx, with the build in `../dist`). `ANTIVIBE_DIST_DIR`
  * overrides everything.
  */
 function resolveDistDir(): string {
   const candidates = [
-    process.env.FIXATE_DIST_DIR,
+    process.env.ANTIVIBE_DIST_DIR,
     path.resolve(here, '..', 'app'), // packaged: bin/ -> ../app
     path.resolve(here, 'app'), // packaged (flat)
     path.resolve(here, '..', 'dist'), // source repo: mcp/ -> ../dist
@@ -35,7 +35,7 @@ const DIST_DIR = resolveDistDir()
 
 /** STDOUT is the MCP protocol channel — all diagnostics MUST go to stderr. */
 export function log(...args: unknown[]): void {
-  console.error('[fixate-mcp]', ...args)
+  console.error('[anti-vibe-mcp]', ...args)
 }
 
 const CONTENT_TYPES: Record<string, string> = {
@@ -54,11 +54,11 @@ const CONTENT_TYPES: Record<string, string> = {
   '.map': 'application/json; charset=utf-8',
 }
 
-const PLACEHOLDER = `<!doctype html><meta charset=utf-8><title>Fixate bridge</title>
+const PLACEHOLDER = `<!doctype html><meta charset=utf-8><title>Anti-Vibe bridge</title>
 <body style="font:16px ui-monospace,monospace;background:#0a0705;color:#e8d9c0;padding:3rem">
-<h1>Fixate not built</h1>
+<h1>Anti-Vibe not built</h1>
 <p>The MCP bridge is running, but <code>dist/</code> was not found.</p>
-<p>Run <code>npm run build</code> in the Fixate repo, then reload.</p>
+<p>Run <code>npm run build</code> in the Anti-Vibe repo, then reload.</p>
 </body>`
 
 /** Active SSE responses; size drives open-on-first-push. */
@@ -66,7 +66,7 @@ const sseClients = new Set<http.ServerResponse>()
 /** True after we've opened a browser and are waiting for it to connect. */
 let pendingOpen = false
 
-function send(res: http.ServerResponse, doc: FixateDoc): void {
+function send(res: http.ServerResponse, doc: AntiVibeDoc): void {
   res.write(`event: document\ndata: ${JSON.stringify(doc)}\n\n`)
 }
 
@@ -151,24 +151,24 @@ async function handleRequest(
   const url = req.url ?? '/'
   const method = req.method ?? 'GET'
 
-  // --- bridge API (under /__fixate) ---
-  if (url === '/__fixate/events') return handleSse(req, res)
+  // --- bridge API (under /__antivibe) ---
+  if (url === '/__antivibe/events') return handleSse(req, res)
 
-  if (url === '/__fixate/health') {
+  if (url === '/__antivibe/health') {
     res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
     res.end(JSON.stringify({ app: HEALTH_MARKER, clients: sseClients.size }))
     return
   }
 
-  if (url === '/__fixate/doc') {
+  if (url === '/__antivibe/doc') {
     res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
     res.end(JSON.stringify(getDoc()))
     return
   }
 
-  if (url === '/__fixate/ingest' && method === 'POST') {
+  if (url === '/__antivibe/ingest' && method === 'POST') {
     try {
-      const doc = JSON.parse(await readBody(req)) as FixateDoc
+      const doc = JSON.parse(await readBody(req)) as AntiVibeDoc
       setDoc(doc) // fires onDocument -> forward to SSE + open-on-first-push
       res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
       res.end(JSON.stringify({ ok: true, clients: sseClients.size }))
@@ -181,7 +181,7 @@ async function handleRequest(
   }
 
   // Reserved for phase 2: human review comments flow back to the agent here.
-  if (url === '/__fixate/feedback' && method === 'POST') {
+  if (url === '/__antivibe/feedback' && method === 'POST') {
     res.writeHead(501, { 'content-type': 'text/plain; charset=utf-8' })
     res.end('Feedback channel not implemented yet (phase 2)')
     return
@@ -256,11 +256,11 @@ export function startBridge(): Promise<void> {
   })
 }
 
-/** Probe whether an existing Fixate bridge already owns the port. */
+/** Probe whether an existing Anti-Vibe bridge already owns the port. */
 export function probeBridge(): Promise<boolean> {
   return new Promise((resolve) => {
     const req = http.get(
-      { host: HOST, port: PORT, path: '/__fixate/health', timeout: 1500 },
+      { host: HOST, port: PORT, path: '/__antivibe/health', timeout: 1500 },
       (res) => {
         let body = ''
         res.on('data', (d) => (body += d))
@@ -282,14 +282,14 @@ export function probeBridge(): Promise<boolean> {
 }
 
 /** Forward a doc to the already-running bridge (used when we don't own the port). */
-export function postIngest(doc: FixateDoc): Promise<void> {
+export function postIngest(doc: AntiVibeDoc): Promise<void> {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(doc)
     const req = http.request(
       {
         host: HOST,
         port: PORT,
-        path: '/__fixate/ingest',
+        path: '/__antivibe/ingest',
         method: 'POST',
         headers: {
           'content-type': 'application/json',

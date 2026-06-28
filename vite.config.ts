@@ -16,8 +16,8 @@ export default defineConfig({
         image: 'public/logo.svg',
       },
       manifest: {
-        name: 'Fixate — focused review, without the fatigue',
-        short_name: 'Fixate',
+        name: 'Anti-Vibe — don\'t just vibe, review what your agent writes',
+        short_name: 'Anti-Vibe',
         description:
           'A retro-cyberpunk RSVP reader for reviewing LLM/agent output without the fatigue.',
         theme_color: '#0a0705',

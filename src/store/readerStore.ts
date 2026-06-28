@@ -108,7 +108,7 @@ interface ReaderState {
   /** Step-mode units for the current section + cursor. */
   stepUnits: StepUnit[]
   stepIndex: number
-  /** Token index queued to RSVP after the Ready/Set/Fixate countdown. */
+  /** Token index queued to RSVP after the Ready/Set/Focus countdown. */
   pendingRsvp: number | null
 
   load: (src: string) => void
@@ -123,7 +123,7 @@ interface ReaderState {
   /** Go to a section and reveal it (used by hold-to-advance). */
   gotoSectionRevealed: (idx: number) => void
   /** Start RSVP for the current section from token `index` (runs the
-   *  Ready/Set/Fixate countdown first). */
+   *  Ready/Set/Focus countdown first). */
   rsvpFrom: (index: number) => void
   /** Called when the pre-RSVP countdown finishes — begins playback. */
   beginRsvp: () => void
@@ -132,8 +132,8 @@ interface ReaderState {
   startStepping: () => void
   stepNext: () => void
   stepPrev: () => void
-  /** Enter: fixate one level deeper (heading -> reveal -> step -> next unit). */
-  fixateDeeper: () => void
+  /** Enter: focus one level deeper (heading -> reveal -> step -> next unit). */
+  focusDeeper: () => void
   /** Cmd/Ctrl+Enter: RSVP the current section from its first word, any level. */
   rsvpSection: () => void
   /** Esc: up one level (RSVP/step -> reading -> heading). Never to landing. */
@@ -288,7 +288,7 @@ export const useReader = create<ReaderState>((set, get) => {
       })
     },
 
-    // Clicking a word: prime the Ready/Set/Fixate countdown before RSVP.
+    // Clicking a word: prime the Ready/Set/Focus countdown before RSVP.
     rsvpFrom: (index) => {
       clearTimer()
       set({ pendingRsvp: index, mode: 'countdown' })
@@ -346,7 +346,7 @@ export const useReader = create<ReaderState>((set, get) => {
       if (stepIndex > 0) set({ stepIndex: stepIndex - 1 })
     },
 
-    fixateDeeper: () => {
+    focusDeeper: () => {
       const { mode, revealed } = get()
       if (mode === 'section') {
         if (!revealed) set({ revealed: true }) // heading -> reading

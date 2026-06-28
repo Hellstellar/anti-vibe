@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-Fixate is a retro-cyberpunk **RSVP reader** for reviewing LLM/agent markdown output without fatigue. You move through a document heading-by-heading, reveal a section, optionally speed-read it (RSVP: one word flashed at a time with an ORP pivot), or step through it one sentence/list-item/table-row at a time. Single-page Vite + React + TypeScript app, no backend.
+Anti-Vibe is a retro-cyberpunk **RSVP reader** for reviewing LLM/agent markdown output without fatigue. You move through a document heading-by-heading, reveal a section, optionally speed-read it (RSVP: one word flashed at a time with an ORP pivot), or step through it one sentence/list-item/table-row at a time. Single-page Vite + React + TypeScript app, no backend.
 
 ## Development standards
 
@@ -51,7 +51,7 @@ A single Zustand store holds all reader state and is the only place modes change
 
 - The RSVP playback loop is a **self-rescheduling `setTimeout`** (`scheduleNext`), with the timer handle kept in a **module-level variable outside React/store state** so it survives re-renders. Always `clearTimer()` before changing mode. The loop is bounded to the current section and stops back to the reading view at the section end or any atomic token.
 - `rampStart` is the `wordIndex` where the current play session began; per-word timing measures offset from it, so playback eases in again on every (re)start/resume.
-- Config (`ReaderConfig`) is persisted to `localStorage` under key `fixate-config`, and **`sanitizeConfig` clamps it on every load/set** (guards corrupted/hand-edited values, keeps `startWpm <= targetWpm`).
+- Config (`ReaderConfig`) is persisted to `localStorage` under key `antivibe-config`, and **`sanitizeConfig` clamps it on every load/set** (guards corrupted/hand-edited values, keeps `startWpm <= targetWpm`).
 
 ### Pure timing/chunking/stepping logic (`src/lib/`)
 
@@ -69,4 +69,4 @@ Sound (`src/lib/sfx.ts`) is synthesized with the Web Audio API (no audio files).
 
 ### The interaction model (central, spans store + ReaderView)
 
-One axis of focus, deepening with Enter: `enter` fixate deeper (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` RSVP the section from its start · `space` pause/resume RSVP · `esc` up one level (never to landing — the ✕ button exits). Arrows are **contextual** (heading list moves between headings; reading view scrolls; step mode moves between units), and `cmd/ctrl+arrow` jumps across sections. Clicking a word in the reading view starts RSVP from there (after the Ready/Set/Fixate countdown). When changing this behavior, the keydown handler in `ReaderView.tsx` and the corresponding store actions must stay in sync.
+One axis of focus, deepening with Enter: `enter` focus deeper (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` RSVP the section from its start · `space` pause/resume RSVP · `esc` up one level (never to landing — the ✕ button exits). Arrows are **contextual** (heading list moves between headings; reading view scrolls; step mode moves between units), and `cmd/ctrl+arrow` jumps across sections. Clicking a word in the reading view starts RSVP from there (after the Ready/Set/Focus countdown). When changing this behavior, the keydown handler in `ReaderView.tsx` and the corresponding store actions must stay in sync.

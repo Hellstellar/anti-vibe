@@ -15,7 +15,7 @@ export default function ReaderView() {
   const mode = useReader((s) => s.mode)
   const enterReading = useReader((s) => s.enterReading)
   const beginRsvp = useReader((s) => s.beginRsvp)
-  const fixateDeeper = useReader((s) => s.fixateDeeper)
+  const focusDeeper = useReader((s) => s.focusDeeper)
   const stepNext = useReader((s) => s.stepNext)
   const stepPrev = useReader((s) => s.stepPrev)
   const rsvpSection = useReader((s) => s.rsvpSection)
@@ -83,7 +83,7 @@ export default function ReaderView() {
           e.preventDefault()
           if (meta) rsvpSection()
           else if (e.shiftKey) stepPrev()
-          else fixateDeeper()
+          else focusDeeper()
           break
         case ' ':
           e.preventDefault()
@@ -127,7 +127,7 @@ export default function ReaderView() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [
-    fixateDeeper,
+    focusDeeper,
     stepNext,
     stepPrev,
     rsvpSection,
