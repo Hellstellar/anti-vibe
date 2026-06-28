@@ -2,6 +2,8 @@
 
 ### Don't just vibe. Review what your agent writes.
 
+**▸ Live at [anti-vibe.pages.dev](https://anti-vibe.pages.dev)**
+
 A retro-cyberpunk reader for **reviewing LLM / agent output without the fatigue**. Move through generated markdown section by section, glance at each, and speed-read the parts worth it on demand — eyes still, content moving.
 
 > **RSVP** (Rapid Serial Visual Presentation) shows information one item at a time in the same spot. Instead of reading a paragraph at your own pace, words flash by in the center of your vision. It's speed-reading where the content moves, not your gaze — easier to process without scrolling or darting your eyes around.
@@ -47,6 +49,8 @@ npm run dev
 ```
 
 Opens on `http://localhost:5173`. Copy some markdown and click **PASTE & READ**, or **OPEN .MD FILE**.
+
+No install needed to try it — the latest build is hosted at **[anti-vibe.pages.dev](https://anti-vibe.pages.dev)**.
 
 ### Tests
 
