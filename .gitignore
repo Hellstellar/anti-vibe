@@ -12,5 +12,6 @@ dev-dist
 mcp/bin
 mcp/app
 
-# local agent state
-.claude
+# local agent state — ignore everything except shared slash commands
+.claude/*
+!.claude/commands/
