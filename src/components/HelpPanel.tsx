@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useFlow } from '../store/flowStore'
 import { useReader } from '../store/readerStore'
 import { useClickOutside } from './useClickOutside'
 import './HelpPanel.css'
@@ -58,18 +59,62 @@ const VIEWS: Record<string, { title: string; rows: Row[] }> = {
       ['esc', 'back to reading'],
     ],
   },
+  flow: {
+    title: 'flow review',
+    rows: [
+      ['→ / ↓ / j', 'next hunk, then follow the call'],
+      ['← / ↑ / k', 'previous hunk'],
+      ['enter', 'focus this hunk'],
+      ['m', 'open the flow map'],
+      ['esc', 'back along your path'],
+      ['click a node', 'jump to that stop'],
+      ['✕', 'exit review'],
+    ],
+  },
+  flowFocus: {
+    title: 'flow review · focus',
+    rows: [
+      ['→ / ↓ / j', 'next hunk'],
+      ['← / ↑ / k', 'previous hunk'],
+      ['esc', 'exit focus'],
+    ],
+  },
+  flowMap: {
+    title: 'flow map',
+    rows: [
+      ['click a node', 'jump to that stop'],
+      ['esc / m', 'close the map'],
+    ],
+  },
+  flowBranch: {
+    title: 'flow review · branch',
+    rows: [
+      ['1–9', 'pick a path to follow'],
+      ['esc', 'stay here'],
+    ],
+  },
 }
 
 export default function HelpPanel() {
   const mode = useReader((s) => s.mode)
   const revealed = useReader((s) => s.revealed)
   const hasContent = useReader((s) => s.tokens.length > 0)
+  const flowActive = useFlow((s) => s.stops.length > 0)
+  const focusMode = useFlow((s) => s.focusMode)
+  const mapOpen = useFlow((s) => s.mapOpen)
+  const branchPending = useFlow((s) => s.pendingBranch !== null)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   useClickOutside(ref, open, () => setOpen(false))
 
   let key = 'landing'
-  if (hasContent) {
+  if (flowActive) {
+    // Same precedence as the FlowReviewView keydown handler.
+    if (branchPending) key = 'flowBranch'
+    else if (mapOpen) key = 'flowMap'
+    else if (focusMode) key = 'flowFocus'
+    else key = 'flow'
+  } else if (hasContent) {
     if (mode === 'playing') key = 'rsvp'
     else if (mode === 'stepping') key = 'step'
     else key = revealed ? 'reading' : 'heading'
