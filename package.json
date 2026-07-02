@@ -15,7 +15,7 @@
     "mcp": "tsx mcp/server.ts",
     "typecheck:mcp": "tsc -p mcp/tsconfig.json --noEmit",
     "build:mcp": "npm run build && node mcp/scripts/bundle.mjs",
-    "release:mcp": "npm run build:mcp && npm publish mcp",
+    "release:mcp": "npm run build:mcp && npm publish ./mcp",
     "deploy": "npm run build && wrangler pages deploy dist --project-name=anti-vibe"
   },
   "dependencies": {
