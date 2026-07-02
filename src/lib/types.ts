@@ -100,6 +100,11 @@ export type FlowLayer = 'flow' | 'foundation'
 /** How confidently the MCP tool matched a stop's locator to a real git-diff hunk. */
 export type MatchStatus = 'exact' | 'fuzzy' | 'missing'
 
+/** A call edge as sent by the agent: either just the callee stop id, or the id
+ *  plus `via` — the caller-side function the call happens in, shown as the
+ *  edge's semantic label. Normalized to a FlowEdge (lib/flowGraph) at load. */
+export type FlowCall = string | { to: string; via?: string }
+
 /** One resolved diff hunk of a file. The focus view shows these one at a time. */
 export interface ResolvedHunk {
   /** The `@@ ... @@` header line. */
@@ -108,6 +113,9 @@ export interface ResolvedHunk {
   diffText: string
   /** 1-based line in the new file this hunk starts at (for "open in editor"). */
   line: number
+  /** One-line "why read this next" caption from the agent's `hunkFlow` entry;
+   *  shown above the diff. Absent for hunks outside the semantic order. */
+  note?: string
 }
 
 /** A review stop after the MCP tool has resolved its file's hunks from git.
@@ -123,8 +131,9 @@ export interface ResolvedFlowStop {
   explanation: string
   /** One-line gist shown as a caption for the stop. */
   oneLineSummary: string
-  /** Ids of stops this one calls into (drives the sequence connectors). */
-  callsTo?: string[]
+  /** Stops this one calls into (drives the sequence connectors); entries may
+   *  carry the caller-side function name as the edge label. */
+  callsTo?: FlowCall[]
   /** All of the file's diff hunks, in source order. Empty when `missing` or `context`. */
   hunks: ResolvedHunk[]
   /** Overall match confidence of the stop's locator hint. */

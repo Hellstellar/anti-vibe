@@ -25,7 +25,11 @@ export interface FlowStopInput {
   title: string
   explanation: string
   oneLineSummary: string
-  callsTo?: string[]
+  /** Callee stop ids, optionally labeled with the caller-side function. */
+  callsTo?: Array<string | { to: string; via?: string }>
+  /** Semantic reading order for the stop's hunks: each entry locates one hunk
+   *  and captions it. Hunks not listed append after, in source order. */
+  hunkFlow?: Array<{ match: HunkLocator; note?: string }>
 }
 
 export interface FlowReviewInput {
@@ -167,12 +171,68 @@ export function matchStop(stop: FlowStopInput, byFile: Map<string, Hunk[]>): Res
   // same file can appear in several flow nodes each showing a different change;
   // no locator claims the whole file (all hunks, stepped one at a time).
   const { selected, matchStatus } = selectHunks(candidates, stop.locator)
-  const hunks: ResolvedHunk[] = selected.map((h) => ({
-    header: h.header,
-    diffText: h.text,
-    line: h.newStart,
+  // Then order them for reading: `hunkFlow` puts hunks in semantic (execution)
+  // order with per-hunk notes; without it the source order stands.
+  const { ordered, degraded } = orderByFlow(selected, stop.hunkFlow)
+  const hunks: ResolvedHunk[] = ordered.map(({ hunk, note }) => ({
+    header: hunk.header,
+    diffText: hunk.text,
+    line: hunk.newStart,
+    ...(note !== undefined ? { note } : {}),
   }))
-  return { ...base, hunks, matchStatus }
+  return { ...base, hunks, matchStatus: degraded && matchStatus === 'exact' ? 'fuzzy' : matchStatus }
+}
+
+/** Order `selected` by the agent's `hunkFlow`: each entry claims (at most) one
+ *  remaining hunk and captions it; unclaimed hunks append in source order.
+ *  `degraded` is true when an entry missed or needed a fuzzy fallback. */
+function orderByFlow(
+  selected: Hunk[],
+  hunkFlow: FlowStopInput['hunkFlow'],
+): { ordered: { hunk: Hunk; note?: string }[]; degraded: boolean } {
+  if (!hunkFlow?.length) return { ordered: selected.map((hunk) => ({ hunk })), degraded: false }
+
+  const remaining = [...selected]
+  const ordered: { hunk: Hunk; note?: string }[] = []
+  let degraded = false
+  for (const entry of hunkFlow) {
+    const { hunk, fuzzy } = takeMatch(remaining, entry.match)
+    if (!hunk) {
+      degraded = true // entry matched nothing — skip it, keep the rest readable
+      continue
+    }
+    if (fuzzy) degraded = true
+    ordered.push({ hunk, note: entry.note })
+  }
+  for (const hunk of remaining) ordered.push({ hunk })
+  return { ordered, degraded }
+}
+
+/** Match one `hunkFlow` locator against the remaining hunks and remove the hit.
+ *  Header: exact match, else same new-file start line (fuzzy). Line range:
+ *  first remaining hunk overlapping it. */
+function takeMatch(
+  remaining: Hunk[],
+  locator: HunkLocator,
+): { hunk?: Hunk; fuzzy: boolean } {
+  const take = (i: number) => remaining.splice(i, 1)[0]
+  if (locator.hunkHeader) {
+    const want = locator.hunkHeader.trim()
+    const exact = remaining.findIndex((h) => h.header.trim() === want)
+    if (exact !== -1) return { hunk: take(exact), fuzzy: false }
+    const wantLine = newStartOf(want)
+    const byLine = wantLine != null ? remaining.findIndex((h) => h.newStart === wantLine) : -1
+    return byLine !== -1 ? { hunk: take(byLine), fuzzy: true } : { fuzzy: true }
+  }
+  if (locator.lineRange) {
+    const { start, end } = locator.lineRange
+    const hit = remaining.findIndex((h) => {
+      const hEnd = h.newStart + h.newCount - 1
+      return Math.min(hEnd, end) >= Math.max(h.newStart, start)
+    })
+    return hit !== -1 ? { hunk: take(hit), fuzzy: false } : { fuzzy: true }
+  }
+  return { fuzzy: true } // empty locator can never match
 }
 
 /** Parse the new-file start line from a `@@ -a,b +c,d @@` header. */

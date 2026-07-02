@@ -121,6 +121,8 @@ async function main(): Promise<void> {
     '`lineRange`) that just sets the match-confidence badge. Give each stop a one-line summary.',
     'For unchanged connective steps (a dispatcher/existing handler the flow passes through),',
     'add a stop with `context: true` and no locator so the sequence reads continuously.',
+    'When a stop\'s file has several hunks, add `hunkFlow` to order them for reading in',
+    'execution order (behavior change before plumbing) with a one-line note per hunk.',
   ].join(' ')
 
   const FLOW_STOP_SCHEMA = z.object({
@@ -144,7 +146,43 @@ async function main(): Promise<void> {
     title: z.string().describe('Short role/title, e.g. "Route handler".'),
     explanation: z.string().describe('Markdown prose explaining the change at this stop.'),
     oneLineSummary: z.string().describe('One-line gist of the hunk in view.'),
-    callsTo: z.array(z.string()).optional().describe('Ids of stops this stop calls into.'),
+    callsTo: z
+      .array(
+        z.union([
+          z.string(),
+          z.object({
+            to: z.string().describe('Id of the callee stop.'),
+            via: z
+              .string()
+              .optional()
+              .describe('Caller-side function the call happens in, e.g. "handleSubmit" — shown as the edge label.'),
+          }),
+        ]),
+      )
+      .optional()
+      .describe('Stops this stop calls into: bare ids, or { to, via } to label the edge with the calling function.'),
+    hunkFlow: z
+      .array(
+        z.object({
+          match: z
+            .object({
+              hunkHeader: z.string().optional().describe('The `@@ ... @@` header of the hunk.'),
+              lineRange: z
+                .object({ start: z.number(), end: z.number() })
+                .optional()
+                .describe('New-file line range of the hunk.'),
+            })
+            .describe('Locator for the hunk this reading step refers to (one of hunkHeader / lineRange).'),
+          note: z
+            .string()
+            .optional()
+            .describe('One-line "why read this next" caption shown above the hunk.'),
+        }),
+      )
+      .optional()
+      .describe(
+        'SEMANTIC reading order for the stop\'s hunks (execution order, not source order), each with a caption. Hunks not listed append after in source order. Omit to read hunks in source order.',
+      ),
   })
 
   server.registerTool(

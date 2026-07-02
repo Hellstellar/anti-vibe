@@ -1,4 +1,16 @@
-import type { ResolvedFlowStop } from './types'
+import type { FlowCall, ResolvedFlowStop } from './types'
+
+/** A normalized call edge: callee id plus the optional caller-side function
+ *  name (`via`) used as the edge's semantic label everywhere it's drawn. */
+export interface FlowEdge {
+  to: string
+  via?: string
+}
+
+/** `callsTo` entries may be bare ids or labeled objects; normalize once here. */
+export function normalizeCall(call: FlowCall): FlowEdge {
+  return typeof call === 'string' ? { to: call } : { to: call.to, via: call.via }
+}
 
 /**
  * Call-graph model over a review's `flow` stops. Navigation follows `callsTo`
@@ -10,8 +22,8 @@ export interface FlowGraph {
   /** Topological order of flow stop ids (callers before callees; array order
    *  breaks ties and cycles). Drives the minimap's vertical layout. */
   order: string[]
-  /** stop id → ids it calls into (existing flow stops only, de-duped). */
-  callees: Map<string, string[]>
+  /** stop id → edges it calls into (existing flow stops only, de-duped). */
+  callees: Map<string, FlowEdge[]>
   /** stop id → ids that call it. */
   callers: Map<string, string[]>
   /** BFS depth from the nearest entry point (root = 0). Drives indentation. */
@@ -24,7 +36,7 @@ export interface FlowGraph {
  *  they sit in their own lane and are reached directly). */
 export function buildFlowGraph(stops: ResolvedFlowStop[], flowOrder: string[]): FlowGraph {
   const flowIds = new Set(flowOrder)
-  const callees = new Map<string, string[]>()
+  const callees = new Map<string, FlowEdge[]>()
   const callers = new Map<string, string[]>()
   for (const id of flowOrder) {
     callees.set(id, [])
@@ -33,10 +45,18 @@ export function buildFlowGraph(stops: ResolvedFlowStop[], flowOrder: string[]): 
 
   const byId = new Map(stops.map((s) => [s.id, s]))
   for (const id of flowOrder) {
-    const targets = (byId.get(id)?.callsTo ?? []).filter((t) => flowIds.has(t) && t !== id)
-    const uniq = [...new Set(targets)]
+    const edges = (byId.get(id)?.callsTo ?? [])
+      .map(normalizeCall)
+      .filter((e) => flowIds.has(e.to) && e.to !== id)
+    // De-dupe by callee; the first label seen for a callee wins.
+    const uniq: FlowEdge[] = []
+    for (const e of edges) {
+      const dup = uniq.find((u) => u.to === e.to)
+      if (!dup) uniq.push(e)
+      else if (!dup.via && e.via) dup.via = e.via
+    }
     callees.set(id, uniq)
-    for (const t of uniq) callers.get(t)!.push(id)
+    for (const e of uniq) callers.get(e.to)!.push(id)
   }
 
   const roots = flowOrder.filter((id) => (callers.get(id) ?? []).length === 0)
@@ -50,12 +70,13 @@ export function buildFlowGraph(stops: ResolvedFlowStop[], flowOrder: string[]): 
  *  in a cycle so the result is always a full permutation of `flowOrder`. */
 function topoSort(
   flowOrder: string[],
-  callees: Map<string, string[]>,
+  callees: Map<string, FlowEdge[]>,
   roots: string[],
 ): string[] {
   const indeg = new Map<string, number>()
   for (const id of flowOrder) indeg.set(id, 0)
-  for (const id of flowOrder) for (const t of callees.get(id)!) indeg.set(t, (indeg.get(t) ?? 0) + 1)
+  for (const id of flowOrder)
+    for (const { to } of callees.get(id)!) indeg.set(to, (indeg.get(to) ?? 0) + 1)
 
   // Seed with roots in input order, then any other zero-indegree nodes.
   const queue = flowOrder.filter((id) => indeg.get(id) === 0)
@@ -67,9 +88,9 @@ function topoSort(
     if (seen.has(id)) continue
     seen.add(id)
     out.push(id)
-    for (const t of callees.get(id)!) {
-      indeg.set(t, (indeg.get(t) ?? 1) - 1)
-      if ((indeg.get(t) ?? 0) <= 0) queue.push(t)
+    for (const { to } of callees.get(id)!) {
+      indeg.set(to, (indeg.get(to) ?? 1) - 1)
+      if ((indeg.get(to) ?? 0) <= 0) queue.push(to)
     }
   }
   // Append anything stuck in a cycle, preserving input order.
@@ -79,7 +100,7 @@ function topoSort(
 
 function bfsDepth(
   order: string[],
-  callees: Map<string, string[]>,
+  callees: Map<string, FlowEdge[]>,
   roots: string[],
 ): Map<string, number> {
   const depth = new Map<string, number>()
@@ -91,10 +112,10 @@ function bfsDepth(
   while (queue.length) {
     const id = queue.shift()!
     const d = depth.get(id) ?? 0
-    for (const t of callees.get(id) ?? []) {
-      if (!depth.has(t) || depth.get(t)! > d + 1) {
-        depth.set(t, d + 1)
-        queue.push(t)
+    for (const { to } of callees.get(id) ?? []) {
+      if (!depth.has(to) || depth.get(to)! > d + 1) {
+        depth.set(to, d + 1)
+        queue.push(to)
       }
     }
   }

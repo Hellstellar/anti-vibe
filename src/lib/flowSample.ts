@@ -21,7 +21,10 @@ export const flowSample: FlowReviewDoc = {
       oneLineSummary: 'Wires the new rateLimit middleware in front of the login handler.',
       explanation:
         'This is the **entry point** for the change. The request first hits `rateLimit` before reaching `loginHandler`, so abusive clients are turned away before any password work happens. This file has two hunks — step through them with ← / →.',
-      callsTo: ['middleware', 'audit'],
+      callsTo: [
+        { to: 'middleware', via: 'router.post' },
+        { to: 'audit', via: 'loginHandler' },
+      ],
       matchStatus: 'exact',
       absPath: '/Users/you/proj/src/routes/auth.ts',
       hunks: [
@@ -35,6 +38,7 @@ export const flowSample: FlowReviewDoc = {
  const router = Router()
 -router.post('/login', loginHandler)
 +router.post('/login', rateLimit({ windowMs: 60000, max: 5 }), loginHandler)`,
+          note: 'The entry-point change — /login now runs rateLimit before loginHandler (import comes along).',
         },
         {
           header: '@@ -22,3 +23,4 @@ router.post(',
@@ -43,6 +47,7 @@ export const flowSample: FlowReviewDoc = {
  router.post('/logout', logoutHandler)
 +router.post('/refresh', rateLimit({ windowMs: 60000, max: 30 }), refreshHandler)
  export default router`,
+          note: 'Same treatment for /refresh — a wider window (60s, max 30) than login.',
         },
       ],
     },
@@ -54,7 +59,7 @@ export const flowSample: FlowReviewDoc = {
       oneLineSummary: 'New middleware that counts hits per IP in a sliding window.',
       explanation:
         'The middleware reads the client IP, increments its counter in the `RateStore`, and rejects with `429` once the window `max` is exceeded. Note it *calls into* the store rather than holding state itself.',
-      callsTo: ['dispatch'],
+      callsTo: [{ to: 'dispatch', via: 'rateLimit' }],
       matchStatus: 'exact',
       absPath: '/Users/you/proj/src/middleware/rateLimit.ts',
       hunks: [
@@ -76,6 +81,7 @@ export const flowSample: FlowReviewDoc = {
 +    next()
 +  }
 +}`,
+          note: 'New rateLimit middleware — counts hits per IP via hit() and rejects with 429 past cfg.max.',
         },
       ],
     },
@@ -116,6 +122,7 @@ export const flowSample: FlowReviewDoc = {
 +  buckets.set(ip, fresh)
 +  return fresh.length
 +}`,
+          note: 'The counter itself — hit() prunes timestamps older than windowMs and returns the fresh count.',
         },
       ],
     },
@@ -138,6 +145,7 @@ export const flowSample: FlowReviewDoc = {
 +  // eslint-disable-next-line no-console
 +  console.info('[audit]', event, ip, Date.now())
 +}`,
+          note: 'The audit sink — logs event, ip, and timestamp to the console.',
         },
       ],
     },
@@ -163,6 +171,7 @@ export const flowSample: FlowReviewDoc = {
 +  windowMs: number
 +  max: number
 +}`,
+          note: 'The shared contract — RateConfig (windowMs, max) used by route, middleware, and store.',
         },
       ],
     },

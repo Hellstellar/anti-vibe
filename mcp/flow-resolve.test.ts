@@ -162,6 +162,72 @@ describe('matchStop', () => {
   })
 })
 
+describe('hunkFlow semantic ordering', () => {
+  const multi = `diff --git a/src/x.ts b/src/x.ts
+--- a/src/x.ts
++++ b/src/x.ts
+@@ -1,2 +1,3 @@ top
+ head
++first
+@@ -50,2 +50,3 @@ later
+ keep
++second`
+  const byFile = parseUnifiedDiff(multi)
+
+  it('reorders hunks per hunkFlow and attaches notes', () => {
+    const r = matchStop(
+      {
+        ...stop('src/x.ts', undefined),
+        hunkFlow: [
+          { match: { lineRange: { start: 50, end: 52 } }, note: 'behavior change' },
+          { match: { hunkHeader: '@@ -1,2 +1,3 @@ top' }, note: 'plumbing' },
+        ],
+      },
+      byFile,
+    )
+    expect(r.hunks.map((h) => h.line)).toEqual([50, 1])
+    expect(r.hunks.map((h) => h.note)).toEqual(['behavior change', 'plumbing'])
+    expect(r.matchStatus).toBe('exact')
+  })
+
+  it('skips unmatched entries, appends unlisted hunks source-ordered, degrades to fuzzy', () => {
+    const r = matchStop(
+      {
+        ...stop('src/x.ts', undefined),
+        hunkFlow: [
+          { match: { lineRange: { start: 900, end: 999 } }, note: 'ghost' },
+          { match: { lineRange: { start: 50, end: 52 } }, note: 'behavior change' },
+        ],
+      },
+      byFile,
+    )
+    expect(r.hunks.map((h) => h.line)).toEqual([50, 1])
+    expect(r.hunks[0].note).toBe('behavior change')
+    expect(r.hunks[1].note).toBeUndefined()
+    expect(r.matchStatus).toBe('fuzzy')
+  })
+
+  it('falls back to the header\'s +line when the header text drifted (fuzzy)', () => {
+    const r = matchStop(
+      {
+        ...stop('src/x.ts', undefined),
+        hunkFlow: [{ match: { hunkHeader: '@@ -50,2 +50,3 @@ drifted context' }, note: 'n' }],
+      },
+      byFile,
+    )
+    expect(r.hunks[0].line).toBe(50)
+    expect(r.hunks[0].note).toBe('n')
+    expect(r.matchStatus).toBe('fuzzy')
+  })
+
+  it('without hunkFlow behavior is unchanged (source order, no notes)', () => {
+    const r = matchStop(stop('src/x.ts', undefined), byFile)
+    expect(r.hunks.map((h) => h.line)).toEqual([1, 50])
+    expect(r.hunks.every((h) => h.note === undefined)).toBe(true)
+    expect(r.matchStatus).toBe('exact')
+  })
+})
+
 describe('resolveFlowReview against this repo', () => {
   it('never throws and returns one resolved stop per input stop', async () => {
     const input: FlowReviewInput = {
