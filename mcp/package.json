@@ -1,6 +1,6 @@
 {
   "name": "anti-vibe-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server that pushes agent-generated markdown into the Anti-Vibe reader for fatigue-free, heading-by-heading review.",
   "license": "MIT",
   "type": "module",
