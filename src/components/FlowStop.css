@@ -1,0 +1,285 @@
+.flow-stop {
+  max-width: 60rem;
+}
+
+.fs-head {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.fs-layer {
+  font: 0.62rem ui-monospace, monospace;
+  letter-spacing: 0.16em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  border: 1px solid currentColor;
+}
+.fs-layer-flow {
+  color: var(--accent);
+}
+.fs-layer-foundation {
+  color: var(--accent-2);
+}
+
+.fs-title {
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  color: var(--fg-strong);
+  margin: 0;
+}
+
+.fs-step-count {
+  margin-left: auto;
+  font: 0.78rem ui-monospace, monospace;
+  color: var(--fg-dim);
+}
+
+.fs-file {
+  font: 0.78rem ui-monospace, monospace;
+  color: var(--fg-dim);
+  margin: 0.4rem 0 1rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+.fs-match {
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+}
+.fs-match-fuzzy {
+  color: var(--accent-2);
+}
+.fs-match-missing {
+  color: var(--accent);
+}
+
+/* --- bottom footer: action + flow CTAs (like the plan viewer) --- */
+.fs-footer {
+  margin-top: 2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--fg-dim) 25%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.fs-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.fs-actions .fs-open {
+  margin: 0;
+}
+.fs-focus-cta {
+  font: 0.8rem ui-monospace, monospace;
+  color: var(--fg);
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 40%, transparent);
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  transition: border-color 0.12s, color 0.12s;
+}
+.fs-focus-cta:hover {
+  border-color: var(--accent);
+  color: var(--fg-strong);
+}
+
+/* --- minimal focus mode --- */
+.flow-stop.minimal {
+  max-width: 72rem;
+  margin: 0 auto;
+}
+.fs-focus-loc {
+  display: flex;
+  align-items: baseline;
+  gap: 0.9rem;
+  margin-bottom: 1.2rem;
+}
+.fs-focus-title {
+  font-size: 1.15rem;
+  color: var(--fg-strong);
+  font-weight: 600;
+}
+.fs-focus-file {
+  font: 0.8rem ui-monospace, monospace;
+  color: var(--fg-dim);
+}
+
+/* --- open in editor --- */
+.fs-open {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin: 0 0 1.3rem;
+}
+.fs-open-cta {
+  font: 0.8rem ui-monospace, monospace;
+  color: var(--bg);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  padding: 0.35rem 0.7rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: filter 0.12s;
+}
+.fs-open-cta:hover {
+  filter: brightness(1.12);
+}
+.fs-open-cta.disabled {
+  background: transparent;
+  color: var(--fg-dim);
+  border-color: color-mix(in srgb, var(--fg-dim) 40%, transparent);
+  cursor: not-allowed;
+}
+.fs-open-select,
+.fs-open-template {
+  font: 0.76rem ui-monospace, monospace;
+  color: var(--fg);
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  border-radius: 4px;
+  padding: 0.3rem 0.4rem;
+}
+.fs-open-template {
+  min-width: 20rem;
+  flex: 1;
+}
+
+.fs-summary {
+  font-size: 1.05rem;
+  color: var(--fg);
+  border-left: 2px solid var(--accent);
+  padding-left: 0.8rem;
+  margin: 0 0 1.5rem;
+}
+
+/* --- hunk stepper --- */
+.fs-hunk-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0 0 0.8rem;
+}
+.fs-hunk-btn {
+  font: 1rem ui-monospace, monospace;
+  color: var(--fg);
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  border-radius: 4px;
+  width: 2rem;
+  height: 1.8rem;
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+.fs-hunk-btn:hover {
+  border-color: var(--accent);
+}
+.fs-hunk-count {
+  font: 0.75rem ui-monospace, monospace;
+  letter-spacing: 0.08em;
+  color: var(--fg-dim);
+}
+
+/* --- calls-into chips (branching) --- */
+.fs-calls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.fs-calls-label {
+  font: 0.7rem ui-monospace, monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.fs-call-chip {
+  font: 0.8rem ui-monospace, monospace;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.fs-call-chip:hover {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* --- diff --- */
+.fs-diff {
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 30%, transparent);
+  border-radius: 6px;
+  padding: 0.9rem 0;
+  overflow-x: auto;
+  font: 0.82rem/1.5 ui-monospace, monospace;
+  margin: 0 0 1.8rem;
+}
+.fs-diff code {
+  display: block;
+}
+.df-line {
+  display: block;
+  padding: 0 1rem 0 0.75rem;
+  white-space: pre;
+  border-left: 3px solid transparent;
+}
+/* Text stays at the theme's readable foreground; +/- is signalled by a subtle
+ * background tint and a colored left border, so it reads on both light + dark. */
+.df-add {
+  background: color-mix(in srgb, #2ea043 22%, var(--bg));
+  border-left-color: #2ea043;
+  color: var(--fg-strong);
+}
+.df-del {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg));
+  border-left-color: var(--accent);
+  color: var(--fg-strong);
+}
+.df-hunk {
+  color: var(--fg-dim);
+  background: color-mix(in srgb, var(--fg-dim) 14%, var(--bg));
+}
+.df-ctx {
+  color: var(--fg);
+}
+
+.fs-diff-missing {
+  font: 0.82rem ui-monospace, monospace;
+  color: var(--fg-dim);
+  border: 1px dashed color-mix(in srgb, var(--fg-dim) 40%, transparent);
+  border-radius: 6px;
+  padding: 1rem;
+  margin: 0 0 1.8rem;
+}
+
+/* --- prose --- */
+.fs-prose {
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: var(--fg);
+}
+.fs-prose .strong {
+  color: var(--fg-strong);
+  font-weight: 700;
+}
+.fs-prose .em {
+  font-style: italic;
+}
+.fs-prose-code {
+  background: var(--bg-2);
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  overflow-x: auto;
+  font: 0.82rem/1.5 ui-monospace, monospace;
+}
+.fs-p.list .fs-li {
+  display: block;
+}

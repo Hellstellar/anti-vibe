@@ -1,4 +1,6 @@
 import { useReader } from '../store/readerStore'
+import { useFlow } from '../store/flowStore'
+import type { FlowReviewDoc } from '../lib/types'
 
 /**
  * Receives documents pushed by the Anti-Vibe MCP bridge and loads them into the
@@ -9,21 +11,34 @@ import { useReader } from '../store/readerStore'
  * no-op everywhere except behind the bridge.
  */
 
-interface PushedDoc {
+interface PushedMarkdownDoc {
   documentId: string
   markdown: string
   title?: string
 }
 
+type PushedDoc = PushedMarkdownDoc | FlowReviewDoc
+
 let lastDocId: string | null = null
 
 function loadDoc(doc: PushedDoc | null): void {
-  if (!doc || !doc.markdown) return
+  if (!doc) return
   // Dedupe so a re-sent doc (e.g. SSE replay on connect) doesn't reset the
-  // reader while the human is mid-review.
+  // view while the human is mid-review.
   if (doc.documentId && doc.documentId === lastDocId) return
-  lastDocId = doc.documentId ?? null
-  useReader.getState().load(doc.markdown)
+
+  if ('kind' in doc && doc.kind === 'flow-review') {
+    lastDocId = doc.documentId
+    useReader.getState().exit() // ensure only one mode is active
+    useFlow.getState().loadFlow(doc)
+    return
+  }
+
+  const md = doc as PushedMarkdownDoc
+  if (!md.markdown) return
+  lastDocId = md.documentId ?? null
+  useFlow.getState().exitFlow()
+  useReader.getState().load(md.markdown)
 }
 
 function subscribe(): void {

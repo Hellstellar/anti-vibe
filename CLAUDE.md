@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Anti-Vibe is a retro-cyberpunk **RSVP reader** for reviewing LLM/agent markdown output without fatigue. You move through a document heading-by-heading, reveal a section, optionally speed-read it (RSVP: one word flashed at a time with an ORP pivot), or step through it one sentence/list-item/table-row at a time. Single-page Vite + React + TypeScript app, no backend.
 
+It also has a **Flow Review** mode — a flow-ordered code review walked in runtime call order (like a sequence diagram), one hunk at a time, driven by the `review_flow` MCP tool. See `docs/FLOW-REVIEW.md`.
+
 ## Development standards
 
 Before writing or changing code, follow these repo-root docs:

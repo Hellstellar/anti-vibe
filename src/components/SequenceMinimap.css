@@ -1,0 +1,95 @@
+.seq-minimap {
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  /* Top padding clears the fixed settings/help gears. */
+  padding: 5rem 0.8rem 1.4rem;
+  overflow-y: auto;
+  gap: 1rem;
+  font: 0.72rem ui-monospace, monospace;
+}
+
+.mm-lane-head {
+  letter-spacing: 0.16em;
+  color: var(--fg-dim);
+}
+
+/* --- call-graph lane (absolute nodes + SVG edges) --- */
+.mm-graph {
+  position: relative;
+}
+.mm-edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.mm-edge {
+  fill: none;
+  stroke: color-mix(in srgb, var(--fg-dim) 55%, transparent);
+  stroke-width: 1.5;
+}
+.mm-edge.active {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.mm-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: left;
+  background: color-mix(in srgb, var(--bg-2) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  border-radius: 4px;
+  color: var(--fg);
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.12s, background 0.12s;
+  overflow: hidden;
+}
+.mm-node:hover {
+  border-color: var(--accent-2);
+}
+.mm-node.visited {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.mm-node.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-2));
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.mm-node-label {
+  color: var(--fg-strong);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mm-node-file {
+  color: var(--fg-dim);
+  font-size: 0.66rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- foundation lane (simple pinned list) --- */
+.mm-lane-foundation {
+  margin-top: auto;
+  border-top: 1px dashed color-mix(in srgb, var(--fg-dim) 40%, transparent);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.mm-lane-foundation .mm-node {
+  position: static;
+  width: auto;
+}
+.mm-foundation .mm-node-label {
+  color: var(--accent-2);
+}

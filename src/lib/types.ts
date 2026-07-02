@@ -92,6 +92,58 @@ export interface ParseResult {
   sections: Section[]
 }
 
+/** Which lane a flow-review stop belongs to. `flow` files are traversed top→bottom
+ *  in runtime call order; `foundation` files (models/schemas/contracts/types) sit
+ *  in a pinned lane and are listed bottom→up. */
+export type FlowLayer = 'flow' | 'foundation'
+
+/** How confidently the MCP tool matched a stop's locator to a real git-diff hunk. */
+export type MatchStatus = 'exact' | 'fuzzy' | 'missing'
+
+/** One resolved diff hunk of a file. The focus view shows these one at a time. */
+export interface ResolvedHunk {
+  /** The `@@ ... @@` header line. */
+  header: string
+  /** Verbatim unified-diff text for this hunk (including the header line). */
+  diffText: string
+  /** 1-based line in the new file this hunk starts at (for "open in editor"). */
+  line: number
+}
+
+/** A review stop after the MCP tool has resolved its file's hunks from git.
+ *  A stop maps to a FILE; the frontend steps through `hunks` one at a time.
+ *  The agent never sends `hunks`/`matchStatus`. */
+export interface ResolvedFlowStop {
+  id: string
+  file: string
+  layer: FlowLayer
+  /** Short human title/role for the stop, e.g. "Route handler". */
+  title: string
+  /** Markdown prose explaining the change (rendered statically). */
+  explanation: string
+  /** One-line gist shown as a caption for the stop. */
+  oneLineSummary: string
+  /** Ids of stops this one calls into (drives the sequence connectors). */
+  callsTo?: string[]
+  /** All of the file's diff hunks, in source order. Empty when `missing`. */
+  hunks: ResolvedHunk[]
+  /** Overall match confidence of the stop's locator hint. */
+  matchStatus: MatchStatus
+  /** Absolute path on the machine that ran the review, for "open in editor".
+   *  Undefined when the repo path could not be resolved. */
+  absPath?: string
+}
+
+/** A flow-ordered code review pushed into Anti-Vibe. Discriminated from the
+ *  markdown reader doc by `kind`. */
+export interface FlowReviewDoc {
+  kind: 'flow-review'
+  documentId: string
+  title: string
+  createdAt: number
+  stops: ResolvedFlowStop[]
+}
+
 /** Runtime-tunable playback configuration (persisted to localStorage). */
 export interface ReaderConfig {
   startWpm: number

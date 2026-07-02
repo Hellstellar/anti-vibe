@@ -3,7 +3,7 @@ import { promises as fs, createReadStream, existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { getDoc, onDocument, setDoc, type AntiVibeDoc } from './doc-store'
+import { getDoc, onDocument, setDoc, type BridgeDoc } from './doc-store'
 
 export const HOST = '127.0.0.1'
 export const PORT = Number(process.env.ANTIVIBE_MCP_PORT) || 7777
@@ -66,7 +66,7 @@ const sseClients = new Set<http.ServerResponse>()
 /** True after we've opened a browser and are waiting for it to connect. */
 let pendingOpen = false
 
-function send(res: http.ServerResponse, doc: AntiVibeDoc): void {
+function send(res: http.ServerResponse, doc: BridgeDoc): void {
   res.write(`event: document\ndata: ${JSON.stringify(doc)}\n\n`)
 }
 
@@ -168,7 +168,7 @@ async function handleRequest(
 
   if (url === '/__antivibe/ingest' && method === 'POST') {
     try {
-      const doc = JSON.parse(await readBody(req)) as AntiVibeDoc
+      const doc = JSON.parse(await readBody(req)) as BridgeDoc
       setDoc(doc) // fires onDocument -> forward to SSE + open-on-first-push
       res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
       res.end(JSON.stringify({ ok: true, clients: sseClients.size }))
@@ -282,7 +282,7 @@ export function probeBridge(): Promise<boolean> {
 }
 
 /** Forward a doc to the already-running bridge (used when we don't own the port). */
-export function postIngest(doc: AntiVibeDoc): Promise<void> {
+export function postIngest(doc: BridgeDoc): Promise<void> {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(doc)
     const req = http.request(

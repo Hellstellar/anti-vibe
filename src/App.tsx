@@ -1,15 +1,18 @@
 import { useEffect } from 'react'
 import { useReader } from './store/readerStore'
+import { useFlow } from './store/flowStore'
 import { sfx, setSoundEnabled } from './lib/sfx'
 import { applyTheme, applyAlign } from './lib/theme'
 import LandingView from './components/LandingView'
 import ReaderView from './components/ReaderView'
+import FlowReviewView from './components/FlowReviewView'
 import SettingsPanel from './components/SettingsPanel'
 import HelpPanel from './components/HelpPanel'
 import CrtOverlay from './components/CrtOverlay'
 
 export default function App() {
   const hasContent = useReader((s) => s.tokens.length > 0)
+  const flowActive = useFlow((s) => s.stops.length > 0)
 
   // Play theme SFX on meaningful store transitions.
   useEffect(() => {
@@ -43,7 +46,7 @@ export default function App() {
 
   return (
     <>
-      {hasContent ? <ReaderView /> : <LandingView />}
+      {flowActive ? <FlowReviewView /> : hasContent ? <ReaderView /> : <LandingView />}
       <SettingsPanel />
       <HelpPanel />
       <CrtOverlay />
