@@ -222,8 +222,24 @@
 .fs-call-chip:hover {
   background: color-mix(in srgb, var(--accent) 22%, transparent);
 }
+.fs-call-via {
+  font-size: 0.85em;
+  font-style: italic;
+  color: var(--fg-dim);
+  margin-left: 0.3em;
+}
 
 /* --- diff --- */
+.fs-hunk-note {
+  font: italic 0.75rem/1.4 ui-monospace, monospace;
+  color: var(--fg-dim);
+  margin: 0.4rem 0;
+}
+.fs-hunk-note::before {
+  content: '» ';
+  color: var(--accent-2);
+}
+
 .fs-diff {
   background: var(--bg-2);
   border: 1px solid color-mix(in srgb, var(--fg-dim) 30%, transparent);

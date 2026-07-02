@@ -60,6 +60,11 @@
   font-weight: 600;
   font-size: 0.9rem;
 }
+.branch-via {
+  font-style: italic;
+  font-size: 0.8rem;
+  color: var(--fg-dim);
+}
 .branch-file {
   font: 0.72rem ui-monospace, monospace;
   color: var(--fg-dim);

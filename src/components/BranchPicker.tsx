@@ -4,30 +4,31 @@ import './BranchPicker.css'
 /** Shown when the current stop calls into several others — the reviewer picks
  *  which branch to follow (click or press 1-9). */
 export default function BranchPicker({
-  stops,
+  options,
   onPick,
   onCancel,
 }: {
-  stops: ResolvedFlowStop[]
+  options: { stop: ResolvedFlowStop; via?: string }[]
   onPick: (id: string) => void
   onCancel: () => void
 }) {
   return (
     <div className="branch-scrim" onClick={onCancel}>
       <div className="branch-card" onClick={(e) => e.stopPropagation()}>
-        <div className="branch-head">This step calls into {stops.length} paths — pick one</div>
+        <div className="branch-head">This step calls into {options.length} paths — pick one</div>
         <ul className="branch-list">
-          {stops.map((s, i) => (
-            <li key={s.id}>
-              <button className="branch-item" onClick={() => onPick(s.id)}>
+          {options.map((o, i) => (
+            <li key={o.stop.id}>
+              <button className="branch-item" onClick={() => onPick(o.stop.id)}>
                 <span className="branch-key">{i + 1}</span>
-                <span className="branch-title">{s.title}</span>
-                <span className="branch-file">{s.file}</span>
+                <span className="branch-title">{o.stop.title}</span>
+                {o.via && <span className="branch-via">via {o.via}</span>}
+                <span className="branch-file">{o.stop.file}</span>
               </button>
             </li>
           ))}
         </ul>
-        <div className="branch-hint">Press 1–{stops.length} · Esc to cancel</div>
+        <div className="branch-hint">Press 1–{options.length} · Esc to cancel</div>
       </div>
     </div>
   )

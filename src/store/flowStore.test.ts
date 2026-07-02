@@ -54,7 +54,7 @@ describe('flowStore navigation', () => {
       .getState()
       .loadFlow(doc([stop('a', ['b', 'c'], 1), stop('b', undefined, 1), stop('c', undefined, 1)]))
     useFlow.getState().nextHunk() // past a's single hunk -> branch
-    expect(useFlow.getState().pendingBranch).toEqual(['b', 'c'])
+    expect(useFlow.getState().pendingBranch?.map((e) => e.to)).toEqual(['b', 'c'])
     expect(useFlow.getState().currentStop).toBe('a') // stays until chosen
     useFlow.getState().chooseBranch('c')
     expect(useFlow.getState().pendingBranch).toBeNull()
@@ -67,6 +67,17 @@ describe('flowStore navigation', () => {
     expect(useFlow.getState().currentStop).toBe('b')
     useFlow.getState().back()
     expect(useFlow.getState().currentStop).toBe('a')
+  })
+
+  it('map overlay opens, closes, and resets on load', () => {
+    useFlow.getState().loadFlow(doc([stop('a', undefined, 1)]))
+    useFlow.getState().openMap()
+    expect(useFlow.getState().mapOpen).toBe(true)
+    useFlow.getState().closeMap()
+    expect(useFlow.getState().mapOpen).toBe(false)
+    useFlow.getState().openMap()
+    useFlow.getState().loadFlow(doc([stop('b', undefined, 1)]))
+    expect(useFlow.getState().mapOpen).toBe(false)
   })
 
   it('gotoStop reaches a foundation stop off the graph', () => {

@@ -1,10 +1,16 @@
 import { useEffect } from 'react'
+import { normalizeCall } from '../lib/flowGraph'
+import type { ResolvedFlowStop } from '../lib/types'
 import { useFlow } from '../store/flowStore'
 import FlowStop from './FlowStop'
+import FlowMapOverlay from './FlowMapOverlay'
 import SequenceMinimap from './SequenceMinimap'
 import ReviewSwitcher from './ReviewSwitcher'
 import BranchPicker from './BranchPicker'
 import './FlowReviewView.css'
+
+/** A call edge with its callee resolved to the actual stop. */
+type CallRef = { stop: ResolvedFlowStop; via: string | undefined }
 
 export default function FlowReviewView() {
   const stops = useFlow((s) => s.stops)
@@ -14,6 +20,8 @@ export default function FlowReviewView() {
   const currentStop = useFlow((s) => s.currentStop)
   const hunkIndex = useFlow((s) => s.hunkIndex)
   const focusMode = useFlow((s) => s.focusMode)
+  const mapOpen = useFlow((s) => s.mapOpen)
+  const history = useFlow((s) => s.history)
   const pendingBranch = useFlow((s) => s.pendingBranch)
   const title = useFlow((s) => s.title)
   const gotoStop = useFlow((s) => s.gotoStop)
@@ -24,6 +32,8 @@ export default function FlowReviewView() {
   const cancelBranch = useFlow((s) => s.cancelBranch)
   const enterFocus = useFlow((s) => s.enterFocus)
   const exitFocus = useFlow((s) => s.exitFocus)
+  const openMap = useFlow((s) => s.openMap)
+  const closeMap = useFlow((s) => s.closeMap)
   const exitFlow = useFlow((s) => s.exitFlow)
 
   useEffect(() => {
@@ -40,8 +50,17 @@ export default function FlowReviewView() {
           const pick = s.pendingBranch[Number(e.key) - 1]
           if (pick) {
             e.preventDefault()
-            chooseBranch(pick)
+            chooseBranch(pick.to)
           }
+        }
+        return
+      }
+      // While the map overlay is open it owns the keyboard: esc/m close it,
+      // everything else is ignored so the review doesn't move underneath.
+      if (s.mapOpen) {
+        if (e.key === 'Escape' || e.key === 'm') {
+          e.preventDefault()
+          closeMap()
         }
         return
       }
@@ -62,6 +81,10 @@ export default function FlowReviewView() {
           e.preventDefault()
           if (!s.focusMode) enterFocus()
           break
+        case 'm':
+          e.preventDefault()
+          openMap()
+          break
         case 'Escape':
           e.preventDefault()
           if (s.focusMode) exitFocus()
@@ -71,13 +94,13 @@ export default function FlowReviewView() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [nextHunk, prevHunk, back, enterFocus, exitFocus, chooseBranch, cancelBranch])
+  }, [nextHunk, prevHunk, back, enterFocus, exitFocus, openMap, closeMap, chooseBranch, cancelBranch])
 
   const stop = stops.find((s) => s.id === currentStop) ?? null
   const spinePos = currentStop ? graph.order.indexOf(currentStop) : -1
-  const branchStops = (pendingBranch ?? [])
-    .map((id) => stops.find((s) => s.id === id))
-    .filter((s): s is NonNullable<typeof s> => !!s)
+  const branchOptions = (pendingBranch ?? [])
+    .map((edge) => ({ stop: stops.find((s) => s.id === edge.to), via: edge.via }))
+    .filter((o): o is CallRef => !!o.stop)
 
   return (
     <div className={`flow-review${focusMode ? ' focus' : ''}`}>
@@ -98,8 +121,8 @@ export default function FlowReviewView() {
             graph={graph}
             foundationOrder={foundationOrder}
             currentStop={currentStop}
-            history={useFlow.getState().history}
             onPick={gotoStop}
+            onOpenMap={openMap}
           />
         </div>
       )}
@@ -114,8 +137,9 @@ export default function FlowReviewView() {
             hunkIndex={hunkIndex}
             minimal={focusMode}
             calls={(stop.callsTo ?? [])
-              .map((id) => stops.find((s) => s.id === id))
-              .filter((s): s is NonNullable<typeof s> => !!s)}
+              .map(normalizeCall)
+              .map((edge) => ({ stop: stops.find((s) => s.id === edge.to), via: edge.via }))
+              .filter((c): c is CallRef => !!c.stop)}
             onNextHunk={nextHunk}
             onPrevHunk={prevHunk}
             onEnterFocus={enterFocus}
@@ -126,8 +150,23 @@ export default function FlowReviewView() {
         )}
       </main>
 
-      {branchStops.length > 0 && (
-        <BranchPicker stops={branchStops} onPick={chooseBranch} onCancel={cancelBranch} />
+      {branchOptions.length > 0 && (
+        <BranchPicker options={branchOptions} onPick={chooseBranch} onCancel={cancelBranch} />
+      )}
+
+      {mapOpen && (
+        <FlowMapOverlay
+          stops={stops}
+          graph={graph}
+          foundationOrder={foundationOrder}
+          currentStop={currentStop}
+          history={history}
+          onPick={(id) => {
+            gotoStop(id)
+            closeMap()
+          }}
+          onClose={closeMap}
+        />
       )}
     </div>
   )

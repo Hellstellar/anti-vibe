@@ -196,7 +196,7 @@ export default function FlowStop({
   total: number
   hunkIndex: number
   minimal: boolean
-  calls: ResolvedFlowStop[]
+  calls: { stop: ResolvedFlowStop; via?: string }[]
   onNextHunk: () => void
   onPrevHunk: () => void
   onEnterFocus: () => void
@@ -223,8 +223,8 @@ export default function FlowStop({
             <div className="fs-calls">
               <span className="fs-calls-label">calls into</span>
               {calls.map((c) => (
-                <button key={c.id} className="fs-call-chip" onClick={() => onGotoStop(c.id)}>
-                  {c.title} →
+                <button key={c.stop.id} className="fs-call-chip" onClick={() => onGotoStop(c.stop.id)}>
+                  {c.stop.title} {c.via && <span className="fs-call-via">via {c.via}</span>} →
                 </button>
               ))}
             </div>
@@ -243,6 +243,7 @@ export default function FlowStop({
           <span className="fs-focus-file">{stop.file}</span>
         </div>
         <HunkNav idx={idx} count={hunkCount} onPrev={onPrevHunk} onNext={onNextHunk} />
+        {hunk?.note && <p className="fs-hunk-note">{hunk.note}</p>}
         <DiffView text={hunk?.diffText ?? ''} />
       </div>
     )
@@ -268,6 +269,7 @@ export default function FlowStop({
 
       <HunkNav idx={idx} count={hunkCount} onPrev={onPrevHunk} onNext={onNextHunk} />
 
+      {hunk?.note && <p className="fs-hunk-note">{hunk.note}</p>}
       <DiffView text={hunk?.diffText ?? ''} />
       <ProseView markdown={stop.explanation} />
 
@@ -283,8 +285,8 @@ export default function FlowStop({
           <div className="fs-calls">
             <span className="fs-calls-label">calls into</span>
             {calls.map((c) => (
-              <button key={c.id} className="fs-call-chip" onClick={() => onGotoStop(c.id)}>
-                {c.title} →
+              <button key={c.stop.id} className="fs-call-chip" onClick={() => onGotoStop(c.stop.id)}>
+                {c.stop.title} {c.via && <span className="fs-call-via">via {c.via}</span>} →
               </button>
             ))}
           </div>

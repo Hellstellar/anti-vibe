@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { buildFlowGraph, type FlowGraph } from '../lib/flowGraph'
+import { buildFlowGraph, type FlowEdge, type FlowGraph } from '../lib/flowGraph'
 import type { FlowReviewDoc, ResolvedFlowStop, ReviewMeta } from '../lib/types'
 
 /**
@@ -23,10 +23,14 @@ interface FlowState {
   hunkIndex: number
   /** Nav breadcrumb, enabling "back" to where you actually came from. */
   history: string[]
-  /** Callee ids awaiting a branch choice (set when a stop calls several). */
-  pendingBranch: string[] | null
+  /** Callee edges awaiting a branch choice (set when a stop calls several);
+   *  each carries its `via` label for the picker. */
+  pendingBranch: FlowEdge[] | null
   /** Minimal, distraction-free single-hunk mode (minimap + chrome hidden). */
   focusMode: boolean
+  /** Full-screen call-flow map overlay (the minimap shows only the current
+   *  stop's neighborhood; the map shows the whole graph). */
+  mapOpen: boolean
   /** All persisted flow reviews (metadata) for the switcher, newest first. */
   reviews: ReviewMeta[]
 
@@ -47,6 +51,8 @@ interface FlowState {
   back: () => void
   enterFocus: () => void
   exitFocus: () => void
+  openMap: () => void
+  closeMap: () => void
 }
 
 const EMPTY_GRAPH: FlowGraph = {
@@ -67,8 +73,9 @@ const EMPTY = {
   currentStop: null as string | null,
   hunkIndex: 0,
   history: [] as string[],
-  pendingBranch: null as string[] | null,
+  pendingBranch: null as FlowEdge[] | null,
   focusMode: false,
+  mapOpen: false,
 }
 
 export const useFlow = create<FlowState>((set, get) => {
@@ -94,7 +101,7 @@ export const useFlow = create<FlowState>((set, get) => {
     if (!currentStop) return
     const callees = graph.callees.get(currentStop) ?? []
     if (callees.length === 1) {
-      goTo(callees[0], 'first')
+      goTo(callees[0].to, 'first')
     } else if (callees.length > 1) {
       set({ pendingBranch: callees }) // let the user choose
     } else {
@@ -195,5 +202,7 @@ export const useFlow = create<FlowState>((set, get) => {
 
     enterFocus: () => set({ focusMode: true }),
     exitFocus: () => set({ focusMode: false }),
+    openMap: () => set({ mapOpen: true }),
+    closeMap: () => set({ mapOpen: false }),
   }
 })
