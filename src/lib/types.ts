@@ -137,6 +137,15 @@ export interface ResolvedFlowStop {
   absPath?: string
 }
 
+/** Lightweight metadata for the review switcher (matches the bridge's DocMeta). */
+export interface ReviewMeta {
+  documentId: string
+  title: string
+  createdAt: number
+  kind: 'flow-review' | 'markdown'
+  stopCount: number
+}
+
 /** A flow-ordered code review pushed into Anti-Vibe. Discriminated from the
  *  markdown reader doc by `kind`. */
 export interface FlowReviewDoc {

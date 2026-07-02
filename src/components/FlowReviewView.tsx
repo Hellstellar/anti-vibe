@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { useFlow } from '../store/flowStore'
 import FlowStop from './FlowStop'
 import SequenceMinimap from './SequenceMinimap'
+import ReviewSwitcher from './ReviewSwitcher'
 import BranchPicker from './BranchPicker'
 import './FlowReviewView.css'
 
@@ -90,14 +91,17 @@ export default function FlowReviewView() {
       </button>
 
       {!focusMode && (
-        <SequenceMinimap
-          stops={stops}
-          graph={graph}
-          foundationOrder={foundationOrder}
-          currentStop={currentStop}
-          history={useFlow.getState().history}
-          onPick={gotoStop}
-        />
+        <div className="fr-left">
+          <ReviewSwitcher />
+          <SequenceMinimap
+            stops={stops}
+            graph={graph}
+            foundationOrder={foundationOrder}
+            currentStop={currentStop}
+            history={useFlow.getState().history}
+            onPick={gotoStop}
+          />
+        </div>
       )}
 
       <main className="fr-stage">

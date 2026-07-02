@@ -1,6 +1,6 @@
 import { useReader } from '../store/readerStore'
 import { useFlow } from '../store/flowStore'
-import type { FlowReviewDoc } from '../lib/types'
+import type { FlowReviewDoc, ReviewMeta } from '../lib/types'
 
 /**
  * Receives documents pushed by the Anti-Vibe MCP bridge and loads them into the
@@ -31,6 +31,7 @@ function loadDoc(doc: PushedDoc | null): void {
     lastDocId = doc.documentId
     useReader.getState().exit() // ensure only one mode is active
     useFlow.getState().loadFlow(doc)
+    void refreshReviews() // a new push may add to the list
     return
   }
 
@@ -39,6 +40,34 @@ function loadDoc(doc: PushedDoc | null): void {
   lastDocId = md.documentId ?? null
   useFlow.getState().exitFlow()
   useReader.getState().load(md.markdown)
+}
+
+/** Fetch the persisted review list into the switcher (flow reviews only). */
+function refreshReviews(): Promise<void> {
+  return fetch('/__antivibe/docs')
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no bridge'))))
+    .then((list: ReviewMeta[]) => {
+      useFlow.getState().setReviews(list.filter((m) => m.kind === 'flow-review'))
+    })
+    .catch(() => {
+      /* not behind the bridge — leave the list as-is */
+    })
+}
+
+/** Load a specific stored review by id (used by the review switcher). */
+export function openReview(id: string): void {
+  fetch(`/__antivibe/doc?id=${encodeURIComponent(id)}`)
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error('not found'))))
+    .then((doc: FlowReviewDoc | null) => {
+      if (doc && 'kind' in doc && doc.kind === 'flow-review') {
+        lastDocId = doc.documentId
+        useReader.getState().exit()
+        useFlow.getState().loadFlow(doc)
+      }
+    })
+    .catch(() => {
+      /* ignore — stale id or off the bridge */
+    })
 }
 
 function subscribe(): void {
@@ -63,6 +92,7 @@ export function connectBridge(): void {
     .then((r) => (r.ok ? r.json() : Promise.reject(new Error('no bridge'))))
     .then((doc: PushedDoc | null) => {
       loadDoc(doc)
+      void refreshReviews() // populate the switcher with all stored reviews
       subscribe()
     })
     .catch(() => {

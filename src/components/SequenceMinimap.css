@@ -1,12 +1,9 @@
 .seq-minimap {
   display: flex;
   flex-direction: column;
-  border-right: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
-  /* Top padding clears the fixed settings/help gears. */
-  padding: 5rem 0.8rem 1.4rem;
-  overflow-y: auto;
   gap: 1rem;
   font: 0.72rem ui-monospace, monospace;
+  flex: 1;
 }
 
 .mm-lane-head {

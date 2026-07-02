@@ -3,7 +3,7 @@ import { promises as fs, createReadStream, existsSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { getDoc, onDocument, setDoc, type BridgeDoc } from './doc-store'
+import { getDoc, getDocById, listDocs, onDocument, setDoc, type BridgeDoc } from './doc-store'
 
 export const HOST = '127.0.0.1'
 export const PORT = Number(process.env.ANTIVIBE_MCP_PORT) || 7777
@@ -160,9 +160,19 @@ async function handleRequest(
     return
   }
 
-  if (url === '/__antivibe/doc') {
+  // List all stored docs' metadata (for the review switcher).
+  if (url.startsWith('/__antivibe/docs')) {
     res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
-    res.end(JSON.stringify(getDoc()))
+    res.end(JSON.stringify(listDocs()))
+    return
+  }
+
+  // A specific doc by ?id=, else the latest (SSE catch-up).
+  if (url.startsWith('/__antivibe/doc')) {
+    const id = new URL(url, BRIDGE_URL).searchParams.get('id')
+    const doc = id ? getDocById(id) : getDoc()
+    res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
+    res.end(JSON.stringify(doc))
     return
   }
 

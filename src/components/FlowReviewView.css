@@ -9,6 +9,17 @@
   overflow: hidden;
 }
 
+/* Left rail: review switcher + call-flow minimap share one scroll column. */
+.fr-left {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-right: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  overflow-y: auto;
+  /* Top padding clears the fixed settings/help gears. */
+  padding: 5rem 0.8rem 1.4rem;
+}
+
 .fr-stage {
   position: relative;
   overflow-y: auto;
@@ -54,33 +65,37 @@
   color: var(--accent);
 }
 
-/* Slim, themed scrollbars for the flow panels (minimap, stage, diff). */
-.seq-minimap,
+/* Slim, themed scrollbars for the flow panels (left rail, stage, diff). */
+.fr-left,
 .fr-stage,
-.flow-review .fs-diff {
+.flow-review .fs-diff,
+.rs-list {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--fg-dim) 55%, transparent) transparent;
 }
-.seq-minimap::-webkit-scrollbar,
+.fr-left::-webkit-scrollbar,
 .fr-stage::-webkit-scrollbar,
-.flow-review .fs-diff::-webkit-scrollbar {
+.flow-review .fs-diff::-webkit-scrollbar,
+.rs-list::-webkit-scrollbar {
   width: 9px;
   height: 9px;
 }
-.seq-minimap::-webkit-scrollbar-track,
+.fr-left::-webkit-scrollbar-track,
 .fr-stage::-webkit-scrollbar-track,
-.flow-review .fs-diff::-webkit-scrollbar-track {
+.flow-review .fs-diff::-webkit-scrollbar-track,
+.rs-list::-webkit-scrollbar-track {
   background: transparent;
 }
-.seq-minimap::-webkit-scrollbar-thumb,
+.fr-left::-webkit-scrollbar-thumb,
 .fr-stage::-webkit-scrollbar-thumb,
-.flow-review .fs-diff::-webkit-scrollbar-thumb {
+.flow-review .fs-diff::-webkit-scrollbar-thumb,
+.rs-list::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--fg-dim) 45%, transparent);
   border-radius: 6px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-.seq-minimap:hover::-webkit-scrollbar-thumb,
+.fr-left:hover::-webkit-scrollbar-thumb,
 .fr-stage:hover::-webkit-scrollbar-thumb,
 .flow-review .fs-diff:hover::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--fg-dim) 70%, transparent);

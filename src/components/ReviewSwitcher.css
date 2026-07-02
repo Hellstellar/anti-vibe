@@ -1,0 +1,54 @@
+.review-switcher {
+  border-bottom: 1px solid color-mix(in srgb, var(--fg-dim) 30%, transparent);
+  padding-bottom: 1rem;
+  margin-bottom: 0.4rem;
+  font: 0.72rem ui-monospace, monospace;
+}
+.rs-head {
+  letter-spacing: 0.16em;
+  color: var(--fg-dim);
+  margin-bottom: 0.6rem;
+}
+.rs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-height: 30vh;
+  overflow-y: auto;
+}
+.rs-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  width: 100%;
+  text-align: left;
+  background: color-mix(in srgb, var(--bg-2) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 30%, transparent);
+  border-radius: 4px;
+  color: var(--fg);
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.12s;
+}
+.rs-item:hover {
+  border-color: var(--accent-2);
+}
+.rs-item.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg-2));
+}
+.rs-title {
+  color: var(--fg-strong);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rs-meta {
+  color: var(--fg-dim);
+  font-size: 0.66rem;
+}

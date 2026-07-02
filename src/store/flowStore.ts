@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { buildFlowGraph, type FlowGraph } from '../lib/flowGraph'
-import type { FlowReviewDoc, ResolvedFlowStop } from '../lib/types'
+import type { FlowReviewDoc, ResolvedFlowStop, ReviewMeta } from '../lib/types'
 
 /**
  * State for Flow Review mode: a flow-ordered code review walked like a sequence
@@ -27,7 +27,11 @@ interface FlowState {
   pendingBranch: string[] | null
   /** Minimal, distraction-free single-hunk mode (minimap + chrome hidden). */
   focusMode: boolean
+  /** All persisted flow reviews (metadata) for the switcher, newest first. */
+  reviews: ReviewMeta[]
 
+  /** Replace the switcher's review list (from the bridge's /docs endpoint). */
+  setReviews: (reviews: ReviewMeta[]) => void
   loadFlow: (doc: FlowReviewDoc) => void
   exitFlow: () => void
   /** Jump directly to a stop (minimap / branch pick / foundation). Records history. */
@@ -103,6 +107,9 @@ export const useFlow = create<FlowState>((set, get) => {
 
   return {
     ...EMPTY,
+    reviews: [], // NOT in EMPTY — the switcher list survives exit/reload
+
+    setReviews: (reviews) => set({ reviews }),
 
     loadFlow: (doc) => {
       const flowOrder = doc.stops.filter((s) => s.layer === 'flow').map((s) => s.id)
@@ -112,6 +119,17 @@ export const useFlow = create<FlowState>((set, get) => {
       const graph = buildFlowGraph(doc.stops, flowOrder)
       // Start at the first entry point (topo order), else the first stop.
       const start = graph.roots[0] ?? graph.order[0] ?? doc.stops[0]?.id ?? null
+      // Upsert this review into the switcher list (fresh pushes may not be in it yet).
+      const meta: ReviewMeta = {
+        documentId: doc.documentId,
+        title: doc.title,
+        createdAt: doc.createdAt,
+        kind: 'flow-review',
+        stopCount: doc.stops.length,
+      }
+      const reviews = [meta, ...get().reviews.filter((r) => r.documentId !== doc.documentId)].sort(
+        (a, b) => b.createdAt - a.createdAt,
+      )
       set({
         ...EMPTY,
         documentId: doc.documentId,
@@ -121,6 +139,7 @@ export const useFlow = create<FlowState>((set, get) => {
         foundationOrder,
         graph,
         currentStop: start,
+        reviews,
       })
     },
 
