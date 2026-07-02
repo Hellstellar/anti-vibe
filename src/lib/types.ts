@@ -125,10 +125,13 @@ export interface ResolvedFlowStop {
   oneLineSummary: string
   /** Ids of stops this one calls into (drives the sequence connectors). */
   callsTo?: string[]
-  /** All of the file's diff hunks, in source order. Empty when `missing`. */
+  /** All of the file's diff hunks, in source order. Empty when `missing` or `context`. */
   hunks: ResolvedHunk[]
   /** Overall match confidence of the stop's locator hint. */
   matchStatus: MatchStatus
+  /** A connective step with no change — shown so the runtime flow reads
+   *  continuously. Rendered dimmed, with no diff / stepper / editor link. */
+  context?: boolean
   /** Absolute path on the machine that ran the review, for "open in editor".
    *  Undefined when the repo path could not be resolved. */
   absPath?: string

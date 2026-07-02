@@ -206,6 +206,34 @@ export default function FlowStop({
   const idx = Math.min(hunkIndex, Math.max(0, hunkCount - 1))
   const hunk = stop.hunks[idx]
 
+  // Context step: a connective, unchanged node. No diff / stepper / editor link —
+  // just enough to keep the flow reading continuously.
+  if (stop.context) {
+    return (
+      <div className={`flow-stop context${minimal ? ' minimal' : ''}`}>
+        <header className="fs-head">
+          <span className="fs-layer fs-layer-context">CONTEXT · no change</span>
+          <h2 className="fs-title">{stop.title}</h2>
+        </header>
+        <div className="fs-file">{stop.file}</div>
+        {stop.oneLineSummary && <p className="fs-summary">{stop.oneLineSummary}</p>}
+        <ProseView markdown={stop.explanation} />
+        {!minimal && calls.length > 0 && (
+          <div className="fs-footer">
+            <div className="fs-calls">
+              <span className="fs-calls-label">calls into</span>
+              {calls.map((c) => (
+                <button key={c.id} className="fs-call-chip" onClick={() => onGotoStop(c.id)}>
+                  {c.title} →
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
+
   // Minimal focus mode: one hunk, a compact location line, nothing else.
   if (minimal) {
     return (

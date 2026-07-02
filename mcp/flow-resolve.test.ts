@@ -107,6 +107,13 @@ describe('matchStop', () => {
     expect(r.hunks[0].diffText).toContain('RateConfig')
   })
 
+  it('context stop skips git matching → no hunks, not missing', () => {
+    const r = matchStop({ ...stop('src/anything.ts', undefined), context: true }, byFile)
+    expect(r.context).toBe(true)
+    expect(r.hunks).toHaveLength(0)
+    expect(r.matchStatus).toBe('exact') // not "missing" → no warning
+  })
+
   it('no candidate file → missing, no hunks', () => {
     const r = matchStop(stop('src/nope.ts', { hunkHeader: '@@ -1 +1 @@' }), byFile)
     expect(r.matchStatus).toBe('missing')
@@ -117,6 +124,25 @@ describe('matchStop', () => {
     const r = matchStop(stop('src/routes/auth.ts', { hunkHeader: '@@ -999 +999 @@ nope' }), byFile)
     expect(r.matchStatus).toBe('fuzzy')
     expect(r.hunks[0].diffText).toContain('rateLimit')
+  })
+
+  it('a locator narrows to its own hunk — same file, different node', () => {
+    const multi = `diff --git a/src/x.ts b/src/x.ts
+--- a/src/x.ts
++++ b/src/x.ts
+@@ -1,2 +1,3 @@ top
+ head
++first
+@@ -50,2 +50,3 @@ later
+ keep
++second`
+    const byFile = parseUnifiedDiff(multi)
+    const nodeA = matchStop(stop('src/x.ts', { hunkHeader: '@@ -1,2 +1,3 @@ top' }), byFile)
+    const nodeB = matchStop(stop('src/x.ts', { hunkHeader: '@@ -50,2 +50,3 @@ later' }), byFile)
+    expect(nodeA.hunks).toHaveLength(1)
+    expect(nodeA.hunks[0].diffText).toContain('+first')
+    expect(nodeB.hunks).toHaveLength(1)
+    expect(nodeB.hunks[0].diffText).toContain('+second')
   })
 
   it('multiple hunks in one file are all returned, source-ordered', () => {

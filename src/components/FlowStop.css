@@ -22,6 +22,17 @@
 .fs-layer-foundation {
   color: var(--accent-2);
 }
+.fs-layer-context {
+  color: var(--fg-dim);
+}
+
+/* Context (unchanged) stop reads quieter than a changed one. */
+.flow-stop.context .fs-title {
+  color: var(--fg);
+}
+.flow-stop.context .fs-summary {
+  border-left-color: var(--fg-dim);
+}
 
 .fs-title {
   font-size: clamp(1.3rem, 3vw, 1.9rem);

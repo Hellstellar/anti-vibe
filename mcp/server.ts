@@ -119,6 +119,8 @@ async function main(): Promise<void> {
     'Each stop maps to a FILE — the reviewer steps through all of that file\'s hunks one',
     'at a time. `locator` is an OPTIONAL hint (exact `hunkHeader` "@@ -a,b +c,d @@ ..." or',
     '`lineRange`) that just sets the match-confidence badge. Give each stop a one-line summary.',
+    'For unchanged connective steps (a dispatcher/existing handler the flow passes through),',
+    'add a stop with `context: true` and no locator so the sequence reads continuously.',
   ].join(' ')
 
   const FLOW_STOP_SCHEMA = z.object({
@@ -135,6 +137,10 @@ async function main(): Promise<void> {
       .optional()
       .describe('Optional hint marking the primary hunk / match confidence. All file hunks are shown regardless.'),
     layer: z.enum(['flow', 'foundation']).describe("'flow' = runtime path; 'foundation' = models/schemas/contracts/types."),
+    context: z
+      .boolean()
+      .optional()
+      .describe('True for a connective step with NO change, shown so the flow reads continuously (no diff resolved).'),
     title: z.string().describe('Short role/title, e.g. "Route handler".'),
     explanation: z.string().describe('Markdown prose explaining the change at this stop.'),
     oneLineSummary: z.string().describe('One-line gist of the hunk in view.'),

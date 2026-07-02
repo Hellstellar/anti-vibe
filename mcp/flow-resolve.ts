@@ -19,6 +19,9 @@ export interface FlowStopInput {
   file: string
   locator?: HunkLocator
   layer: 'flow' | 'foundation'
+  /** True for a connective step that has no change — shown for flow continuity.
+   *  Skips git matching entirely (no diff, no "no hunk" warning). */
+  context?: boolean
   title: string
   explanation: string
   oneLineSummary: string
@@ -146,6 +149,9 @@ export function matchStop(stop: FlowStopInput, byFile: Map<string, Hunk[]>): Res
     callsTo: stop.callsTo,
   }
 
+  // Context steps carry no change — skip git matching entirely.
+  if (stop.context) return { ...base, hunks: [], matchStatus: 'exact', context: true }
+
   // Collect every hunk across files whose path matches the stop's, source-ordered.
   const candidates: Hunk[] = []
   for (const [file, hunks] of byFile) {
@@ -153,30 +159,56 @@ export function matchStop(stop: FlowStopInput, byFile: Map<string, Hunk[]>): Res
   }
   candidates.sort((a, b) => a.newStart - b.newStart)
 
-  const hunks: ResolvedHunk[] = candidates.map((h) => ({
+  if (candidates.length === 0) {
+    return { ...base, hunks: [], matchStatus: 'missing' }
+  }
+
+  // Select which hunks THIS stop owns. A locator narrows to its hunk(s) so the
+  // same file can appear in several flow nodes each showing a different change;
+  // no locator claims the whole file (all hunks, stepped one at a time).
+  const { selected, matchStatus } = selectHunks(candidates, stop.locator)
+  const hunks: ResolvedHunk[] = selected.map((h) => ({
     header: h.header,
     diffText: h.text,
     line: h.newStart,
   }))
-
-  if (hunks.length === 0) return { ...base, hunks, matchStatus: 'missing' }
-
-  // Overall status from the optional locator hint.
-  const { hunkHeader, lineRange } = stop.locator ?? {}
-  let matchStatus: MatchStatus = 'exact'
-  if (hunkHeader) {
-    const want = hunkHeader.trim()
-    matchStatus = candidates.some((h) => h.header.trim() === want) ? 'exact' : 'fuzzy'
-  } else if (lineRange) {
-    const hit = candidates.some((h) => {
-      const hEnd = h.newStart + h.newCount - 1
-      return Math.min(hEnd, lineRange.end) >= Math.max(h.newStart, lineRange.start)
-    })
-    matchStatus = hit ? 'exact' : 'fuzzy'
-  }
-  // No locator → whole-file grab, treated as an intentional exact match.
-
   return { ...base, hunks, matchStatus }
+}
+
+/** Parse the new-file start line from a `@@ -a,b +c,d @@` header. */
+function newStartOf(header: string): number | null {
+  const m = header.match(/^@@ -\d+(?:,\d+)? \+(\d+)/)
+  return m ? Number(m[1]) : null
+}
+
+/** Choose the hunk subset a stop owns, given its optional locator. */
+function selectHunks(
+  candidates: Hunk[],
+  locator: HunkLocator | undefined,
+): { selected: Hunk[]; matchStatus: MatchStatus } {
+  if (!locator || (!locator.hunkHeader && !locator.lineRange)) {
+    return { selected: candidates, matchStatus: 'exact' } // whole file
+  }
+  if (locator.hunkHeader) {
+    const want = locator.hunkHeader.trim()
+    const exact = candidates.find((h) => h.header.trim() === want)
+    if (exact) return { selected: [exact], matchStatus: 'exact' }
+    // Fall back to the hunk starting at the header's +line, else the whole file.
+    const wantLine = newStartOf(want)
+    const byLine = wantLine != null ? candidates.find((h) => h.newStart === wantLine) : undefined
+    return byLine
+      ? { selected: [byLine], matchStatus: 'fuzzy' }
+      : { selected: candidates, matchStatus: 'fuzzy' }
+  }
+  // lineRange: every hunk overlapping the requested new-file range.
+  const { start, end } = locator.lineRange!
+  const overlaps = candidates.filter((h) => {
+    const hEnd = h.newStart + h.newCount - 1
+    return Math.min(hEnd, end) >= Math.max(h.newStart, start)
+  })
+  return overlaps.length
+    ? { selected: overlaps, matchStatus: 'exact' }
+    : { selected: candidates, matchStatus: 'fuzzy' }
 }
 
 /** Resolve a full flow-review input against the repo's git diff. Never throws on

@@ -56,6 +56,15 @@
 .mm-node.visited {
   border-color: color-mix(in srgb, var(--accent) 45%, transparent);
 }
+/* Context (unchanged) nodes read quieter: dashed, dimmed. */
+.mm-node.context {
+  border-style: dashed;
+  opacity: 0.72;
+}
+.mm-node.context .mm-node-label {
+  color: var(--fg-dim);
+  font-weight: 500;
+}
 .mm-node.active {
   border-color: var(--accent);
   background: color-mix(in srgb, var(--accent) 16%, var(--bg-2));

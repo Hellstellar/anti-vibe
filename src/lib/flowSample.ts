@@ -54,7 +54,7 @@ export const flowSample: FlowReviewDoc = {
       oneLineSummary: 'New middleware that counts hits per IP in a sliding window.',
       explanation:
         'The middleware reads the client IP, increments its counter in the `RateStore`, and rejects with `429` once the window `max` is exceeded. Note it *calls into* the store rather than holding state itself.',
-      callsTo: ['store'],
+      callsTo: ['dispatch'],
       matchStatus: 'exact',
       absPath: '/Users/you/proj/src/middleware/rateLimit.ts',
       hunks: [
@@ -78,6 +78,19 @@ export const flowSample: FlowReviewDoc = {
 +}`,
         },
       ],
+    },
+    {
+      id: 'dispatch',
+      file: 'src/lib/middlewareChain.ts',
+      layer: 'flow',
+      context: true,
+      title: 'Middleware chain (unchanged)',
+      oneLineSummary: 'Existing dispatcher the request passes through — no change here.',
+      explanation:
+        'A **context** step: the request threads through the existing middleware runner on its way to the store. Nothing changed here, but the flow would read as a gap without it.',
+      callsTo: ['store'],
+      matchStatus: 'exact',
+      hunks: [],
     },
     {
       id: 'store',

@@ -76,7 +76,7 @@ export default function SequenceMinimap({
             <button
               key={id}
               type="button"
-              className={`mm-node${active ? ' active' : ''}${onPath.has(id) ? ' visited' : ''}`}
+              className={`mm-node${active ? ' active' : ''}${onPath.has(id) ? ' visited' : ''}${stop.context ? ' context' : ''}`}
               style={{
                 top: topOf(id) + 6,
                 left: leftOf(id),
