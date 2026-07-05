@@ -5,13 +5,39 @@
   align-items: center;
   justify-content: center;
 }
+.countdown-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+/* Three dots, filled left-to-right as Ready/Set/Focus advance — makes the
+   countdown read as a visible 3-step sequence with a known end, not just a
+   word flashing with no sense of how much is left. */
+.countdown-dots {
+  display: flex;
+  gap: 0.5rem;
+}
+.countdown-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--fg-dim);
+  opacity: 0.35;
+  transition: background-color 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+}
+.countdown-dot.lit {
+  background: var(--accent);
+  opacity: 1;
+  box-shadow: 0 0 8px var(--glow);
+}
 .countdown-word {
   font-family: var(--ui-font);
   font-size: clamp(1.5rem, 6vw, 3.5rem);
   letter-spacing: 0.2em;
   color: var(--accent);
   text-shadow: 0 0 18px var(--glow);
-  animation: countpop 0.7s ease-out;
+  animation: countpop 0.35s ease-out;
 }
 @keyframes countpop {
   0% {

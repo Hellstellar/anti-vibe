@@ -3,7 +3,7 @@ import { sfx } from '../lib/sfx'
 import './Countdown.css'
 
 const STEPS = ['READY', 'SET', 'FOCUS']
-const STEP_MS = 700
+const STEP_MS = 350
 
 /** Ready → Set → Focus sequence, then fires onDone to begin playback. */
 export default function Countdown({ onDone }: { onDone: () => void }) {
@@ -23,8 +23,15 @@ export default function Countdown({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="countdown">
-      <div key={i} className="countdown-word">
-        {STEPS[i]}
+      <div className="countdown-body">
+        <div key={i} className="countdown-word">
+          {STEPS[i]}
+        </div>
+        <div className="countdown-dots" aria-hidden="true">
+          {STEPS.map((_, idx) => (
+            <span key={idx} className={`countdown-dot${idx <= i ? ' lit' : ''}`} />
+          ))}
+        </div>
       </div>
     </div>
   )
