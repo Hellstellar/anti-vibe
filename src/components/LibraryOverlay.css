@@ -1,0 +1,130 @@
+.library {
+  position: fixed;
+  top: 1rem;
+  left: 6.4rem; /* beside the shortcuts (?) toggle */
+  z-index: 50;
+}
+
+.library-toggle {
+  position: relative;
+  width: 2.2rem;
+  height: 2.2rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--fg-dim);
+  background: var(--bg-2);
+  border: 2px solid var(--fg-dim);
+  border-radius: 4px;
+}
+.library-toggle:hover,
+.library.open .library-toggle {
+  color: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 10px var(--glow);
+}
+
+/* Unread-arrival count. */
+.library-badge {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.4rem;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  padding: 0 0.25rem;
+  font-family: var(--ui-font);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1.05rem;
+  color: var(--bg);
+  background: var(--accent);
+  border-radius: 999px;
+  box-shadow: 0 0 8px var(--glow);
+}
+
+.library-body {
+  margin-top: 0.6rem;
+  width: 320px;
+  max-width: calc(100vw - 2rem);
+  padding: 0.9rem;
+  background: var(--bg-2);
+  border: 2px solid var(--fg-dim);
+  border-radius: 4px;
+}
+
+.library-title {
+  font-family: var(--ui-font);
+  font-size: 0.55rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--glow);
+  margin-bottom: 0.7rem;
+}
+
+.library-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.library-item {
+  display: grid;
+  grid-template-columns: 0.7rem 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.4rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.library-item.sel {
+  border-color: var(--accent);
+  background: var(--bg);
+  box-shadow: 0 0 8px var(--glow);
+}
+
+.li-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--fg-dim);
+  justify-self: center;
+}
+/* Active (currently-loaded) doc: filled marker. */
+.library-item.active .li-dot {
+  background: var(--fg-dim);
+  border-color: var(--fg-dim);
+}
+/* Unread arrival: accent-filled, glowing. */
+.li-dot.unread {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 6px var(--glow);
+}
+
+.li-title {
+  font-family: var(--word-font);
+  font-size: 1rem;
+  line-height: 1.2;
+  color: var(--fg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.library-item.active .li-title {
+  color: var(--accent-2);
+}
+
+.li-time {
+  font-family: var(--ui-font);
+  font-size: 0.55rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  white-space: nowrap;
+}

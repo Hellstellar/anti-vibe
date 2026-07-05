@@ -266,7 +266,8 @@
 
 .scroll-cue {
   position: fixed;
-  bottom: 3.4rem;
+  /* Clear of the contextual control bar pinned at the bottom. */
+  bottom: calc(4.8rem + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   font-size: 1.1rem;

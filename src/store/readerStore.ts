@@ -12,8 +12,11 @@ import {
   DEFAULT_THEME,
 } from '../lib/theme'
 import { CFG_KEY } from '../lib/storageKeys'
+import { docKeyFor, persistComments, restoreComments } from '../lib/comments'
 import type {
   Block,
+  Comment,
+  LibraryDoc,
   ReaderConfig,
   ReaderMode,
   Section,
@@ -81,6 +84,23 @@ function saveConfig(cfg: ReaderConfig) {
   }
 }
 
+/** Cap on retained received docs client-side (mirrors the bridge's MAX_DOCS). */
+const MAX_LIBRARY = 20
+
+/** Trim to MAX_LIBRARY, evicting oldest first but never the active doc. `lib`
+ *  is oldest-first, so this drops from the front. */
+function capLibrary(lib: LibraryDoc[], activeId: string | null): LibraryDoc[] {
+  if (lib.length <= MAX_LIBRARY) return lib
+  let excess = lib.length - MAX_LIBRARY
+  return lib.filter((d) => {
+    if (excess > 0 && d.documentId !== activeId) {
+      excess--
+      return false
+    }
+    return true
+  })
+}
+
 // Timer handle lives outside React/store state so it survives re-renders.
 let timer: ReturnType<typeof setTimeout> | null = null
 function clearTimer() {
@@ -111,7 +131,25 @@ interface ReaderState {
   /** Token index queued to RSVP after the Ready/Set/Focus countdown. */
   pendingRsvp: number | null
 
-  load: (src: string) => void
+  /** Raw source of the loaded document, retained for anchor quoting and
+   *  marker export (parseMarkdown otherwise discards it). */
+  src: string
+  /** Stable identity the current doc's comments persist under. */
+  docKey: string
+  /** Document title, if the loader supplied one (bridge path). */
+  docTitle: string
+  /** Review comments for the loaded document. */
+  comments: Comment[]
+  /** Every document received from the bridge this session, oldest first. Each
+   *  push is retained as its own entry so the reader can navigate between them
+   *  instead of each new push clobbering the last. */
+  library: LibraryDoc[]
+  /** documentId of the currently-loaded doc (null for landing paste/file). */
+  activeDocId: string | null
+  /** Whether the document-library overlay is open. */
+  libraryOpen: boolean
+
+  load: (src: string, meta?: { documentId?: string; title?: string }) => void
   exit: () => void
   startCountdown: () => void
   /** Enter the section reading view (called when the countdown finishes). */
@@ -139,6 +177,31 @@ interface ReaderState {
   /** Esc: up one level (RSVP/step -> reading -> heading). Never to landing. */
   goBack: () => void
   setCfg: (partial: Partial<ReaderConfig>) => void
+
+  /** Add a comment; returns its id. */
+  addComment: (c: Omit<Comment, 'id' | 'createdAt' | 'resolved'>) => string
+  /** Edit a comment's body. */
+  updateComment: (id: string, body: string) => void
+  /** Remove a comment. */
+  removeComment: (id: string) => void
+  /** Mark a comment resolved/unresolved. */
+  resolveComment: (id: string, resolved: boolean) => void
+  /** Drop all comments for the current document. */
+  clearComments: () => void
+
+  /** Add a bridge-pushed doc to the library. The first doc (nothing loaded yet)
+   *  opens immediately; a push arriving mid-review is appended silently (unread
+   *  badge) so the human is never yanked off what they're reading. Deduped by
+   *  documentId, so SSE replay on (re)connect is idempotent. */
+  receiveDoc: (doc: { documentId: string; markdown: string; title?: string; createdAt?: number }) => void
+  /** Load a library doc by id, restoring its own comments. */
+  switchTo: (documentId: string) => void
+  /** Open the library overlay (no-op when the library is empty). */
+  openLibrary: () => void
+  /** Close the library overlay. */
+  closeLibrary: () => void
+  /** Toggle the library overlay. */
+  toggleLibrary: () => void
 }
 
 export const useReader = create<ReaderState>((set, get) => {
@@ -221,10 +284,19 @@ export const useReader = create<ReaderState>((set, get) => {
     stepUnits: [],
     stepIndex: 0,
     pendingRsvp: null,
+    src: '',
+    docKey: '',
+    docTitle: '',
+    comments: [],
+    library: [],
+    activeDocId: null,
+    libraryOpen: false,
 
-    load: (src) => {
+    load: (src, meta) => {
       clearTimer()
       const { tokens, blocks, sections } = parseMarkdown(src)
+      const docKey = docKeyFor(src, meta?.documentId)
+      const activeDocId = meta?.documentId ?? null
       set({
         tokens,
         blocks,
@@ -236,6 +308,16 @@ export const useReader = create<ReaderState>((set, get) => {
         rampStart: 0,
         stepUnits: [],
         stepIndex: 0,
+        src,
+        docKey,
+        docTitle: meta?.title ?? '',
+        comments: restoreComments(docKey),
+        activeDocId,
+        // Opening a doc clears its unread flag and closes the overlay.
+        library: activeDocId
+          ? get().library.map((d) => (d.documentId === activeDocId ? { ...d, unread: false } : d))
+          : get().library,
+        libraryOpen: false,
       })
     },
 
@@ -252,6 +334,15 @@ export const useReader = create<ReaderState>((set, get) => {
         rampStart: 0,
         stepUnits: [],
         stepIndex: 0,
+        src: '',
+        docKey: '',
+        docTitle: '',
+        comments: [],
+        // Leaving to landing drops the session library; a tab reload re-hydrates
+        // it from the bridge's /__antivibe/docs catch-up.
+        library: [],
+        activeDocId: null,
+        libraryOpen: false,
       })
     },
 
@@ -386,5 +477,70 @@ export const useReader = create<ReaderState>((set, get) => {
       saveConfig(next)
       set({ cfg: next })
     },
+
+    addComment: (c) => {
+      const { comments, docKey } = get()
+      const id = `c${comments.length + 1}_${Date.now().toString(36)}`
+      const next = [...comments, { ...c, id, createdAt: Date.now(), resolved: false }]
+      set({ comments: next })
+      persistComments(docKey, next)
+      return id
+    },
+
+    updateComment: (id, body) => {
+      const next = get().comments.map((c) => (c.id === id ? { ...c, body } : c))
+      set({ comments: next })
+      persistComments(get().docKey, next)
+    },
+
+    removeComment: (id) => {
+      const next = get().comments.filter((c) => c.id !== id)
+      set({ comments: next })
+      persistComments(get().docKey, next)
+    },
+
+    resolveComment: (id, resolved) => {
+      const next = get().comments.map((c) => (c.id === id ? { ...c, resolved } : c))
+      set({ comments: next })
+      persistComments(get().docKey, next)
+    },
+
+    clearComments: () => {
+      set({ comments: [] })
+      persistComments(get().docKey, [])
+    },
+
+    receiveDoc: (incoming) => {
+      if (!incoming.markdown || !incoming.documentId) return
+      const { library, tokens, activeDocId } = get()
+      if (library.some((d) => d.documentId === incoming.documentId)) return // dedupe replay
+      const entry: LibraryDoc = {
+        documentId: incoming.documentId,
+        title: incoming.title?.trim() || 'Untitled',
+        markdown: incoming.markdown,
+        createdAt: incoming.createdAt ?? Date.now(),
+        unread: true,
+      }
+      const isFirst = tokens.length === 0
+      set({ library: capLibrary([...library, entry], isFirst ? entry.documentId : activeDocId) })
+      // First doc (fresh tab / landing with nothing open) shows immediately.
+      if (isFirst) get().load(entry.markdown, { documentId: entry.documentId, title: entry.title })
+    },
+
+    switchTo: (documentId) => {
+      const entry = get().library.find((d) => d.documentId === documentId)
+      if (!entry) return
+      // load() restores the doc's own comments but leaves mode 'idle'. ReaderView
+      // is already mounted (no remount to fire its enterReading effect), so drive
+      // the heading view explicitly — same entry point as a first load.
+      get().load(entry.markdown, { documentId: entry.documentId, title: entry.title })
+      get().enterReading()
+    },
+
+    openLibrary: () => {
+      if (get().library.length > 0) set({ libraryOpen: true })
+    },
+    closeLibrary: () => set({ libraryOpen: false }),
+    toggleLibrary: () => (get().libraryOpen ? set({ libraryOpen: false }) : get().openLibrary()),
   }
 })

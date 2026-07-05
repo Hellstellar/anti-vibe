@@ -139,4 +139,62 @@ export interface StepUnit {
   node?: RootContent
   /** For tableRow: index into the table node's children (header is 0). */
   rowIndex?: number
+  /** For code: inclusive line range of the node's value shown by this unit.
+   *  Large blocks are paged (see lib/codePages.ts); absent => whole value. */
+  lineStart?: number
+  lineEnd?: number
+}
+
+/** How much of the document a comment covers. 'document' => no anchor. */
+export type CommentScope = 'span' | 'block' | 'section' | 'document'
+
+/**
+ * What a comment points at. Carries BOTH a precise capture-time pointer
+ * (blockId + token range, used for in-session highlighting and for mapping to
+ * mdast char offsets when exporting markers) and a content-based selector
+ * (quote/prefix/suffix, the W3C TextQuoteSelector pattern). The indices are
+ * session-scoped — they go stale if the document is edited and re-parsed — so
+ * the durable cross-edit anchor is the quote, which is re-resolved against the
+ * current source on reload (see resolveAnchor).
+ */
+export interface CommentAnchor {
+  /** Index into blocks[]. Maps to block.node.position offsets for markers. */
+  blockId: number
+  /** Section the block lives in. Denormalized for prompt headings + re-locate. */
+  sectionId: number
+  sectionTitle: string
+  /** Inclusive token-index range at capture time. A point has start === end. */
+  tokenStart: number
+  tokenEnd: number
+  /** Exact anchored source text (TextQuoteSelector.exact). */
+  quote: string
+  /** Up to ~24 chars of source before/after the quote, to disambiguate
+   *  repeated quotes. Empty for 'span' scope (located by quote alone). */
+  prefix: string
+  suffix: string
+}
+
+/** A document received from the bridge, retained so the reader can navigate
+ *  between pushes instead of each new push clobbering the last. */
+export interface LibraryDoc {
+  documentId: string
+  title: string
+  markdown: string
+  /** Epoch ms the push arrived (from the bridge, or receipt time). */
+  createdAt: number
+  /** True until the reader has opened it — drives the "new arrival" badge. */
+  unread: boolean
+}
+
+/** A single piece of review feedback captured in the reader. */
+export interface Comment {
+  id: string
+  /** null => document-level / general note (no anchor). */
+  anchor: CommentAnchor | null
+  scope: CommentScope
+  /** The user's feedback text. */
+  body: string
+  /** Epoch ms at capture. */
+  createdAt: number
+  resolved: boolean
 }

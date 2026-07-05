@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useReader } from '../store/readerStore'
 import type { Block, Token, WordToken } from '../lib/types'
 import './SectionView.css'
@@ -59,10 +59,11 @@ function AtomicBlock({ block }: { block: Block }) {
   )
 }
 
-function Word({ w, active }: { w: WordToken; active: boolean }) {
+function Word({ w, active, commented }: { w: WordToken; active: boolean; commented: boolean }) {
   const cls = [
     'pw',
     active ? 'active' : '',
+    commented ? 'commented' : '',
     w.emphasis.includes('strong') ? 'strong' : '',
     w.emphasis.includes('em') ? 'em' : '',
   ]
@@ -82,10 +83,12 @@ function ContentBlock({
   block,
   tokens,
   currentIndex,
+  commented,
 }: {
   block: Block
   tokens: Token[]
   currentIndex: number
+  commented: Set<number>
 }) {
   if (block.type === 'heading' || block.type === 'code' || block.type === 'table') {
     return <AtomicBlock block={block} />
@@ -124,7 +127,12 @@ function ContentBlock({
               style={{ marginLeft: `${indent}em` }}
             >
               {seg.map((w) => (
-                <Word key={w.index} w={w} active={w.index === currentIndex} />
+                <Word
+                  key={w.index}
+                  w={w}
+                  active={w.index === currentIndex}
+                  commented={commented.has(w.index)}
+                />
               ))}
             </div>
           )
@@ -137,7 +145,12 @@ function ContentBlock({
   return (
     <Tag className={`sv-block ${block.type}`}>
       {words.map((w) => (
-        <Word key={w.index} w={w} active={w.index === currentIndex} />
+        <Word
+          key={w.index}
+          w={w}
+          active={w.index === currentIndex}
+          commented={commented.has(w.index)}
+        />
       ))}
     </Tag>
   )
@@ -150,8 +163,19 @@ export default function SectionView() {
   const currentSection = useReader((s) => s.currentSection)
   const revealed = useReader((s) => s.revealed)
   const currentIndex = useReader((s) => s.currentIndex)
+  const comments = useReader((s) => s.comments)
   const rsvpFrom = useReader((s) => s.rsvpFrom)
   const gotoSectionRevealed = useReader((s) => s.gotoSectionRevealed)
+
+  // Token indices carrying an unresolved comment, for the wavy underline.
+  const commented = useMemo(() => {
+    const set = new Set<number>()
+    for (const c of comments) {
+      if (c.resolved || !c.anchor) continue
+      for (let i = c.anchor.tokenStart; i <= c.anchor.tokenEnd; i++) set.add(i)
+    }
+    return set
+  }, [comments])
 
   const scrollRef = useRef<HTMLDivElement>(null)
   const [canScrollDown, setCanScrollDown] = useState(false)
@@ -222,6 +246,7 @@ export default function SectionView() {
             block={b}
             tokens={tokens}
             currentIndex={currentIndex}
+            commented={commented}
           />
         ))}
         {!hasContent && (

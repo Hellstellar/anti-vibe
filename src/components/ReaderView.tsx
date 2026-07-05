@@ -4,6 +4,7 @@ import Countdown from './Countdown'
 import RsvpStage from './RsvpStage'
 import SectionView from './SectionView'
 import StepView from './StepView'
+import ControlBar from './ControlBar'
 import './ReaderView.css'
 
 const sectionPane = () => document.querySelector<HTMLElement>('.section-context')
@@ -68,6 +69,17 @@ export default function ReaderView() {
       if (tag === 'TEXTAREA' || tag === 'INPUT') return
       const s = useReader.getState()
       const meta = e.metaKey || e.ctrlKey
+
+      // While the library overlay is open it owns the keyboard (↑↓/enter/esc/l);
+      // don't let reader navigation fire underneath it.
+      if (s.libraryOpen) return
+
+      // `l`: open the document library (no-op when nothing has been pushed).
+      if (e.key === 'l' && !meta && !e.shiftKey && !e.altKey) {
+        e.preventDefault()
+        s.openLibrary()
+        return
+      }
 
       // Cmd/Ctrl + arrow: jump to the next/prev section (reveal view).
       if (meta && e.key.startsWith('Arrow')) {
@@ -167,6 +179,8 @@ export default function ReaderView() {
           <span className="advance-icon">↓</span>
         </button>
       )}
+
+      <ControlBar />
     </div>
   )
 }

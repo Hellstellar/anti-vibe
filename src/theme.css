@@ -80,6 +80,9 @@ html,
 body,
 #root {
   height: 100%;
+  /* dvh tracks the *visible* viewport so mobile browser chrome (address bar)
+     doesn't clip the reader or hide the bottom control bar. */
+  height: 100dvh;
   margin: 0;
 }
 
@@ -369,5 +372,29 @@ button {
   }
   body {
     transition: none;
+  }
+}
+
+/* ---- Mobile / small screens ----------------------------------------------
+   The app is keyboard-first on desktop; on a phone the ControlBar supplies the
+   CTAs, so here we just make the chrome fit and keep content clear of the bar. */
+@media (max-width: 640px) {
+  /* Keep the top chrome buttons reachable but compact. */
+  .help-body {
+    width: min(20rem, calc(100vw - 2rem));
+  }
+
+  /* Reserve room at the bottom so the fixed ControlBar never covers content. */
+  .section-context,
+  .step-body {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+  .heading-list {
+    padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Keyboard-only hint is meaningless on touch — the ControlBar replaces it. */
+  .landing-hint {
+    display: none;
   }
 }

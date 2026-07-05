@@ -9,6 +9,7 @@ const COMMON: Row[] = [
   ['⌘↓ / ⌘→', 'next section'],
   ['⌘↑ / ⌘←', 'previous section'],
   ['⌘ enter', 'RSVP this section'],
+  ['l', 'browse documents'],
   ['esc', 'back one level'],
   ['✕', 'exit to landing'],
 ]
@@ -36,6 +37,8 @@ const VIEWS: Record<string, { title: string; rows: Row[] }> = {
     rows: [
       ['enter', 'step through this section'],
       ['click a word', 'RSVP from that word'],
+      ['select + c', 'comment on selection'],
+      ['c', 'comment on this section'],
       ['↑ / ↓', 'scroll'],
       ['← / →', 'scroll wide content'],
       ['space', 'pause / resume RSVP'],
@@ -47,6 +50,7 @@ const VIEWS: Record<string, { title: string; rows: Row[] }> = {
     rows: [
       ['→ / enter', 'next unit'],
       ['← / shift+enter', 'previous unit'],
+      ['c', 'comment on this unit'],
       ['↑ / ↓', 'scroll the unit'],
       ...COMMON,
     ],

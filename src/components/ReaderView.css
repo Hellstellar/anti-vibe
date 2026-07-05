@@ -27,7 +27,8 @@
 /* Appears at the bottom once a section is finished — click to go next. */
 .advance-btn {
   position: fixed;
-  bottom: 1.8rem;
+  /* Centered, raised so it sits clear above the control bar below it. */
+  bottom: calc(4.8rem + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   z-index: 10000; /* above the CRT overlay */
