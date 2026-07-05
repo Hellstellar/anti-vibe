@@ -162,6 +162,9 @@ interface ReaderState {
   enterKey: () => void
   nextSection: () => void
   prevSection: () => void
+  /** Select a heading without revealing it (arrow keys, or scrolling the
+   *  heading list to a new row settling it as current). */
+  selectSection: (idx: number) => void
   /** Go to a section and reveal it (used by hold-to-advance). */
   gotoSectionRevealed: (idx: number) => void
   /** Start RSVP for the current section from token `index` (runs the
@@ -405,6 +408,7 @@ export const useReader = create<ReaderState>((set, get) => {
 
     nextSection: () => gotoSection(get().currentSection + 1),
     prevSection: () => gotoSection(get().currentSection - 1),
+    selectSection: (idx) => gotoSection(idx),
     // Like gotoSection but lands in the revealed reading view.
     gotoSectionRevealed: (idx: number) => {
       clearTimer()

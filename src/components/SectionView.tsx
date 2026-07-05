@@ -165,6 +165,7 @@ export default function SectionView() {
   const currentIndex = useReader((s) => s.currentIndex)
   const comments = useReader((s) => s.comments)
   const gotoSectionRevealed = useReader((s) => s.gotoSectionRevealed)
+  const selectSection = useReader((s) => s.selectSection)
   const selectWord = useReader((s) => s.selectWord)
 
   // Token indices carrying an unresolved comment, for the wavy underline.
@@ -230,6 +231,7 @@ export default function SectionView() {
           sections={sections}
           current={currentSection}
           onPick={gotoSectionRevealed}
+          onScrollSettle={selectSection}
         />
       </div>
     )
@@ -268,12 +270,19 @@ function HeadingList({
   sections,
   current,
   onPick,
+  onScrollSettle,
 }: {
   sections: ReturnType<typeof useReader.getState>['sections']
   current: number
   onPick: (i: number) => void
+  /** Called with the row nearest center once a manual scroll settles, so the
+   *  highlighted heading tracks what's actually centered (picker-wheel style)
+   *  instead of staying wherever arrow keys/click last left it. */
+  onScrollSettle: (i: number) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
+  const settleTimer = useRef<ReturnType<typeof setTimeout>>()
+
   useEffect(() => {
     // rAF so the active row's (larger) size is laid out before we center it.
     const id = requestAnimationFrame(() => {
@@ -284,8 +293,31 @@ function HeadingList({
     return () => cancelAnimationFrame(id)
   }, [current])
 
+  useEffect(() => () => clearTimeout(settleTimer.current), [])
+
+  const onScroll = () => {
+    clearTimeout(settleTimer.current)
+    settleTimer.current = setTimeout(() => {
+      const el = ref.current
+      if (!el) return
+      const mid = el.getBoundingClientRect().top + el.clientHeight / 2
+      const rows = [...el.querySelectorAll<HTMLElement>('.hl-row')]
+      let nearest = 0
+      let nearestDist = Infinity
+      rows.forEach((row, i) => {
+        const rowMid = row.getBoundingClientRect().top + row.offsetHeight / 2
+        const dist = Math.abs(rowMid - mid)
+        if (dist < nearestDist) {
+          nearestDist = dist
+          nearest = i
+        }
+      })
+      if (nearest !== current) onScrollSettle(nearest)
+    }, 120)
+  }
+
   return (
-    <div className="heading-list" ref={ref}>
+    <div className="heading-list" ref={ref} onScroll={onScroll}>
       {sections.map((s, i) => (
         <div
           key={s.id}
