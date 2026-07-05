@@ -231,7 +231,7 @@ export default function SectionView() {
           sections={sections}
           current={currentSection}
           onPick={gotoSectionRevealed}
-          onScrollSettle={selectSection}
+          onScrollSelect={selectSection}
         />
       </div>
     )
@@ -270,20 +270,27 @@ function HeadingList({
   sections,
   current,
   onPick,
-  onScrollSettle,
+  onScrollSelect,
 }: {
   sections: ReturnType<typeof useReader.getState>['sections']
   current: number
   onPick: (i: number) => void
-  /** Called with the row nearest center once a manual scroll settles, so the
-   *  highlighted heading tracks what's actually centered (picker-wheel style)
-   *  instead of staying wherever arrow keys/click last left it. */
-  onScrollSettle: (i: number) => void
+  /** Called live during a manual scroll with the row nearest center, so the
+   *  highlight tracks the scroll (picker-wheel style) instead of staying
+   *  wherever arrow keys/click last left it. */
+  onScrollSelect: (i: number) => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
   const settleTimer = useRef<ReturnType<typeof setTimeout>>()
+  // True while `current` is being driven by the user's own scrolling — the
+  // centering effect must not fight the finger/wheel with scrollIntoView.
+  const fromScroll = useRef(false)
 
   useEffect(() => {
+    if (fromScroll.current) {
+      fromScroll.current = false
+      return
+    }
     // rAF so the active row's (larger) size is laid out before we center it.
     const id = requestAnimationFrame(() => {
       ref.current
@@ -295,25 +302,39 @@ function HeadingList({
 
   useEffect(() => () => clearTimeout(settleTimer.current), [])
 
+  const nearestRow = (): number => {
+    const el = ref.current
+    if (!el) return 0
+    const mid = el.getBoundingClientRect().top + el.clientHeight / 2
+    const rows = [...el.querySelectorAll<HTMLElement>('.hl-row')]
+    let nearest = 0
+    let nearestDist = Infinity
+    rows.forEach((row, i) => {
+      const rowMid = row.getBoundingClientRect().top + row.offsetHeight / 2
+      const dist = Math.abs(rowMid - mid)
+      if (dist < nearestDist) {
+        nearestDist = dist
+        nearest = i
+      }
+    })
+    return nearest
+  }
+
   const onScroll = () => {
+    // Live: retarget the highlight as the scroll moves (scroll events already
+    // fire at most ~once per frame, so no extra throttling needed).
+    const nearest = nearestRow()
+    if (nearest !== current) {
+      fromScroll.current = true
+      onScrollSelect(nearest)
+    }
+    // Settled: snap the (already-selected) nearest row precisely to center.
     clearTimeout(settleTimer.current)
     settleTimer.current = setTimeout(() => {
-      const el = ref.current
-      if (!el) return
-      const mid = el.getBoundingClientRect().top + el.clientHeight / 2
-      const rows = [...el.querySelectorAll<HTMLElement>('.hl-row')]
-      let nearest = 0
-      let nearestDist = Infinity
-      rows.forEach((row, i) => {
-        const rowMid = row.getBoundingClientRect().top + row.offsetHeight / 2
-        const dist = Math.abs(rowMid - mid)
-        if (dist < nearestDist) {
-          nearestDist = dist
-          nearest = i
-        }
-      })
-      if (nearest !== current) onScrollSettle(nearest)
-    }, 120)
+      ref.current
+        ?.querySelector<HTMLElement>('.hl-row.active')
+        ?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }, 150)
   }
 
   return (
