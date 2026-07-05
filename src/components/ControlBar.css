@@ -17,6 +17,11 @@
   justify-content: center;
   width: 2.6rem;
   height: 2.6rem;
+  /* Not the theme UI font: CRT's pixel font lacks these arrow/bar glyphs, so
+     each would fall back to a different font with different metrics and the
+     icons would sit at visibly different heights. One neutral stack with full
+     symbol coverage keeps all three buttons aligned in both themes. */
+  font-family: system-ui, -apple-system, 'Segoe UI Symbol', sans-serif;
   font-size: 1.1rem;
   line-height: 1;
   color: var(--fg-dim);
