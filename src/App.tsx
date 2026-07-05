@@ -13,6 +13,29 @@ import CrtOverlay from './components/CrtOverlay'
 export default function App() {
   const hasContent = useReader((s) => s.tokens.length > 0)
 
+  // Trap the hardware/edge-swipe back gesture while the reader is open. Mobile
+  // has no in-app back button — only the OS gesture — and a single-page app
+  // with no extra history entry treats that gesture as "leave the page", which
+  // on a standalone PWA means closing it outright. Pushing a barrier entry and
+  // re-arming it on every pop makes back step up one level (RSVP/step ->
+  // reading -> heading -> landing) instead, matching Esc / the Back CTA.
+  useEffect(() => {
+    if (!hasContent) return
+    history.pushState({ antivibeReader: true }, '')
+    const onPopState = () => {
+      const s = useReader.getState()
+      if (s.tokens.length === 0) return // already exited (e.g. via ✕)
+      if (s.mode === 'section' && !s.revealed) {
+        s.exit()
+      } else {
+        s.goBack()
+        history.pushState({ antivibeReader: true }, '')
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [hasContent])
+
   // Play theme SFX on meaningful store transitions.
   useEffect(() => {
     let prev = useReader.getState()

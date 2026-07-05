@@ -161,7 +161,16 @@ export default function ReaderView() {
   return (
     <div className="reader">
       <div className="screen-boot" aria-hidden="true" />
-      <button className="exit-button" onClick={exit} title="Exit to landing">
+      <button
+        className="exit-button"
+        onClick={() => {
+          exit()
+          // Consume the back-gesture barrier App.tsx pushed on open — otherwise
+          // it's still sitting in history and a later back needs an extra press.
+          history.back()
+        }}
+        title="Exit to landing"
+      >
         ✕
       </button>
 
