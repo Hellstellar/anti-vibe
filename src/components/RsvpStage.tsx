@@ -125,7 +125,22 @@ export default function RsvpStage() {
     const word = wordRef.current
     const piv = pivotRef.current
     if (!word || !piv) return
+    // Shrink-to-fit first: the word is nowrap at a viewport-relative size and
+    // the pivot gets pinned to screen center, so what must fit is each SIDE's
+    // span from the pivot within half the viewport — total width alone isn't
+    // enough (a long tail after the pivot would still run off the edge).
+    // Reset, measure both spans, scale by the worst one.
+    word.style.fontSize = ''
     word.style.transform = 'translateX(0px)'
+    const rect0 = word.getBoundingClientRect()
+    const piv0 = piv.getBoundingClientRect()
+    const pivX0 = piv0.left + piv0.width / 2
+    const halfAvail = window.innerWidth * 0.47
+    const span = Math.max(pivX0 - rect0.left, rect0.right - pivX0)
+    if (span > halfAvail) {
+      const cur = parseFloat(getComputedStyle(word).fontSize)
+      word.style.fontSize = `${Math.max(16, cur * (halfAvail / span))}px`
+    }
     const pivotCenter = piv.getBoundingClientRect()
     const pivotCenterX = pivotCenter.left + pivotCenter.width / 2
     const target = window.innerWidth / 2
