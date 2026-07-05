@@ -190,6 +190,25 @@
   letter-spacing: 0.08em;
 }
 
+@media (max-width: 640px) {
+  /* 8vw side padding is ~31px on a phone — narrower than the fixed side
+     arrows, which then sat on top of the text. Reserve real room for slimmer
+     edge-hugging arrows, and clear the bottom control bar. */
+  .step {
+    padding: 5vh 3rem calc(4.6rem + env(safe-area-inset-bottom, 0px));
+  }
+  .step-nav {
+    font-size: 1.8rem;
+    padding: 0.4rem 0.5rem;
+  }
+  .step-nav.prev {
+    left: 0.25rem;
+  }
+  .step-nav.next {
+    right: 0.25rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .step-context,
   .step-body {
