@@ -49,6 +49,16 @@
   letter-spacing: 0.04em;
 }
 
+/* Icon-only buttons (e.g. RSVP) stay a small square instead of growing to
+   match the labeled buttons either side of them — an icon doesn't need the
+   same footprint as a word, and shrinking it reads as secondary. */
+.cb-icon {
+  flex: 0 0 auto;
+  width: 2.6rem;
+  padding: 0;
+  font-size: 1.05rem;
+}
+
 /* The primary action stands out — it's the "focus deeper" path. */
 .cb-primary {
   color: var(--bg);
@@ -86,16 +96,59 @@
     max-width: none;
     padding: 0 0.75rem;
     bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+    gap: 0.4rem;
   }
+  /* Ghost style on mobile — the bar is on-screen for the whole review, so it
+     should read as a quiet, always-available strip rather than a CTA row
+     competing with the content above it. */
   .cb-btn {
     flex: 1;
-    min-height: 3rem;
-    font-size: 0.62rem;
-    padding: 0.5rem 0.6rem;
+    min-height: 2.6rem;
+    font-size: 0.58rem;
+    padding: 0.4rem 0.5rem;
+    background: transparent;
+    border-width: 1px;
+    box-shadow: none;
   }
-  /* Primary carries the most weight on the small bar. */
+  .cb-icon {
+    flex: 0 0 auto;
+    width: 2.4rem;
+    padding: 0;
+  }
+  /* A tap can leave :hover "stuck" on touch browsers — override the desktop
+     glow so it never lingers after the finger lifts. */
+  .cb-btn:hover {
+    color: var(--fg-dim);
+    border-color: var(--fg-dim);
+    box-shadow: none;
+  }
+  .cb-btn:active {
+    background: var(--bg-2);
+  }
   .cb-primary {
-    flex: 1.4;
+    flex: 1.2;
+    background: transparent;
+    color: var(--accent);
+    box-shadow: none;
+  }
+  .cb-primary .cb-sub {
+    color: var(--accent);
+    opacity: 0.8;
+  }
+  .cb-primary:hover {
+    color: var(--accent);
+    border-color: var(--accent-2);
+    background: transparent;
+  }
+  .cb-primary:active {
+    background: var(--bg-2);
+    color: var(--accent);
+  }
+  [data-theme='cream'] .cb-btn {
+    box-shadow: none;
+  }
+  [data-theme='cream'] .cb-primary {
+    color: var(--accent);
   }
 }
 

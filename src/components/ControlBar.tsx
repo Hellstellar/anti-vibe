@@ -47,11 +47,12 @@ export default function ControlBar() {
       )}
       {speed && (
         <button
-          className="cb-btn cb-speed"
+          className="cb-btn cb-icon cb-speed"
           onClick={speed}
           title="Speed-read this section (RSVP)"
+          aria-label="Speed-read this section (RSVP)"
         >
-          RSVP
+          <span aria-hidden="true">⚡</span>
         </button>
       )}
       {primary && (
