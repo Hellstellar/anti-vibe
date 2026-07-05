@@ -264,6 +264,19 @@
   color: var(--orp);
   text-shadow: 0 0 16px var(--glow);
 }
+/* Cream has no glow to carry the cursor, and its --orp red alone is easy to
+   miss in a page of brown prose — fill the word instead. The box-shadow
+   spread paints the pill without adding padding (no layout shift). */
+[data-theme='cream'] .pw.active {
+  color: #fff;
+  background-color: var(--accent);
+  box-shadow: 0 0 0 0.14em var(--accent);
+  text-shadow: none;
+}
+[data-theme='cream'] .pw:hover {
+  background-color: rgba(168, 90, 40, 0.18);
+  box-shadow: 0 0 0 0.14em rgba(168, 90, 40, 0.18);
+}
 
 .scroll-cue {
   position: fixed;
