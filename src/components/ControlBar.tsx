@@ -36,7 +36,7 @@ export default function ControlBar() {
     back = null // heading view is the top level
     primary = { icon: '›', aria: 'Open this section', fn: focusDeeper }
   } else if (mode === 'section') {
-    primary = { icon: '›', aria: 'Step through this section', fn: focusDeeper }
+    primary = { icon: '≡', aria: 'Step through this section', fn: focusDeeper }
     speed = { icon: '»', aria: 'Speed-read this section (RSVP)', fn: rsvpHere }
   } else if (mode === 'stepping') {
     // prev/next are the big side arrows in StepView; bar just offers Back.
