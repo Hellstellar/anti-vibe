@@ -44,15 +44,25 @@ function UnitBody({ unit }: { unit: StepUnit }) {
           {words(unit.words ?? [])}
         </p>
       )
-    case 'code':
+    case 'code': {
+      const value: string = (unit.node as any)?.value ?? ''
+      // Paged unit -> show only its line range (see lib/codePages.ts).
+      const text =
+        unit.lineStart != null
+          ? value
+              .split('\n')
+              .slice(unit.lineStart, (unit.lineEnd ?? unit.lineStart) + 1)
+              .join('\n')
+          : value
       return (
         <pre className="step-code">
           {(unit.node as any)?.lang && (
             <span className="step-code-lang">{(unit.node as any).lang}</span>
           )}
-          <code>{(unit.node as any)?.value}</code>
+          <code>{text}</code>
         </pre>
       )
+    }
     case 'image': {
       const node: any = unit.node
       const img =

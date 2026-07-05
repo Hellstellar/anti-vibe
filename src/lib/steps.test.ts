@@ -85,6 +85,20 @@ describe('buildSteps', () => {
     const u = build('# H\n\n```js\nconst x = 1\n```')
     expect(u).toHaveLength(1)
     expect(u[0].kind).toBe('code')
+    expect(u[0].label).toBe('CODE')
+  })
+
+  it('pages a large code block into multiple code units with position labels', () => {
+    const body = Array.from({ length: 60 }, (_, i) => `line ${i}`).join('\n')
+    const u = build(`# H\n\n\`\`\`js\n${body}\n\`\`\``)
+    expect(u.length).toBeGreaterThan(1)
+    expect(u.every((x) => x.kind === 'code')).toBe(true)
+    expect(u[0].label).toBe(`CODE · 1/${u.length}`)
+    // Pages share the block (groupId) and advance through its lines in order.
+    expect(new Set(u.map((x) => x.groupId)).size).toBe(1)
+    for (let i = 1; i < u.length; i++) {
+      expect(u[i].lineStart!).toBeGreaterThan(u[i - 1].lineEnd!)
+    }
   })
 
   it('returns no units for a heading-only section', () => {

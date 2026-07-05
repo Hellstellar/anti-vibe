@@ -1,4 +1,5 @@
 import type { Block, Section, StepUnit, Token, WordToken } from './types'
+import { paginateCode } from './codePages'
 
 /** Group words into sentences, breaking after .!? (with trailing quotes/brackets). */
 export function splitSentences(words: WordToken[]): WordToken[][] {
@@ -97,9 +98,22 @@ export function buildSteps(
         }
         break
       }
-      case 'code':
-        units.push({ kind: 'code', label: 'CODE', groupId: bi, node: b.node })
+      case 'code': {
+        // A big block becomes several fixed-window pages instead of one wall.
+        const code = b.node as { value?: string; lang?: string | null }
+        const pages = paginateCode(code.value ?? '', code.lang)
+        pages.forEach((p, i) => {
+          units.push({
+            kind: 'code',
+            label: pages.length === 1 ? 'CODE' : `CODE · ${i + 1}/${pages.length}`,
+            groupId: bi,
+            node: b.node,
+            lineStart: p.start,
+            lineEnd: p.end,
+          })
+        })
         break
+      }
       default:
         // standalone image atomic, etc.
         units.push({ kind: 'image', label: 'IMAGE', groupId: bi, node: b.node })
