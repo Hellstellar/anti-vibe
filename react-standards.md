@@ -2,7 +2,7 @@
 
 **Version 2.0.0** — applies to all React development in this repository.
 
-Standards are organized into **groups** (RS-01 … RS-20); each group is broken into atomic
+Standards are organized into **groups** (RS-01 … RS-21); each group is broken into atomic
 **sub-standards** (RS-01.1, RS-01.2, …). Every sub-standard is normative ("must"/"never"),
 is tracked as its own Jira Story under epic **LEAPDATAOS-1140 — Team Productivity - Standards -
 React**, and maps to a section of [`AGENTS.md`](../best-practices/AGENTS.md), which carries the
@@ -679,3 +679,46 @@ re-spelled as bare string literals.
 **Why it matters:** Loose string literals allow typos and invalid values the type system can't
 catch, and make the value set impossible to evolve safely.
 **Reference:** AGENTS.md §15.5, §8.
+
+## RS-21 — Mobile & touch
+
+### RS-21.1 — Every UI change is verified at phone width
+**Standard:** Any change that touches layout, positioning, or interaction is checked at a narrow
+viewport (~390px wide) before it ships: nothing cropped or overflowing horizontally, no fixed
+elements overlapping each other or the content, and every action still reachable.
+**Why it matters:** The app is developed on desktop but reviewed on phones; a desktop-only check
+repeatedly shipped overlapping fixed elements and cropped text that were invisible at 1400px.
+
+### RS-21.2 — Fixed/floating UI respects the bottom bar and safe areas
+**Standard:** Anything `position: fixed` near the bottom edge offsets itself by
+`env(safe-area-inset-bottom, 0px)` and, on small screens (the shared `max-width: 640px`
+breakpoint), clears the control bar (raise `bottom` past it, as `.advance-btn`, `.scroll-cue`,
+and `.wpm-indicator` do). New floating elements must state which existing fixed elements share
+their corner and how they avoid colliding.
+**Why it matters:** The bottom band is crowded (control bar, WPM readout, advance button, comment
+button) and iOS home-indicator insets eat into it; each element placed without checking the
+others has produced an overlap bug.
+
+### RS-21.3 — Every keyboard interaction has a touch path; no hover-only affordances
+**Standard:** Each keyboard shortcut has an on-screen equivalent (control bar, tap, or visible
+button), and nothing is discoverable only via `:hover`. Touch styling overrides sticky hover
+states under `@media (max-width: 640px)` (or `hover: none`) so a tap never leaves a lingering
+hover look.
+**Why it matters:** The reader is keyboard-first on desktop; without a deliberate touch
+equivalent a feature simply doesn't exist on a phone (comments and RSVP were unreachable until
+retrofitted).
+
+### RS-21.4 — Viewport-sized text shrinks to fit, never crops
+**Standard:** Text sized relative to the viewport that cannot wrap (`white-space: nowrap`, or
+units that must fit one screen) is measured and scaled down to fit the width/height available
+(the `RsvpStage`/`StepView` measure-and-shrink pattern) instead of relying on `overflow: hidden`.
+**Why it matters:** A clamp() lower bound that fits a desktop still crops long words on a 390px
+screen, and cropped RSVP words are unreadable — the feature silently breaks.
+
+### RS-21.5 — Icons are plain text glyphs in one font, never emoji
+**Standard:** Icon-only buttons use plain text/dingbat glyphs (`‹ › » ‖ ▸ ⇢`) with an explicit
+font stack that covers them (`system-ui, -apple-system, 'Segoe UI Symbol', sans-serif` on
+`.cb-btn`), plus `aria-label`/`title` for the meaning. Pictographic emoji are banned in icons.
+**Why it matters:** Emoji render in a fixed multicolor font that ignores CSS `color` (so they
+can't follow the theme), and the CRT pixel font lacks symbol glyphs — per-glyph fallback puts
+each icon in a different font at a visibly different baseline.
