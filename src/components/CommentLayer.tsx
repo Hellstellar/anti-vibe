@@ -86,6 +86,10 @@ export default function CommentLayer() {
   const [body, setBody] = useState('')
   const [panelOpen, setPanelOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  // Live token range of the current text selection, tracked so a touch tap on
+  // the Comment button (which would otherwise collapse the selection) still
+  // knows what to anchor to. Also drives the button's "on selection" label.
+  const [selRange, setSelRange] = useState<[number, number] | null>(null)
 
   const panelRef = useRef<HTMLDivElement>(null)
   const textRef = useRef<HTMLTextAreaElement>(null)
@@ -106,8 +110,55 @@ export default function CommentLayer() {
     setDraft(null)
   }
 
-  // `c` captures a comment for the current focus. Ignored while typing or while
-  // a composer is already open.
+  // Open the composer for the current focus. Prefers the tracked selection (so
+  // touch taps that collapse the live selection still anchor to a span), then
+  // falls back to the focused step unit / open section / general note.
+  const capture = () => {
+    if (draft) return
+    const s = useReader.getState()
+    if (s.tokens.length === 0) return
+    const range = selRange ?? selectedRange()
+    let d: Draft | null
+    if (range) {
+      d = {
+        scope: 'span',
+        anchor: buildAnchor({
+          src: s.src,
+          tokens: s.tokens,
+          blocks: s.blocks,
+          sections: s.sections,
+          tokenStart: range[0],
+          tokenEnd: range[1],
+          scope: 'span',
+        }),
+      }
+    } else {
+      d = buildDraft()
+    }
+    if (d) openComposer(d)
+  }
+
+  // Track the selection so the (touch) Comment button knows the span even after
+  // the tap clears it. rAF-coalesced; skips the token scan when collapsed.
+  useEffect(() => {
+    if (!hasContent) {
+      setSelRange(null)
+      return
+    }
+    let raf = 0
+    const onSel = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => setSelRange(selectedRange()))
+    }
+    document.addEventListener('selectionchange', onSel)
+    return () => {
+      cancelAnimationFrame(raf)
+      document.removeEventListener('selectionchange', onSel)
+    }
+  }, [hasContent])
+
+  // `c` captures a comment for the current focus (desktop shortcut). Ignored
+  // while typing or while a composer is already open.
   useEffect(() => {
     if (!hasContent) return
     const onKey = (e: KeyboardEvent) => {
@@ -115,14 +166,13 @@ export default function CommentLayer() {
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'TEXTAREA' || tag === 'INPUT') return
       if (draft) return
-      const d = buildDraft()
-      if (!d) return
       e.preventDefault()
-      openComposer(d)
+      capture()
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [hasContent, draft])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasContent, draft, selRange])
 
   const copyPrompt = async () => {
     const prompt = buildFeedbackPrompt(useReader.getState().comments, useReader.getState().docTitle)
@@ -167,7 +217,7 @@ export default function CommentLayer() {
 
             {comments.length === 0 ? (
               <div className="comments-empty">
-                Select text and press <kbd>c</kbd> to comment.
+                Select text to comment on it, or add a general note above.
               </div>
             ) : (
               <ul className="comments-list">
@@ -215,6 +265,20 @@ export default function CommentLayer() {
           </div>
         )}
       </div>
+
+      {/* Touch capture: always shown on touch devices; on desktop it appears
+          only while text is selected (the `c` shortcut covers the rest). */}
+      {!draft && (
+        <button
+          className={`comment-fab ${selRange ? 'on-sel' : ''}`}
+          onPointerDown={(e) => e.preventDefault()} // keep the selection alive
+          onClick={capture}
+          title={selRange ? 'Comment on selection' : 'Add comment'}
+        >
+          <span className="cf-plus" aria-hidden="true">+</span>
+          {selRange ? 'Comment on selection' : 'Comment'}
+        </button>
+      )}
 
       {/* Composer modal */}
       {draft && (

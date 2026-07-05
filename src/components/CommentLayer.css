@@ -313,3 +313,92 @@
   text-decoration: underline wavy var(--accent-2);
   text-underline-offset: 0.25em;
 }
+
+/* Touch capture button — pinned bottom-left, clear of the centered/full-width
+   control bar below and the advance button on the right. Hidden on hover-
+   capable devices except while text is selected; the `c` shortcut covers the
+   rest on desktop. */
+.comment-fab {
+  display: none;
+  position: fixed;
+  left: 1rem;
+  bottom: calc(4.6rem + env(safe-area-inset-bottom, 0px));
+  z-index: 10000;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--ui-font);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--accent);
+  border: none;
+  border-radius: 999px;
+  padding: 0.6em 0.9em;
+  box-shadow: 0 0 12px var(--glow);
+}
+.comment-fab .cf-plus {
+  font-size: 1.1em;
+  line-height: 1;
+}
+/* A live selection reveals the button on every device (no clutter otherwise). */
+.comment-fab.on-sel {
+  display: inline-flex;
+}
+/* On touch devices there is no `c` key, so the button is always available. */
+@media (hover: none) {
+  .comment-fab {
+    display: inline-flex;
+  }
+}
+
+/* Larger tap targets on touch. */
+@media (hover: none) {
+  .comment-actions button {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1rem;
+  }
+  .comments-toggle {
+    font-size: 1.1rem;
+  }
+}
+
+/* Panel: on narrow screens pin it to the viewport (not the toggle, which is
+   inset from the right) so a fixed 340px card can't run off the left edge. */
+@media (max-width: 600px) {
+  .comments-body {
+    position: fixed;
+    top: 3.6rem;
+    left: 0.6rem;
+    right: 0.6rem;
+    width: auto;
+    max-width: none;
+    max-height: 75vh;
+  }
+}
+
+/* Composer: on narrow screens anchor near the top so the on-screen keyboard
+   (which occupies the bottom) never covers it, and go full-bleed. */
+@media (max-width: 600px) {
+  .composer-backdrop {
+    align-items: flex-start;
+  }
+  .composer {
+    width: 100%;
+    max-width: none;
+    margin: 3.2rem 0.6rem 0;
+  }
+  .composer-input {
+    min-height: 6rem;
+  }
+}
+/* The ⌘↵ / esc hint is meaningless without a hardware keyboard. */
+@media (hover: none) {
+  .composer-hint {
+    display: none;
+  }
+  .composer-foot {
+    justify-content: flex-end;
+  }
+}
