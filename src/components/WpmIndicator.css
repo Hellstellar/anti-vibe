@@ -9,3 +9,12 @@
   letter-spacing: 0.05em;
   pointer-events: none;
 }
+
+@media (max-width: 640px) {
+  /* Clear of the centered control bar — on a narrow phone the two can
+     otherwise land in the same bottom-right band. */
+  .wpm-indicator {
+    bottom: calc(4.4rem + env(safe-area-inset-bottom, 0px));
+    font-size: 1.2rem;
+  }
+}
