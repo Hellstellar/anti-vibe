@@ -91,8 +91,8 @@ export default function LandingView() {
 
       {error && <div className="landing-error">{error}</div>}
       <div className="landing-hint">
-        enter ▸ reveal / next &nbsp;·&nbsp; shift+enter ▸ prev &nbsp;·&nbsp; click ▸
-        speed-read &nbsp;·&nbsp; space ▸ play/pause
+        enter ▸ reveal / next &nbsp;·&nbsp; shift+enter ▸ prev &nbsp;·&nbsp; ⌘enter ▸
+        RSVP &nbsp;·&nbsp; space ▸ play/pause
       </div>
     </div>
   )

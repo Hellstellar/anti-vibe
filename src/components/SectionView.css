@@ -254,11 +254,6 @@
 .pw.em {
   font-style: italic;
 }
-.pw:hover {
-  color: var(--bg);
-  background-color: var(--accent);
-  box-shadow: 0 0 10px var(--glow);
-}
 .pw.active {
   color: var(--orp);
   text-shadow: 0 0 16px var(--glow);

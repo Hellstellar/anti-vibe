@@ -164,7 +164,6 @@ export default function SectionView() {
   const revealed = useReader((s) => s.revealed)
   const currentIndex = useReader((s) => s.currentIndex)
   const comments = useReader((s) => s.comments)
-  const rsvpFrom = useReader((s) => s.rsvpFrom)
   const gotoSectionRevealed = useReader((s) => s.gotoSectionRevealed)
 
   // Token indices carrying an unresolved comment, for the wavy underline.
@@ -203,12 +202,6 @@ export default function SectionView() {
     updateScrollCue()
   }, [currentSection, revealed, currentIndex])
 
-  const onClick = (e: React.MouseEvent) => {
-    const el = (e.target as HTMLElement).closest<HTMLElement>('[data-token-index]')
-    if (!el) return
-    rsvpFrom(Number(el.dataset.tokenIndex))
-  }
-
   if (!section) return null
 
   const headingBlock = section.hasHeading ? blocks[section.blockStart] : null
@@ -237,7 +230,6 @@ export default function SectionView() {
         ref={scrollRef}
         className={`section-context${hasX ? ' has-x' : ''}`}
         onScroll={updateScrollCue}
-        onClick={onClick}
       >
         {headingBlock && <h2 className="sv-block heading">{section.title}</h2>}
         {contentBlocks.map((b) => (
