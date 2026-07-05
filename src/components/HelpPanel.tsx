@@ -35,12 +35,13 @@ const VIEWS: Record<string, { title: string; rows: Row[] }> = {
   reading: {
     title: 'reading view',
     rows: [
-      ['enter', 'step through this section'],
+      ['click a word', 'move cursor here'],
+      ['enter', 'step through, from cursor'],
       ['select + c', 'comment on selection'],
       ['c', 'comment on this section'],
       ['↑ / ↓', 'scroll'],
       ['← / →', 'scroll wide content'],
-      ['space', 'start RSVP'],
+      ['space', 'RSVP from cursor'],
       ...COMMON,
     ],
   },

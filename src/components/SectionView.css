@@ -254,6 +254,12 @@
 .pw.em {
   font-style: italic;
 }
+/* Click moves the cursor here (RSVP/step-through starts from it next) — a
+   quiet cue, not the old invert+glow that read as "click to launch". */
+.pw:hover {
+  color: var(--accent);
+  cursor: pointer;
+}
 .pw.active {
   color: var(--orp);
   text-shadow: 0 0 16px var(--glow);

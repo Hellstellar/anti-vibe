@@ -182,6 +182,12 @@ interface ReaderState {
   focusDeeper: () => void
   /** Cmd/Ctrl+Enter: RSVP the current section from its first word, any level. */
   rsvpSection: () => void
+  /** RSVP CTA: start from wherever the reader last selected a word (or the
+   *  section start, the default cursor position). */
+  rsvpHere: () => void
+  /** Reading view: click a word to move the cursor there — no mode change,
+   *  just marks where RSVP/step-through starts from next. */
+  selectWord: (index: number) => void
   /** Esc: up one level (RSVP/step -> reading -> heading). Never to landing. */
   goBack: () => void
   setCfg: (partial: Partial<ReaderConfig>) => void
@@ -229,6 +235,19 @@ export const useReader = create<ReaderState>((set, get) => {
       if (tokens[i].kind === 'word') return i
     }
     return null
+  }
+
+  /** Which step unit covers token `index` — an exact word match if the unit
+   *  carries words (sentence/listItem/quote), else the first unit from the
+   *  same source block (code/image/tableRow, or a word whose unit lacks a
+   *  words array). Falls back to the first unit. */
+  const stepIndexForCursor = (units: StepUnit[], tokens: Token[], index: number): number => {
+    const cur = tokens[index]
+    if (!cur) return 0
+    const wordMatch = units.findIndex((u) => u.words?.some((w) => w.index === index))
+    if (wordMatch !== -1) return wordMatch
+    const blockMatch = units.findIndex((u) => u.groupId === cur.blockId)
+    return blockMatch !== -1 ? blockMatch : 0
   }
 
   /** wordIndex to ramp from for an RSVP session starting at token `idx`. */
@@ -467,12 +486,15 @@ export const useReader = create<ReaderState>((set, get) => {
 
     startStepping: () => {
       clearTimer()
-      const { tokens, blocks, sections, currentSection } = get()
+      const { tokens, blocks, sections, currentSection, currentIndex } = get()
       const sec = sections[currentSection]
       if (!sec) return
       const units = buildSteps(tokens, blocks, sec)
       if (units.length === 0) return // nothing to step through
-      set({ stepUnits: units, stepIndex: 0, mode: 'stepping', revealed: true })
+      // Starts at the unit covering currentIndex — the section start by
+      // default, or wherever the reader last clicked a word to select it.
+      const stepIndex = stepIndexForCursor(units, tokens, currentIndex)
+      set({ stepUnits: units, stepIndex, mode: 'stepping', revealed: true })
     },
 
     stepNext: () => {
@@ -501,6 +523,28 @@ export const useReader = create<ReaderState>((set, get) => {
       if (!sec) return
       const from = wordAtOrAfter(sec.tokenStart, sec.tokenEnd)
       if (from !== null) get().rsvpFrom(from) // countdown then play from start
+    },
+
+    rsvpHere: () => {
+      const { sections, currentSection, currentIndex } = get()
+      const sec = sections[currentSection]
+      if (!sec) return
+      // From wherever the reader last clicked a word to select it; the
+      // section start by default (currentIndex resets there on entry).
+      const from =
+        currentIndex >= sec.tokenStart && currentIndex <= sec.tokenEnd
+          ? wordAtOrAfter(currentIndex, sec.tokenEnd)
+          : wordAtOrAfter(sec.tokenStart, sec.tokenEnd)
+      if (from !== null) get().rsvpFrom(from)
+    },
+
+    selectWord: (index) => {
+      const { mode, revealed, tokens, sections, currentSection } = get()
+      if (mode !== 'section' || !revealed) return
+      const sec = sections[currentSection]
+      if (!sec || index < sec.tokenStart || index > sec.tokenEnd) return
+      if (tokens[index]?.kind !== 'word') return
+      set({ currentIndex: index })
     },
 
     goBack: () => {

@@ -165,6 +165,7 @@ export default function SectionView() {
   const currentIndex = useReader((s) => s.currentIndex)
   const comments = useReader((s) => s.comments)
   const gotoSectionRevealed = useReader((s) => s.gotoSectionRevealed)
+  const selectWord = useReader((s) => s.selectWord)
 
   // Token indices carrying an unresolved comment, for the wavy underline.
   const commented = useMemo(() => {
@@ -204,6 +205,16 @@ export default function SectionView() {
 
   if (!section) return null
 
+  // Click a word to move the cursor there (RSVP/step-through will start from
+  // it next) — not while the click is the tail end of a text selection, which
+  // owns the click for the select+c comment flow.
+  const onWordClick = (e: React.MouseEvent) => {
+    if ((window.getSelection()?.toString() ?? '').length > 0) return
+    const el = (e.target as HTMLElement).closest<HTMLElement>('[data-token-index]')
+    if (!el) return
+    selectWord(Number(el.dataset.tokenIndex))
+  }
+
   const headingBlock = section.hasHeading ? blocks[section.blockStart] : null
   const contentBlocks = blocks.slice(
     section.blockStart + (headingBlock ? 1 : 0),
@@ -230,6 +241,7 @@ export default function SectionView() {
         ref={scrollRef}
         className={`section-context${hasX ? ' has-x' : ''}`}
         onScroll={updateScrollCue}
+        onClick={onWordClick}
       >
         {headingBlock && <h2 className="sv-block heading">{section.title}</h2>}
         {contentBlocks.map((b) => (
