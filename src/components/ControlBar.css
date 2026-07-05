@@ -1,6 +1,6 @@
-/* Bottom-center contextual CTA row. Sits above the CRT overlay and respects
-   the iOS home-indicator safe area. Visible on every viewport (it doubles as a
-   discoverability hint on desktop) but tuned for thumb taps on mobile. */
+/* Bottom-center contextual icon row. Sits above the CRT overlay and respects
+   the iOS home-indicator safe area. Icon-only circular buttons so it reads as
+   a quiet, always-available strip rather than a row of shouting CTAs. */
 .control-bar {
   position: fixed;
   left: 50%;
@@ -9,146 +9,62 @@
   z-index: 10000; /* above the CRT overlay */
   display: flex;
   gap: 0.6rem;
-  align-items: stretch;
-  max-width: calc(100vw - 1.5rem);
 }
 
 .cb-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.15rem;
-  min-height: 2.6rem;
-  padding: 0.45rem 1rem;
-  font-family: var(--ui-font);
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--fg-dim);
-  background: var(--bg-2);
-  border: 2px solid var(--fg-dim);
-  border-radius: 4px;
+  width: 2.6rem;
+  height: 2.6rem;
+  font-size: 1.1rem;
   line-height: 1;
+  color: var(--fg-dim);
+  background: transparent;
+  border: 1px solid var(--fg-dim);
+  border-radius: 50%;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
+  transition: color 0.15s ease, border-color 0.15s ease;
 }
 .cb-btn:hover {
   color: var(--accent);
   border-color: var(--accent);
-  box-shadow: 0 0 10px var(--glow);
 }
 .cb-btn:active {
+  background: var(--bg-2);
   transform: translateY(1px);
 }
 
-.cb-sub {
-  font-size: 0.85em;
-  color: var(--accent-2);
-  font-family: var(--word-font);
-  letter-spacing: 0.04em;
-}
-
-/* Icon-only buttons (e.g. RSVP) stay a small square instead of growing to
-   match the labeled buttons either side of them — an icon doesn't need the
-   same footprint as a word, and shrinking it reads as secondary. */
-.cb-icon {
-  flex: 0 0 auto;
-  width: 2.6rem;
-  padding: 0;
-  font-size: 1.05rem;
-}
-
-/* The primary action stands out — it's the "focus deeper" path. */
+/* The primary action stands out via color alone — no fill, so it stays quiet
+   on screen for the whole review instead of shouting. */
 .cb-primary {
-  color: var(--bg);
-  background: var(--accent);
+  color: var(--accent);
   border-color: var(--accent-2);
-  box-shadow: 0 0 14px var(--glow);
-}
-.cb-primary .cb-sub {
-  color: var(--bg);
-  opacity: 0.85;
 }
 .cb-primary:hover {
-  color: var(--bg);
-  background: var(--accent-2);
+  color: var(--accent-2);
   border-color: var(--accent-2);
-}
-
-[data-theme='cream'] .cb-btn {
-  border-radius: 12px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 4px 10px rgba(74, 58, 40, 0.16);
-}
-[data-theme='cream'] .cb-primary {
-  color: #fff;
-}
-[data-theme='cream'] .cb-primary .cb-sub {
-  color: #fff;
 }
 
 @media (max-width: 640px) {
   .control-bar {
-    /* Full-width thumb bar on phones. */
-    left: 0;
-    right: 0;
-    transform: none;
-    max-width: none;
-    padding: 0 0.75rem;
     bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
-    gap: 0.4rem;
+    gap: 0.5rem;
   }
-  /* Ghost style on mobile — the bar is on-screen for the whole review, so it
-     should read as a quiet, always-available strip rather than a CTA row
-     competing with the content above it. */
   .cb-btn {
-    flex: 1;
-    min-height: 2.6rem;
-    font-size: 0.58rem;
-    padding: 0.4rem 0.5rem;
-    background: transparent;
-    border-width: 1px;
-    box-shadow: none;
-  }
-  .cb-icon {
-    flex: 0 0 auto;
-    width: 2.4rem;
-    padding: 0;
+    width: 2.8rem;
+    height: 2.8rem;
+    font-size: 1.2rem;
   }
   /* A tap can leave :hover "stuck" on touch browsers — override the desktop
-     glow so it never lingers after the finger lifts. */
+     hover so it never lingers after the finger lifts. */
   .cb-btn:hover {
     color: var(--fg-dim);
     border-color: var(--fg-dim);
-    box-shadow: none;
-  }
-  .cb-btn:active {
-    background: var(--bg-2);
-  }
-  .cb-primary {
-    flex: 1.2;
-    background: transparent;
-    color: var(--accent);
-    box-shadow: none;
-  }
-  .cb-primary .cb-sub {
-    color: var(--accent);
-    opacity: 0.8;
   }
   .cb-primary:hover {
     color: var(--accent);
     border-color: var(--accent-2);
-    background: transparent;
-  }
-  .cb-primary:active {
-    background: var(--bg-2);
-    color: var(--accent);
-  }
-  [data-theme='cream'] .cb-btn {
-    box-shadow: none;
-  }
-  [data-theme='cream'] .cb-primary {
-    color: var(--accent);
   }
 }
 
