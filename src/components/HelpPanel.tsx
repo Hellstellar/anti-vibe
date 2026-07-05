@@ -36,12 +36,11 @@ const VIEWS: Record<string, { title: string; rows: Row[] }> = {
     title: 'reading view',
     rows: [
       ['enter', 'step through this section'],
-      ['click a word', 'RSVP from that word'],
       ['select + c', 'comment on selection'],
       ['c', 'comment on this section'],
       ['↑ / ↓', 'scroll'],
       ['← / →', 'scroll wide content'],
-      ['space', 'pause / resume RSVP'],
+      ['space', 'start RSVP'],
       ...COMMON,
     ],
   },
@@ -58,7 +57,8 @@ const VIEWS: Record<string, { title: string; rows: Row[] }> = {
   rsvp: {
     title: 'RSVP',
     rows: [
-      ['space', 'pause'],
+      ['space', 'pause / resume'],
+      ['← / →', 'rewind / forward one word (while paused)'],
       ['esc', 'back to reading'],
     ],
   },

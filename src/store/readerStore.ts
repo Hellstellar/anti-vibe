@@ -121,6 +121,10 @@ interface ReaderState {
   /** Whether the current section's content is revealed (vs heading-only). */
   revealed: boolean
   mode: ReaderMode
+  /** True when RSVP is frozen mid-section (space while mode is 'playing').
+   *  Pausing stays in 'playing' — it never drops to the reading view, so the
+   *  RSVP stage (and its scrub preview) stays on screen. */
+  paused: boolean
   cfg: ReaderConfig
   /** wordIndex where the current RSVP session began — the ramp eases in
    *  from here, so every (re)start eases in slowly. */
@@ -165,8 +169,12 @@ interface ReaderState {
   rsvpFrom: (index: number) => void
   /** Called when the pre-RSVP countdown finishes — begins playback. */
   beginRsvp: () => void
-  /** Space: pause RSVP, or start it for the revealed section. */
+  /** Space: pause/resume RSVP (in place), or start it for the revealed section. */
   toggleRsvp: () => void
+  /** While paused, move the frozen cursor one word back/forward (scrub preview). */
+  rsvpNudge: (delta: 1 | -1) => void
+  /** While paused, jump the frozen cursor to `index` (tap a word in the scrub preview). */
+  rsvpSeek: (index: number) => void
   startStepping: () => void
   stepNext: () => void
   stepPrev: () => void
@@ -214,6 +222,15 @@ export const useReader = create<ReaderState>((set, get) => {
     return null
   }
 
+  /** Nearest word-token index at/before `from` within [lo, hi], or null. */
+  const wordAtOrBefore = (from: number, lo: number): number | null => {
+    const { tokens } = get()
+    for (let i = from; i >= lo && i >= 0; i--) {
+      if (tokens[i].kind === 'word') return i
+    }
+    return null
+  }
+
   /** wordIndex to ramp from for an RSVP session starting at token `idx`. */
   const rampOriginAt = (idx: number): number => {
     const { tokens } = get()
@@ -233,14 +250,14 @@ export const useReader = create<ReaderState>((set, get) => {
 
     if (!token || (sec && currentIndex > sec.tokenEnd) || token.kind === 'atomic') {
       clearTimer()
-      set({ mode: 'section', revealed: true })
+      set({ mode: 'section', revealed: true, paused: false })
       return
     }
 
     const chunk = chunkAt(tokens, currentIndex, cfg.chunkSize)
     if (!chunk) {
       clearTimer()
-      set({ mode: 'section', revealed: true })
+      set({ mode: 'section', revealed: true, paused: false })
       return
     }
 
@@ -261,13 +278,14 @@ export const useReader = create<ReaderState>((set, get) => {
       revealed: false,
       currentIndex: sections[clamped].tokenStart,
       mode: 'section',
+      paused: false,
     })
   }
 
   /** Actually start the RSVP loop from token `index` (no countdown). */
   const startPlaying = (index: number) => {
     clearTimer()
-    set({ currentIndex: index, mode: 'playing', rampStart: rampOriginAt(index) })
+    set({ currentIndex: index, mode: 'playing', paused: false, rampStart: rampOriginAt(index) })
     scheduleNext()
   }
 
@@ -279,6 +297,7 @@ export const useReader = create<ReaderState>((set, get) => {
     currentSection: 0,
     revealed: false,
     mode: 'idle',
+    paused: false,
     cfg: loadConfig(),
     rampStart: 0,
     stepUnits: [],
@@ -305,6 +324,7 @@ export const useReader = create<ReaderState>((set, get) => {
         currentSection: 0,
         revealed: false,
         mode: 'idle',
+        paused: false,
         rampStart: 0,
         stepUnits: [],
         stepIndex: 0,
@@ -331,6 +351,7 @@ export const useReader = create<ReaderState>((set, get) => {
         currentSection: 0,
         revealed: false,
         mode: 'idle',
+        paused: false,
         rampStart: 0,
         stepUnits: [],
         stepIndex: 0,
@@ -376,13 +397,14 @@ export const useReader = create<ReaderState>((set, get) => {
         revealed: true,
         currentIndex: sections[clamped].tokenStart,
         mode: 'section',
+        paused: false,
       })
     },
 
     // Clicking a word: prime the Ready/Set/Focus countdown before RSVP.
     rsvpFrom: (index) => {
       clearTimer()
-      set({ pendingRsvp: index, mode: 'countdown' })
+      set({ pendingRsvp: index, mode: 'countdown', paused: false })
     },
 
     beginRsvp: () => {
@@ -393,10 +415,15 @@ export const useReader = create<ReaderState>((set, get) => {
     },
 
     toggleRsvp: () => {
-      const { mode, revealed, sections, currentSection } = get()
+      const { mode, paused, revealed, sections, currentSection } = get()
       if (mode === 'playing') {
-        clearTimer()
-        set({ mode: 'section', revealed: true })
+        if (paused) {
+          // Resume in place — same re-ease-in as any other (re)start.
+          startPlaying(get().currentIndex)
+        } else {
+          clearTimer()
+          set({ paused: true }) // freeze on the current chunk; stays in 'playing'
+        }
         return
       }
       if (mode !== 'section') return
@@ -415,6 +442,27 @@ export const useReader = create<ReaderState>((set, get) => {
           ? wordAtOrAfter(currentIndex, sec.tokenEnd)
           : wordAtOrAfter(sec.tokenStart, sec.tokenEnd)
       if (from !== null) startPlaying(from)
+    },
+
+    rsvpNudge: (delta) => {
+      const { mode, paused, currentIndex, sections, currentSection } = get()
+      if (mode !== 'playing' || !paused) return
+      const sec = sections[currentSection]
+      if (!sec) return
+      const next =
+        delta > 0
+          ? wordAtOrAfter(currentIndex + 1, sec.tokenEnd)
+          : wordAtOrBefore(currentIndex - 1, sec.tokenStart)
+      if (next !== null) set({ currentIndex: next })
+    },
+
+    rsvpSeek: (index) => {
+      const { mode, paused, sections, currentSection } = get()
+      if (mode !== 'playing' || !paused) return
+      const sec = sections[currentSection]
+      if (!sec || index < sec.tokenStart || index > sec.tokenEnd) return
+      if (get().tokens[index]?.kind !== 'word') return
+      set({ currentIndex: index })
     },
 
     startStepping: () => {
@@ -459,10 +507,10 @@ export const useReader = create<ReaderState>((set, get) => {
       const { mode, revealed } = get()
       if (mode === 'playing' || mode === 'stepping') {
         clearTimer()
-        set({ mode: 'section', revealed: true })
+        set({ mode: 'section', revealed: true, paused: false })
       } else if (mode === 'countdown') {
         clearTimer()
-        set({ pendingRsvp: null, mode: 'section', revealed: true })
+        set({ pendingRsvp: null, mode: 'section', revealed: true, paused: false })
       } else if (mode === 'section' && revealed) {
         set({ revealed: false }) // reading -> heading
       }

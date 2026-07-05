@@ -128,6 +128,8 @@ export default function ReaderView() {
           const fwd = e.key === 'ArrowRight'
           if (s.mode === 'stepping') {
             fwd ? stepNext() : stepPrev() // unit nav (clamps at ends)
+          } else if (s.mode === 'playing' && s.paused) {
+            s.rsvpNudge(fwd ? 1 : -1) // scrub the frozen cursor
           } else if (s.mode === 'section' && s.revealed) {
             const el = sectionPane()
             if (el) el.scrollBy({ left: (fwd ? 1 : -1) * el.clientWidth * 0.5 })

@@ -50,6 +50,7 @@ Markdown → mdast (unified/remark + remark-gfm) → three parallel arrays, the 
 A single Zustand store holds all reader state and is the only place modes change. Modes: `idle` → `countdown` → `section` → `playing` → `stepping`.
 
 - The RSVP playback loop is a **self-rescheduling `setTimeout`** (`scheduleNext`), with the timer handle kept in a **module-level variable outside React/store state** so it survives re-renders. Always `clearTimer()` before changing mode. The loop is bounded to the current section and stops back to the reading view at the section end or any atomic token.
+- Pausing (`space` while `mode === 'playing'`) does **not** leave `playing` — it just clears the timer and sets `paused: true`, freezing `currentIndex` on the current chunk so `RsvpStage` (and its scrub preview strip) stay mounted instead of dropping to the reading view. Resuming re-enters via `startPlaying`, so it re-eases the ramp like any other (re)start. `goBack`/Esc is the only path from `playing` back to the reading view, and it always clears `paused` too.
 - `rampStart` is the `wordIndex` where the current play session began; per-word timing measures offset from it, so playback eases in again on every (re)start/resume.
 - Config (`ReaderConfig`) is persisted to `localStorage` under key `antivibe-config`, and **`sanitizeConfig` clamps it on every load/set** (guards corrupted/hand-edited values, keeps `startWpm <= targetWpm`).
 

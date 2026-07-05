@@ -110,6 +110,70 @@
   }
 }
 
+/* Scrub preview — only mounted while paused. Sits a fixed distance below the
+   centered word so it doesn't collide with the pivot regardless of font size. */
+.rsvp-preview {
+  position: absolute;
+  top: calc(50% + 5rem);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  max-width: min(90vw, 44rem);
+}
+
+.rsvp-preview-strip {
+  display: flex;
+  gap: 0.4em;
+  overflow-x: auto;
+  white-space: nowrap;
+  font-family: var(--word-font);
+  font-size: clamp(0.9rem, 2.4vw, 1.3rem);
+  color: var(--fg-dim);
+  scrollbar-width: none;
+  mask-image: linear-gradient(to right, transparent 0, #000 1.5rem, #000 calc(100% - 1.5rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 1.5rem, #000 calc(100% - 1.5rem), transparent 100%);
+}
+
+.rp-word {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 0.15em;
+}
+.rp-word:hover {
+  color: var(--accent);
+}
+.rp-current {
+  color: var(--orp);
+  font-weight: 700;
+  cursor: default;
+}
+.rp-current:hover {
+  color: var(--orp);
+}
+
+.rsvp-scrub-btn {
+  flex: 0 0 auto;
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  border: 1px solid var(--fg-dim);
+  background: transparent;
+  color: var(--fg-dim);
+  font-family: var(--ui-font);
+  font-size: 0.9rem;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.rsvp-scrub-btn:hover:not(:disabled) {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.rsvp-scrub-btn:disabled {
+  opacity: 0.3;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rsvp-word,
   .rsvp-bullet,

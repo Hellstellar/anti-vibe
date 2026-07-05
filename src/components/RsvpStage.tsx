@@ -2,10 +2,81 @@ import { useLayoutEffect, useRef } from 'react'
 import { useReader } from '../store/readerStore'
 import { chunkAt } from '../lib/chunk'
 import { segmentText, splitPivot, stripWrappingSymbols } from '../lib/timing'
-import type { SymbolMode } from '../lib/types'
+import type { Section, SymbolMode, Token, WordToken } from '../lib/types'
 import Reticle from './Reticle'
 import WpmIndicator from './WpmIndicator'
 import './RsvpStage.css'
+
+const PREVIEW_SPAN = 6
+
+/** Word tokens within `span` either side of `currentIndex`, bounded to the
+ *  current section and stopping at an atomic (RSVP never plays across one). */
+function nearbyWords(tokens: Token[], currentIndex: number, sec: Section, span: number) {
+  const before: WordToken[] = []
+  for (let i = currentIndex - 1; i >= sec.tokenStart && before.length < span; i--) {
+    const t = tokens[i]
+    if (t.kind === 'atomic') break
+    before.unshift(t)
+  }
+  const after: WordToken[] = []
+  for (let i = currentIndex + 1; i <= sec.tokenEnd && after.length < span; i++) {
+    const t = tokens[i]
+    if (t.kind === 'atomic') break
+    after.push(t)
+  }
+  return { before, after }
+}
+
+/** Scrub strip shown only while RSVP is paused — surrounding words for
+ *  context, click one (or the ‹ › nudge buttons) to rewind/advance the frozen
+ *  cursor before resuming. */
+function RsvpPreview() {
+  const tokens = useReader((s) => s.tokens)
+  const currentIndex = useReader((s) => s.currentIndex)
+  const sections = useReader((s) => s.sections)
+  const currentSection = useReader((s) => s.currentSection)
+  const rsvpNudge = useReader((s) => s.rsvpNudge)
+  const rsvpSeek = useReader((s) => s.rsvpSeek)
+
+  const sec = sections[currentSection]
+  const current = tokens[currentIndex]
+  if (!sec || !current || current.kind !== 'word') return null
+  const { before, after } = nearbyWords(tokens, currentIndex, sec, PREVIEW_SPAN)
+
+  return (
+    <div className="rsvp-preview">
+      <button
+        className="rsvp-scrub-btn"
+        onClick={() => rsvpNudge(-1)}
+        disabled={before.length === 0}
+        title="Back one word"
+      >
+        ‹
+      </button>
+      <div className="rsvp-preview-strip">
+        {before.map((w) => (
+          <span key={w.index} className="rp-word" onClick={() => rsvpSeek(w.index)}>
+            {w.text}
+          </span>
+        ))}
+        <span className="rp-word rp-current">{current.text}</span>
+        {after.map((w) => (
+          <span key={w.index} className="rp-word" onClick={() => rsvpSeek(w.index)}>
+            {w.text}
+          </span>
+        ))}
+      </div>
+      <button
+        className="rsvp-scrub-btn"
+        onClick={() => rsvpNudge(1)}
+        disabled={after.length === 0}
+        title="Forward one word"
+      >
+        ›
+      </button>
+    </div>
+  )
+}
 
 /** One side of the flashed word (pre/post). In 'dim' mode symbol runs are
  *  recessed via .rsvp-sym; otherwise the text renders verbatim. */
@@ -36,6 +107,7 @@ export default function RsvpStage() {
   const currentIndex = useReader((s) => s.currentIndex)
   const chunkSize = useReader((s) => s.cfg.chunkSize)
   const symbols = useReader((s) => s.cfg.symbols)
+  const paused = useReader((s) => s.paused)
 
   const wordRef = useRef<HTMLDivElement>(null)
   const pivotRef = useRef<HTMLSpanElement>(null)
@@ -72,6 +144,7 @@ export default function RsvpStage() {
             {chunk.words[0].text}
           </code>
         </div>
+        {paused && <RsvpPreview />}
         <WpmIndicator />
       </div>
     )
@@ -108,6 +181,7 @@ export default function RsvpStage() {
           </span>
         </div>
       </div>
+      {paused && <RsvpPreview />}
       <WpmIndicator />
     </div>
   )

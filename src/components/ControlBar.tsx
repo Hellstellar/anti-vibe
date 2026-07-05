@@ -11,6 +11,7 @@ import './ControlBar.css'
 export default function ControlBar() {
   const mode = useReader((s) => s.mode)
   const revealed = useReader((s) => s.revealed)
+  const paused = useReader((s) => s.paused)
   const focusDeeper = useReader((s) => s.focusDeeper)
   const rsvpSection = useReader((s) => s.rsvpSection)
   const toggleRsvp = useReader((s) => s.toggleRsvp)
@@ -33,7 +34,9 @@ export default function ControlBar() {
     // prev/next are the big side arrows in StepView; bar just offers Back.
     primary = null
   } else if (mode === 'playing') {
-    primary = { label: 'Pause', sub: '‖', fn: toggleRsvp }
+    primary = paused
+      ? { label: 'Resume', sub: '▸', fn: toggleRsvp }
+      : { label: 'Pause', sub: '‖', fn: toggleRsvp }
   }
 
   if (!back && !primary && !speed) return null
