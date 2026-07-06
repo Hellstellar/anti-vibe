@@ -1,5 +1,8 @@
 import { EventEmitter } from 'node:events'
 import { randomUUID } from 'node:crypto'
+import { homedir } from 'node:os'
+import path from 'node:path'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 
 /** One document pushed into Anti-Vibe for review. */
 export interface AntiVibeDoc {
@@ -27,9 +30,55 @@ export const MAX_DOCS = 20
 /** Received documents, oldest first. Newest is docs[docs.length - 1]. */
 const docs: AntiVibeDoc[] = []
 
+/**
+ * Disk location for the persisted library, shared across all sessions/instances
+ * so pushes survive bridge restarts and can be reopened later. Overridable via
+ * ANTIVIBE_DATA_DIR (e.g. for tests).
+ */
+const DATA_DIR = process.env.ANTIVIBE_DATA_DIR || path.join(homedir(), '.anti-vibe')
+const LIBRARY_FILE = path.join(DATA_DIR, 'library.json')
+
 /** STDOUT is the MCP protocol channel — diagnostics MUST go to stderr. */
 function log(...args: unknown[]): void {
   console.error('[anti-vibe-mcp] doc-store:', ...args)
+}
+
+/**
+ * Restore the persisted library from disk into memory. Called once when a
+ * process binds the bridge (becomes the owner) — forwarding processes never
+ * touch disk, so there is a single writer. Tolerates a missing/corrupt file.
+ */
+export function loadFromDisk(): void {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(readFileSync(LIBRARY_FILE, 'utf8'))
+  } catch {
+    return // no file yet / unreadable — start empty
+  }
+  if (!Array.isArray(parsed)) return
+  docs.length = 0
+  for (const d of parsed) {
+    if (d && typeof d.documentId === 'string' && typeof d.markdown === 'string') {
+      docs.push({
+        documentId: d.documentId,
+        title: typeof d.title === 'string' ? d.title : 'Untitled',
+        markdown: d.markdown,
+        createdAt: typeof d.createdAt === 'number' ? d.createdAt : Date.now(),
+      })
+    }
+  }
+  while (docs.length > MAX_DOCS) docs.shift()
+  log(`restored ${docs.length} doc(s) from ${LIBRARY_FILE}`)
+}
+
+/** Persist the current library to disk (best-effort; swallows errors). */
+function saveToDisk(): void {
+  try {
+    mkdirSync(DATA_DIR, { recursive: true })
+    writeFileSync(LIBRARY_FILE, JSON.stringify(docs))
+  } catch (err) {
+    log('could not persist library:', err)
+  }
 }
 
 /** Build an AntiVibeDoc from normalized markdown + optional title. */
@@ -47,6 +96,7 @@ export function addDoc(doc: AntiVibeDoc): void {
     const dropped = docs.shift()
     if (dropped) log(`evicted oldest doc "${dropped.title}" (${dropped.documentId}); cap ${MAX_DOCS}`)
   }
+  saveToDisk()
   emitter.emit('document', doc)
 }
 

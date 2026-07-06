@@ -3,7 +3,7 @@ import { promises as fs, createReadStream, existsSync, readFileSync } from 'node
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { getDoc, getDocs, onDocument, addDoc, type AntiVibeDoc } from './doc-store'
+import { getDoc, getDocs, onDocument, addDoc, loadFromDisk, type AntiVibeDoc } from './doc-store'
 
 export const HOST = '127.0.0.1'
 export const PORT = Number(process.env.ANTIVIBE_MCP_PORT) || 7777
@@ -133,8 +133,14 @@ async function distExists(): Promise<boolean> {
   }
 }
 
-/** Open the system browser at the bridge URL (best-effort, cross-platform). */
-function openBrowser(url: string): void {
+/** Open the system browser at the bridge URL (best-effort, cross-platform).
+ *  Set ANTIVIBE_NO_OPEN to suppress (headless/CI, or users who don't want the
+ *  tab auto-opened on push). */
+export function openBrowser(url: string): void {
+  if (process.env.ANTIVIBE_NO_OPEN) {
+    log('skipping browser open (ANTIVIBE_NO_OPEN set)')
+    return
+  }
   const platform = process.platform
   const cmd = platform === 'darwin' ? 'open' : platform === 'win32' ? 'cmd' : 'xdg-open'
   const args = platform === 'win32' ? ['/c', 'start', '', url] : [url]
@@ -313,6 +319,7 @@ export function startBridge(): Promise<void> {
     srv.listen(PORT, HOST, () => {
       srv.removeListener('error', reject)
       server = srv
+      loadFromDisk() // this process now owns the library — restore persisted docs
       wireDocForwarding()
       process.on('SIGINT', () => {
         closeAll()

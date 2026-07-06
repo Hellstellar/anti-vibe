@@ -10,6 +10,7 @@ import {
   postIngest,
   postShutdown,
   onBridgeRelinquished,
+  openBrowser,
   isOlder,
   VERSION,
   BRIDGE_URL,
@@ -168,7 +169,30 @@ const OUTPUT_SCHEMA = {
   url: z.string(),
 }
 
+/**
+ * `anti-vibe-mcp open`: launch the reader to browse past reviews without an
+ * agent pushing. Ensures a bridge is up (binding + restoring the persisted
+ * library from disk, or reusing an existing one), then opens the browser. If we
+ * had to bind it ourselves, stay alive so the reader keeps being served; if a
+ * bridge was already running, its owner keeps serving and we can exit.
+ */
+async function openReader(): Promise<void> {
+  await ensureBridge()
+  openBrowser(BRIDGE_URL)
+  if (!ownsBridge) {
+    log(`opened ${BRIDGE_URL} (an existing Anti-Vibe bridge is serving it)`)
+    process.exit(0)
+  }
+  log(`Anti-Vibe reader open at ${BRIDGE_URL} — leave this running to keep it available.`)
+  // No stdio connect: the listening HTTP server keeps the process alive.
+}
+
 async function main(): Promise<void> {
+  if (process.argv[2] === 'open') {
+    await openReader()
+    return
+  }
+
   await ensureBridge()
 
   const server = new McpServer({ name: 'anti-vibe', version: '0.1.0' })
