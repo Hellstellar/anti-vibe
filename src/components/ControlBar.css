@@ -17,13 +17,6 @@
   justify-content: center;
   width: 2.6rem;
   height: 2.6rem;
-  /* Not the theme UI font: CRT's pixel font lacks these arrow/bar glyphs, so
-     each would fall back to a different font with different metrics and the
-     icons would sit at visibly different heights. One neutral stack with full
-     symbol coverage keeps all three buttons aligned in both themes. */
-  font-family: system-ui, -apple-system, 'Segoe UI Symbol', sans-serif;
-  font-size: 1.1rem;
-  line-height: 1;
   color: var(--fg-dim);
   background: transparent;
   border: 1px solid var(--fg-dim);
@@ -32,12 +25,10 @@
   -webkit-tap-highlight-color: transparent;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
-/* Kill the glyph's own line box so flex centering positions the ink itself —
-   arrow/circle glyphs carry uneven ascent/descent and sat visibly off-center. */
-.cb-btn span {
+/* Inline SVG icons (Icon.tsx): block display kills the baseline slack so flex
+   centering is exact; currentColor follows the button's theme color. */
+.cb-btn svg {
   display: block;
-  line-height: 1;
-  height: 1em;
 }
 .cb-btn:hover {
   color: var(--accent);
@@ -67,7 +58,10 @@
   .cb-btn {
     width: 2.8rem;
     height: 2.8rem;
-    font-size: 1.2rem;
+  }
+  .cb-btn svg {
+    width: 20px;
+    height: 20px;
   }
   /* A tap can leave :hover "stuck" on touch browsers — override the desktop
      hover so it never lingers after the finger lifts. */

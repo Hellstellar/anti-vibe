@@ -715,10 +715,12 @@ units that must fit one screen) is measured and scaled down to fit the width/hei
 **Why it matters:** A clamp() lower bound that fits a desktop still crops long words on a 390px
 screen, and cropped RSVP words are unreadable — the feature silently breaks.
 
-### RS-21.5 — Icons are plain text glyphs in one font, never emoji
-**Standard:** Icon-only buttons use plain text/dingbat glyphs (`‹ › » ‖ ▸ ⇢`) with an explicit
-font stack that covers them (`system-ui, -apple-system, 'Segoe UI Symbol', sans-serif` on
-`.cb-btn`), plus `aria-label`/`title` for the meaning. Pictographic emoji are banned in icons.
+### RS-21.5 — Icons are inline SVG via `Icon.tsx`, never emoji or font glyphs
+**Standard:** Icon-only buttons use the inline-SVG components in `src/components/Icon.tsx`
+(Lucide paths, `stroke="currentColor"`, fixed 24×24 viewBox, `display: block`), plus
+`aria-label`/`title` for the meaning. New icons are added there, not inlined ad hoc.
+Pictographic emoji and font-dependent dingbat glyphs are banned in icons.
 **Why it matters:** Emoji render in a fixed multicolor font that ignores CSS `color` (so they
-can't follow the theme), and the CRT pixel font lacks symbol glyphs — per-glyph fallback puts
-each icon in a different font at a visibly different baseline.
+can't follow the theme), and text glyphs depend on per-platform font fallback — the CRT pixel
+font lacks symbol glyphs entirely, which put each icon in a different font at a visibly
+different baseline. SVG with `currentColor` renders identically everywhere and centers exactly.

@@ -1,10 +1,18 @@
+import type { ReactNode } from 'react'
 import { useReader } from '../store/readerStore'
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconEye,
+  IconFastForward,
+  IconPause,
+  IconPlay,
+} from './Icon'
 import './ControlBar.css'
 
 interface Action {
-  /** Plain text/dingbat glyph only — never a pictographic emoji, which
-   *  renders in its own fixed multicolor style and ignores `color`. */
-  icon: string
+  /** Inline SVG icon (see Icon.tsx) — theme-colored via currentColor. */
+  icon: ReactNode
   aria: string
   fn: () => void
 }
@@ -28,24 +36,24 @@ export default function ControlBar() {
   // The countdown is a transient flash — no controls.
   if (mode === 'countdown') return null
 
-  let back: Action | null = { icon: '‹', aria: 'Back', fn: goBack }
+  let back: Action | null = { icon: <IconChevronLeft />, aria: 'Back', fn: goBack }
   let primary: Action | null = null
   let speed: Action | null = null
 
   if (mode === 'section' && !revealed) {
     back = null // heading view is the top level
-    primary = { icon: '›', aria: 'Open this section', fn: focusDeeper }
+    primary = { icon: <IconChevronRight />, aria: 'Open this section', fn: focusDeeper }
   } else if (mode === 'section') {
-    // Zoom-in glyph = focus deeper into one unit, vs '»' = continuous speed.
-    primary = { icon: '⊕', aria: 'Focus — step through this section', fn: focusDeeper }
-    speed = { icon: '»', aria: 'Speed-read this section (RSVP)', fn: rsvpHere }
+    // Eye = focus on one unit at a time, vs fast-forward = continuous speed.
+    primary = { icon: <IconEye />, aria: 'Focus — step through this section', fn: focusDeeper }
+    speed = { icon: <IconFastForward />, aria: 'Speed-read this section (RSVP)', fn: rsvpHere }
   } else if (mode === 'stepping') {
     // prev/next are the big side arrows in StepView; bar just offers Back.
     primary = null
   } else if (mode === 'playing') {
     primary = paused
-      ? { icon: '▸', aria: 'Resume', fn: toggleRsvp }
-      : { icon: '‖', aria: 'Pause', fn: toggleRsvp }
+      ? { icon: <IconPlay />, aria: 'Resume', fn: toggleRsvp }
+      : { icon: <IconPause />, aria: 'Pause', fn: toggleRsvp }
   }
 
   if (!back && !primary && !speed) return null
@@ -62,7 +70,7 @@ export default function ControlBar() {
               title={a.aria}
               aria-label={a.aria}
             >
-              <span aria-hidden="true">{a.icon}</span>
+              {a.icon}
             </button>
           ),
       )}
