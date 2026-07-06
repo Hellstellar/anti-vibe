@@ -1,0 +1,251 @@
+import { describe, it, expect } from 'vitest'
+import {
+  parseUnifiedDiff,
+  matchStop,
+  resolveFlowReview,
+  type FlowStopInput,
+  type FlowReviewInput,
+} from './flow-resolve'
+
+const stop = (file: string, locator: FlowStopInput['locator']): FlowStopInput => ({
+  id: 'x',
+  file,
+  locator,
+  layer: 'flow',
+  title: 't',
+  explanation: 'e',
+  oneLineSummary: 's',
+})
+
+const DIFF = `diff --git a/src/routes/auth.ts b/src/routes/auth.ts
+index 1111111..2222222 100644
+--- a/src/routes/auth.ts
++++ b/src/routes/auth.ts
+@@ -3,6 +3,7 @@ import { loginHandler } from '../handlers/login'
+ import { Router } from 'express'
++import { rateLimit } from '../middleware/rateLimit'
+
+ const router = Router()
+-router.post('/login', loginHandler)
++router.post('/login', rateLimit(), loginHandler)
+diff --git a/src/lib/contracts.ts b/src/lib/contracts.ts
+index 3333333..4444444 100644
+--- a/src/lib/contracts.ts
++++ b/src/lib/contracts.ts
+@@ -10,3 +10,8 @@ export interface AuthToken {
+   expiresAt: number
+ }
++
++export interface RateConfig {
++  windowMs: number
++  max: number
++}
+`
+
+describe('parseUnifiedDiff', () => {
+  it('splits per file and per hunk, keyed by new-side path', () => {
+    const byFile = parseUnifiedDiff(DIFF)
+    expect([...byFile.keys()].sort()).toEqual(['src/lib/contracts.ts', 'src/routes/auth.ts'])
+    const auth = byFile.get('src/routes/auth.ts')!
+    expect(auth).toHaveLength(1)
+    expect(auth[0].header).toBe("@@ -3,6 +3,7 @@ import { loginHandler } from '../handlers/login'")
+    expect(auth[0].newStart).toBe(3)
+    expect(auth[0].text).toContain('+import { rateLimit }')
+  })
+})
+
+describe('parseUnifiedDiff edge cases', () => {
+  it('keys a deleted file by its old path', () => {
+    const del = `diff --git a/src/old.ts b/src/old.ts
+deleted file mode 100644
+--- a/src/old.ts
++++ /dev/null
+@@ -1,2 +0,0 @@
+-gone
+-away`
+    const byFile = parseUnifiedDiff(del)
+    expect(byFile.has('src/old.ts')).toBe(true)
+    expect(byFile.get('src/old.ts')![0].text).toContain('-gone')
+  })
+
+  it('surfaces a binary file as one informational hunk', () => {
+    const bin = `diff --git a/logo.png b/logo.png
+index a1..b2 100644
+Binary files a/logo.png and b/logo.png differ`
+    const byFile = parseUnifiedDiff(bin)
+    expect(byFile.has('logo.png')).toBe(true)
+    expect(byFile.get('logo.png')![0].text).toContain('binary file changed')
+  })
+})
+
+describe('matchStop', () => {
+  const byFile = parseUnifiedDiff(DIFF)
+
+  it('resolves all of a file\'s hunks; exact hunkHeader → exact', () => {
+    const r = matchStop(
+      stop('src/routes/auth.ts', {
+        hunkHeader: "@@ -3,6 +3,7 @@ import { loginHandler } from '../handlers/login'",
+      }),
+      byFile,
+    )
+    expect(r.matchStatus).toBe('exact')
+    expect(r.hunks).toHaveLength(1)
+    expect(r.hunks[0].diffText).toContain('+import { rateLimit }')
+    expect(r.hunks[0].line).toBe(3)
+  })
+
+  it('no locator → whole-file grab, status exact', () => {
+    const r = matchStop(stop('src/lib/contracts.ts', undefined), byFile)
+    expect(r.matchStatus).toBe('exact')
+    expect(r.hunks).toHaveLength(1)
+    expect(r.hunks[0].diffText).toContain('RateConfig')
+  })
+
+  it('suffix path match works (bare filename)', () => {
+    const r = matchStop(stop('contracts.ts', { lineRange: { start: 10, end: 14 } }), byFile)
+    expect(r.matchStatus).toBe('exact') // line range overlaps the hunk
+    expect(r.hunks[0].diffText).toContain('RateConfig')
+  })
+
+  it('context stop skips git matching → no hunks, not missing', () => {
+    const r = matchStop({ ...stop('src/anything.ts', undefined), context: true }, byFile)
+    expect(r.context).toBe(true)
+    expect(r.hunks).toHaveLength(0)
+    expect(r.matchStatus).toBe('exact') // not "missing" → no warning
+  })
+
+  it('no candidate file → missing, no hunks', () => {
+    const r = matchStop(stop('src/nope.ts', { hunkHeader: '@@ -1 +1 @@' }), byFile)
+    expect(r.matchStatus).toBe('missing')
+    expect(r.hunks).toHaveLength(0)
+  })
+
+  it('wrong header but right file → fuzzy, still returns the hunks', () => {
+    const r = matchStop(stop('src/routes/auth.ts', { hunkHeader: '@@ -999 +999 @@ nope' }), byFile)
+    expect(r.matchStatus).toBe('fuzzy')
+    expect(r.hunks[0].diffText).toContain('rateLimit')
+  })
+
+  it('a locator narrows to its own hunk — same file, different node', () => {
+    const multi = `diff --git a/src/x.ts b/src/x.ts
+--- a/src/x.ts
++++ b/src/x.ts
+@@ -1,2 +1,3 @@ top
+ head
++first
+@@ -50,2 +50,3 @@ later
+ keep
++second`
+    const byFile = parseUnifiedDiff(multi)
+    const nodeA = matchStop(stop('src/x.ts', { hunkHeader: '@@ -1,2 +1,3 @@ top' }), byFile)
+    const nodeB = matchStop(stop('src/x.ts', { hunkHeader: '@@ -50,2 +50,3 @@ later' }), byFile)
+    expect(nodeA.hunks).toHaveLength(1)
+    expect(nodeA.hunks[0].diffText).toContain('+first')
+    expect(nodeB.hunks).toHaveLength(1)
+    expect(nodeB.hunks[0].diffText).toContain('+second')
+  })
+
+  it('multiple hunks in one file are all returned, source-ordered', () => {
+    const multi = `diff --git a/src/x.ts b/src/x.ts
+--- a/src/x.ts
++++ b/src/x.ts
+@@ -50,2 +50,3 @@ later
+ keep
++second
+@@ -1,2 +1,3 @@ top
+ head
++first`
+    const r = matchStop(stop('src/x.ts', undefined), parseUnifiedDiff(multi))
+    expect(r.hunks).toHaveLength(2)
+    expect(r.hunks[0].line).toBe(1) // sorted by newStart
+    expect(r.hunks[1].line).toBe(50)
+  })
+})
+
+describe('hunkFlow semantic ordering', () => {
+  const multi = `diff --git a/src/x.ts b/src/x.ts
+--- a/src/x.ts
++++ b/src/x.ts
+@@ -1,2 +1,3 @@ top
+ head
++first
+@@ -50,2 +50,3 @@ later
+ keep
++second`
+  const byFile = parseUnifiedDiff(multi)
+
+  it('reorders hunks per hunkFlow and attaches notes', () => {
+    const r = matchStop(
+      {
+        ...stop('src/x.ts', undefined),
+        hunkFlow: [
+          { match: { lineRange: { start: 50, end: 52 } }, note: 'behavior change' },
+          { match: { hunkHeader: '@@ -1,2 +1,3 @@ top' }, note: 'plumbing' },
+        ],
+      },
+      byFile,
+    )
+    expect(r.hunks.map((h) => h.line)).toEqual([50, 1])
+    expect(r.hunks.map((h) => h.note)).toEqual(['behavior change', 'plumbing'])
+    expect(r.matchStatus).toBe('exact')
+  })
+
+  it('skips unmatched entries, appends unlisted hunks source-ordered, degrades to fuzzy', () => {
+    const r = matchStop(
+      {
+        ...stop('src/x.ts', undefined),
+        hunkFlow: [
+          { match: { lineRange: { start: 900, end: 999 } }, note: 'ghost' },
+          { match: { lineRange: { start: 50, end: 52 } }, note: 'behavior change' },
+        ],
+      },
+      byFile,
+    )
+    expect(r.hunks.map((h) => h.line)).toEqual([50, 1])
+    expect(r.hunks[0].note).toBe('behavior change')
+    expect(r.hunks[1].note).toBeUndefined()
+    expect(r.matchStatus).toBe('fuzzy')
+  })
+
+  it('falls back to the header\'s +line when the header text drifted (fuzzy)', () => {
+    const r = matchStop(
+      {
+        ...stop('src/x.ts', undefined),
+        hunkFlow: [{ match: { hunkHeader: '@@ -50,2 +50,3 @@ drifted context' }, note: 'n' }],
+      },
+      byFile,
+    )
+    expect(r.hunks[0].line).toBe(50)
+    expect(r.hunks[0].note).toBe('n')
+    expect(r.matchStatus).toBe('fuzzy')
+  })
+
+  it('without hunkFlow behavior is unchanged (source order, no notes)', () => {
+    const r = matchStop(stop('src/x.ts', undefined), byFile)
+    expect(r.hunks.map((h) => h.line)).toEqual([1, 50])
+    expect(r.hunks.every((h) => h.note === undefined)).toBe(true)
+    expect(r.matchStatus).toBe('exact')
+  })
+})
+
+describe('resolveFlowReview against this repo', () => {
+  it('never throws and returns one resolved stop per input stop', async () => {
+    const input: FlowReviewInput = {
+      title: 'self-test',
+      stops: [
+        {
+          id: 'a',
+          file: 'src/lib/types.ts',
+          locator: { lineRange: { start: 1, end: 5 } },
+          layer: 'foundation',
+          title: 'types',
+          explanation: 'x',
+          oneLineSummary: 'y',
+        },
+      ],
+    }
+    const result = await resolveFlowReview(input)
+    expect(result.stops).toHaveLength(1)
+    expect(['exact', 'fuzzy', 'missing']).toContain(result.stops[0].matchStatus)
+  })
+})

@@ -1,9 +1,11 @@
 import { useEffect } from 'react'
 import { useReader } from './store/readerStore'
+import { useFlow } from './store/flowStore'
 import { sfx, setSoundEnabled } from './lib/sfx'
 import { applyTheme, applyAlign } from './lib/theme'
 import LandingView from './components/LandingView'
 import ReaderView from './components/ReaderView'
+import FlowReviewView from './components/FlowReviewView'
 import SettingsPanel from './components/SettingsPanel'
 import HelpPanel from './components/HelpPanel'
 import CommentLayer from './components/CommentLayer'
@@ -12,6 +14,7 @@ import CrtOverlay from './components/CrtOverlay'
 
 export default function App() {
   const hasContent = useReader((s) => s.tokens.length > 0)
+  const flowActive = useFlow((s) => s.stops.length > 0)
 
   // Trap the hardware/edge-swipe back gesture while the reader is open. Mobile
   // has no in-app back button — only the OS gesture — and a single-page app
@@ -68,7 +71,7 @@ export default function App() {
 
   return (
     <>
-      {hasContent ? <ReaderView /> : <LandingView />}
+      {flowActive ? <FlowReviewView /> : hasContent ? <ReaderView /> : <LandingView />}
       <SettingsPanel />
       <HelpPanel />
       <CommentLayer />

@@ -3,7 +3,15 @@ import { promises as fs, createReadStream, existsSync, readFileSync } from 'node
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { getDoc, getDocs, onDocument, addDoc, loadFromDisk, type AntiVibeDoc } from './doc-store'
+import {
+  getDoc,
+  getDocs,
+  getDocById,
+  onDocument,
+  setDoc,
+  loadFromDisk,
+  type BridgeDoc,
+} from './doc-store'
 
 export const HOST = '127.0.0.1'
 export const PORT = Number(process.env.ANTIVIBE_MCP_PORT) || 7777
@@ -120,7 +128,7 @@ function closeAll(): void {
   server = null
 }
 
-function send(res: http.ServerResponse, doc: AntiVibeDoc): void {
+function send(res: http.ServerResponse, doc: BridgeDoc): void {
   res.write(`event: document\ndata: ${JSON.stringify(doc)}\n\n`)
 }
 
@@ -236,24 +244,27 @@ async function handleRequest(
     return
   }
 
-  if (url === '/__antivibe/docs') {
+  // The whole library, oldest first. The frontend hydrates every markdown doc
+  // and derives the flow-review switcher list from the same payload.
+  if (url.startsWith('/__antivibe/docs')) {
     res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
     res.end(JSON.stringify(getDocs()))
     return
   }
 
-  // Legacy single-doc catch-up: newest only. Kept so an older cached app bundle
-  // still hydrates; current clients use /__antivibe/docs for the full library.
-  if (url === '/__antivibe/doc') {
+  // A specific doc by ?id=, else the latest (SSE catch-up).
+  if (url.startsWith('/__antivibe/doc')) {
+    const id = new URL(url, BRIDGE_URL).searchParams.get('id')
+    const doc = id ? getDocById(id) : getDoc()
     res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
-    res.end(JSON.stringify(getDoc()))
+    res.end(JSON.stringify(doc))
     return
   }
 
   if (url === '/__antivibe/ingest' && method === 'POST') {
     try {
-      const doc = JSON.parse(await readBody(req)) as AntiVibeDoc
-      addDoc(doc) // fires onDocument -> forward to SSE + open-on-first-push
+      const doc = JSON.parse(await readBody(req)) as BridgeDoc
+      setDoc(doc) // fires onDocument -> forward to SSE + open-on-first-push
       res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' })
       res.end(JSON.stringify({ ok: true, clients: sseClients.size }))
     } catch (err) {
@@ -390,7 +401,7 @@ export function postShutdown(): Promise<void> {
 }
 
 /** Forward a doc to the already-running bridge (used when we don't own the port). */
-export function postIngest(doc: AntiVibeDoc): Promise<void> {
+export function postIngest(doc: BridgeDoc): Promise<void> {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify(doc)
     const req = http.request(

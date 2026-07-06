@@ -1,0 +1,133 @@
+.seq-minimap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  font: 0.72rem ui-monospace, monospace;
+  flex: 1;
+}
+
+.mm-head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.mm-lane-head {
+  letter-spacing: 0.16em;
+  color: var(--fg-dim);
+}
+
+.mm-map-toggle {
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  border-radius: 4px;
+  color: var(--fg-dim);
+  font: inherit;
+  letter-spacing: 0.1em;
+  padding: 0.1rem 0.4rem;
+  cursor: pointer;
+}
+.mm-map-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent-2);
+}
+
+.mm-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.mm-group-head {
+  color: var(--fg-dim);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+}
+
+/* Node cards — shared with the FlowMapOverlay (which positions them
+   absolutely inside .fm-graph). */
+.mm-node {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  text-align: left;
+  background: color-mix(in srgb, var(--bg-2) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  border-radius: 4px;
+  color: var(--fg);
+  padding: 0.4rem 0.5rem;
+  cursor: pointer;
+  font: inherit;
+  transition: border-color 0.12s, background 0.12s;
+  overflow: hidden;
+}
+.mm-node:hover {
+  border-color: var(--accent-2);
+}
+.mm-node.visited {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+/* Context (unchanged) nodes read quieter: dashed, dimmed. */
+.mm-node.context {
+  border-style: dashed;
+  opacity: 0.72;
+}
+.mm-node.context .mm-node-label {
+  color: var(--fg-dim);
+  font-weight: 500;
+}
+.mm-node.active {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-2));
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.mm-node-label {
+  color: var(--fg-strong);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mm-node-via {
+  color: var(--fg-dim);
+  font-size: 0.6rem;
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mm-node-file {
+  color: var(--fg-dim);
+  font-size: 0.66rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mm-elided {
+  background: none;
+  border: 1px dashed color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  border-radius: 4px;
+  color: var(--fg-dim);
+  font: inherit;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  text-align: left;
+}
+.mm-elided:hover {
+  color: var(--accent);
+  border-color: var(--accent-2);
+}
+
+/* --- foundation lane (simple pinned list) --- */
+.mm-lane-foundation {
+  margin-top: auto;
+  border-top: 1px dashed color-mix(in srgb, var(--fg-dim) 40%, transparent);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.mm-foundation .mm-node-label {
+  color: var(--accent-2);
+}

@@ -92,6 +92,79 @@ export interface ParseResult {
   sections: Section[]
 }
 
+/** Which lane a flow-review stop belongs to. `flow` files are traversed top→bottom
+ *  in runtime call order; `foundation` files (models/schemas/contracts/types) sit
+ *  in a pinned lane and are listed bottom→up. */
+export type FlowLayer = 'flow' | 'foundation'
+
+/** How confidently the MCP tool matched a stop's locator to a real git-diff hunk. */
+export type MatchStatus = 'exact' | 'fuzzy' | 'missing'
+
+/** A call edge as sent by the agent: either just the callee stop id, or the id
+ *  plus `via` — the caller-side function the call happens in, shown as the
+ *  edge's semantic label. Normalized to a FlowEdge (lib/flowGraph) at load. */
+export type FlowCall = string | { to: string; via?: string }
+
+/** One resolved diff hunk of a file. The focus view shows these one at a time. */
+export interface ResolvedHunk {
+  /** The `@@ ... @@` header line. */
+  header: string
+  /** Verbatim unified-diff text for this hunk (including the header line). */
+  diffText: string
+  /** 1-based line in the new file this hunk starts at (for "open in editor"). */
+  line: number
+  /** One-line "why read this next" caption from the agent's `hunkFlow` entry;
+   *  shown above the diff. Absent for hunks outside the semantic order. */
+  note?: string
+}
+
+/** A review stop after the MCP tool has resolved its file's hunks from git.
+ *  A stop maps to a FILE; the frontend steps through `hunks` one at a time.
+ *  The agent never sends `hunks`/`matchStatus`. */
+export interface ResolvedFlowStop {
+  id: string
+  file: string
+  layer: FlowLayer
+  /** Short human title/role for the stop, e.g. "Route handler". */
+  title: string
+  /** Markdown prose explaining the change (rendered statically). */
+  explanation: string
+  /** One-line gist shown as a caption for the stop. */
+  oneLineSummary: string
+  /** Stops this one calls into (drives the sequence connectors); entries may
+   *  carry the caller-side function name as the edge label. */
+  callsTo?: FlowCall[]
+  /** All of the file's diff hunks, in source order. Empty when `missing` or `context`. */
+  hunks: ResolvedHunk[]
+  /** Overall match confidence of the stop's locator hint. */
+  matchStatus: MatchStatus
+  /** A connective step with no change — shown so the runtime flow reads
+   *  continuously. Rendered dimmed, with no diff / stepper / editor link. */
+  context?: boolean
+  /** Absolute path on the machine that ran the review, for "open in editor".
+   *  Undefined when the repo path could not be resolved. */
+  absPath?: string
+}
+
+/** Lightweight metadata for the review switcher (matches the bridge's DocMeta). */
+export interface ReviewMeta {
+  documentId: string
+  title: string
+  createdAt: number
+  kind: 'flow-review' | 'markdown'
+  stopCount: number
+}
+
+/** A flow-ordered code review pushed into Anti-Vibe. Discriminated from the
+ *  markdown reader doc by `kind`. */
+export interface FlowReviewDoc {
+  kind: 'flow-review'
+  documentId: string
+  title: string
+  createdAt: number
+  stops: ResolvedFlowStop[]
+}
+
 /** Runtime-tunable playback configuration (persisted to localStorage). */
 export interface ReaderConfig {
   startWpm: number

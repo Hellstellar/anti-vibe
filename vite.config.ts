@@ -9,6 +9,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Ship a self-destroying service worker: any browser that still has the old
+      // SW installed will unregister it and clear its caches on next load. Offline
+      // caching is pure downside for a localhost-served review tool and caused the
+      // "old app keeps showing" staleness. Revisit before merging to main.
+      selfDestroying: true,
       // Generate all icon/favicon/apple-touch assets from one source SVG and
       // wire them into the manifest + <head> automatically.
       pwaAssets: {
@@ -53,6 +58,6 @@ export default defineConfig({
   server: { open: true },
   test: {
     environment: 'node',
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'mcp/**/*.test.ts'],
   },
 })

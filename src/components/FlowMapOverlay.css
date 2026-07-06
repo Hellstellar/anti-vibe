@@ -1,0 +1,120 @@
+.flow-map {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 0.72rem ui-monospace, monospace;
+}
+
+.fm-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(640px, 92vw);
+  max-height: 86vh;
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
+  border-radius: 6px;
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--bg) 80%, black);
+}
+
+.fm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  border-bottom: 1px dashed color-mix(in srgb, var(--fg-dim) 40%, transparent);
+}
+.fm-title {
+  letter-spacing: 0.16em;
+  color: var(--fg-dim);
+}
+.fm-close {
+  background: none;
+  border: none;
+  color: var(--fg-dim);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.fm-close:hover {
+  color: var(--accent);
+}
+
+.fm-scroll {
+  overflow: auto;
+  padding: 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--fg-dim) 55%, transparent) transparent;
+}
+
+.fm-graph {
+  position: relative;
+  margin: 0 auto;
+}
+.fm-graph .mm-node {
+  position: absolute;
+}
+
+.fm-edges {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.fm-edge {
+  fill: none;
+  stroke: color-mix(in srgb, var(--fg-dim) 55%, transparent);
+  stroke-width: 1.5;
+  transition: opacity 0.1s;
+}
+/* Non-parent edges (skip-level / extra caller / back edge): dashed, thinner,
+   so the primary tree guides stay dominant. */
+.fm-edge.cross {
+  stroke-dasharray: 3 3;
+  stroke-width: 1.2;
+}
+.fm-edge.active {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+/* Hover tracing: edges touching the hovered node light up, the rest recede. */
+.fm-edge.hl {
+  stroke: var(--accent-2);
+  stroke-width: 2;
+}
+.fm-edge.dim,
+.fm-edge-label.dim {
+  opacity: 0.12;
+}
+.fm-edge-label {
+  fill: var(--fg-dim);
+  font-size: 0.6rem;
+  font-style: italic;
+  text-anchor: end;
+  /* Halo so labels stay readable where trunks pass underneath. */
+  paint-order: stroke;
+  stroke: var(--bg-2);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  transition: opacity 0.1s;
+}
+.fm-edge-label.active {
+  fill: var(--accent);
+}
+.fm-edge-label.hl {
+  fill: var(--accent-2);
+}
+
+.fm-foundation {
+  width: min(560px, 100%);
+  margin: 1.2rem auto 0;
+  border-top: 1px dashed color-mix(in srgb, var(--fg-dim) 40%, transparent);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}

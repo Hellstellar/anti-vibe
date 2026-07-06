@@ -3,7 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { parseMarkdown } from '../src/lib/parseMarkdown'
 import { normalizeMarkdown } from './normalize'
-import { makeDoc, addDoc } from './doc-store'
+import { makeDoc, makeFlowDoc, setDoc } from './doc-store'
 import {
   startBridge,
   probeBridge,
@@ -17,6 +17,7 @@ import {
   PORT,
   log,
 } from './bridge'
+import { resolveFlowReview, type FlowReviewInput } from './flow-resolve'
 
 const delay = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
@@ -132,7 +133,7 @@ async function ingest(markdown: string, title: string | undefined, verb: string)
   const doc = makeDoc(normalized, displayTitle)
 
   try {
-    if (ownsBridge) addDoc(doc)
+    if (ownsBridge) setDoc(doc)
     else await postIngest(doc)
   } catch (err) {
     return {
@@ -223,6 +224,146 @@ async function main(): Promise<void> {
       outputSchema: OUTPUT_SCHEMA,
     },
     ({ markdown, title }) => ingest(markdown, title, 'Sent RSVP prose to Anti-Vibe'),
+  )
+
+  const FLOW_DESCRIPTION = [
+    'Push a FLOW-ORDERED code review to Anti-Vibe: the human walks the change in',
+    'runtime execution order (like a sequence diagram), not file-by-file. Send ONLY',
+    'the traversal STRUCTURE — never the diff text. Anti-Vibe resolves each hunk by',
+    'running `git diff` in the repo and matching your locators.',
+    'Order `flow` stops top→bottom in call order (entry → handler → service → effect);',
+    'put models/schemas/contracts/types in `foundation` and list them bottom→up.',
+    'Each stop maps to a FILE — the reviewer steps through all of that file\'s hunks one',
+    'at a time. `locator` is an OPTIONAL hint (exact `hunkHeader` "@@ -a,b +c,d @@ ..." or',
+    '`lineRange`) that just sets the match-confidence badge. Give each stop a one-line summary.',
+    'For unchanged connective steps (a dispatcher/existing handler the flow passes through),',
+    'add a stop with `context: true` and no locator so the sequence reads continuously.',
+    'When a stop\'s file has several hunks, add `hunkFlow` to order them for reading in',
+    'execution order (behavior change before plumbing) with a one-line note per hunk.',
+  ].join(' ')
+
+  const FLOW_STOP_SCHEMA = z.object({
+    id: z.string().describe('Unique id for this stop; referenced by other stops\' callsTo.'),
+    file: z.string().describe('Path of the changed file (repo-relative). The stop resolves to all of this file\'s hunks.'),
+    locator: z
+      .object({
+        hunkHeader: z.string().optional().describe('The `@@ ... @@` header of the primary hunk (optional hint).'),
+        lineRange: z
+          .object({ start: z.number(), end: z.number() })
+          .optional()
+          .describe('New-file line range of the primary hunk (optional hint).'),
+      })
+      .optional()
+      .describe('Optional hint marking the primary hunk / match confidence. All file hunks are shown regardless.'),
+    layer: z.enum(['flow', 'foundation']).describe("'flow' = runtime path; 'foundation' = models/schemas/contracts/types."),
+    context: z
+      .boolean()
+      .optional()
+      .describe('True for a connective step with NO change, shown so the flow reads continuously (no diff resolved).'),
+    title: z.string().describe('Short role/title, e.g. "Route handler".'),
+    explanation: z.string().describe('Markdown prose explaining the change at this stop.'),
+    oneLineSummary: z.string().describe('One-line gist of the hunk in view.'),
+    callsTo: z
+      .array(
+        z.union([
+          z.string(),
+          z.object({
+            to: z.string().describe('Id of the callee stop.'),
+            via: z
+              .string()
+              .optional()
+              .describe('Caller-side function the call happens in, e.g. "handleSubmit" — shown as the edge label.'),
+          }),
+        ]),
+      )
+      .optional()
+      .describe('Stops this stop calls into: bare ids, or { to, via } to label the edge with the calling function.'),
+    hunkFlow: z
+      .array(
+        z.object({
+          match: z
+            .object({
+              hunkHeader: z.string().optional().describe('The `@@ ... @@` header of the hunk.'),
+              lineRange: z
+                .object({ start: z.number(), end: z.number() })
+                .optional()
+                .describe('New-file line range of the hunk.'),
+            })
+            .describe('Locator for the hunk this reading step refers to (one of hunkHeader / lineRange).'),
+          note: z
+            .string()
+            .optional()
+            .describe('One-line "why read this next" caption shown above the hunk.'),
+        }),
+      )
+      .optional()
+      .describe(
+        'SEMANTIC reading order for the stop\'s hunks (execution order, not source order), each with a caption. Hunks not listed append after in source order. Omit to read hunks in source order.',
+      ),
+  })
+
+  server.registerTool(
+    'review_flow',
+    {
+      title: 'Send a flow-ordered code review to Anti-Vibe',
+      description: FLOW_DESCRIPTION,
+      inputSchema: {
+        stops: z.array(FLOW_STOP_SCHEMA).min(1).describe('Ordered traversal of the review.'),
+        title: z.string().optional().describe('Title for the review.'),
+        repoPath: z.string().optional().describe('Repo to run git diff in (defaults to ANTIVIBE_REPO_DIR or cwd).'),
+        diffBase: z.string().optional().describe('git diff base, e.g. "HEAD~1" or "main...HEAD" (default: working tree).'),
+      },
+      outputSchema: {
+        documentId: z.string(),
+        stopCount: z.number(),
+        resolvedCount: z.number(),
+        url: z.string(),
+      },
+    },
+    async (input) => {
+      let resolved
+      try {
+        resolved = await resolveFlowReview(input as FlowReviewInput)
+      } catch (err) {
+        return {
+          isError: true,
+          content: [{ type: 'text', text: `Could not resolve the diff: ${String(err)}` }],
+        }
+      }
+
+      const doc = makeFlowDoc(resolved.stops, input.title?.trim() || 'Flow Review')
+
+      try {
+        if (ownsBridge) setDoc(doc)
+        else await postIngest(doc)
+      } catch (err) {
+        return {
+          isError: true,
+          content: [
+            {
+              type: 'text',
+              text: `Sent nothing — the Anti-Vibe bridge is unreachable on ${BRIDGE_URL} (${String(err)}). Is it running?`,
+            },
+          ],
+        }
+      }
+
+      const resolvedCount = resolved.stops.filter((s) => s.matchStatus !== 'missing').length
+      const hint = resolved.warnings.length
+        ? ` Warnings: ${resolved.warnings.join('; ')}.`
+        : ''
+      const text = `Sent flow review to Anti-Vibe (${doc.stops.length} stops, ${resolvedCount} with diffs). Review at ${BRIDGE_URL}.${hint}`
+
+      return {
+        content: [{ type: 'text', text }],
+        structuredContent: {
+          documentId: doc.documentId,
+          stopCount: doc.stops.length,
+          resolvedCount,
+          url: BRIDGE_URL,
+        },
+      }
+    },
   )
 
   await server.connect(new StdioServerTransport())
