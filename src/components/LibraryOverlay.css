@@ -74,13 +74,21 @@
 
 .library-item {
   display: grid;
-  grid-template-columns: 0.7rem 1fr auto;
+  grid-template-columns: 0.7rem 1fr auto auto;
   align-items: center;
   gap: 0.55rem;
   padding: 0.4rem 0.5rem;
   border: 1px solid transparent;
   border-radius: 4px;
   cursor: pointer;
+}
+
+.library-empty {
+  font-family: var(--word-font);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  color: var(--fg-dim);
+  padding: 0.3rem 0.2rem 0.1rem;
 }
 .library-item.sel {
   border-color: var(--accent);
@@ -118,6 +126,22 @@
 }
 .library-item.active .li-title {
   color: var(--accent-2);
+}
+
+/* Source tag: pushed (agent/MCP) vs local (paste/open). */
+.li-src {
+  font-family: var(--ui-font);
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--fg-dim);
+  border-radius: 3px;
+  padding: 0.1rem 0.3rem;
+  white-space: nowrap;
+}
+.library-item.active .li-src {
+  background: var(--accent);
 }
 
 .li-time {

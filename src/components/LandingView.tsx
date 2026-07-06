@@ -4,7 +4,7 @@ import { primeAudio, sfx } from '../lib/sfx'
 import './LandingView.css'
 
 export default function LandingView() {
-  const load = useReader((s) => s.load)
+  const loadLocal = useReader((s) => s.loadLocal)
   const [fallback, setFallback] = useState(false)
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -20,7 +20,7 @@ export default function LandingView() {
         setError('Clipboard is empty. Copy some markdown first.')
         return
       }
-      load(clip)
+      loadLocal(clip)
     } catch {
       // Clipboard blocked (permissions / insecure context) — fall back.
       setFallback(true)
@@ -37,7 +37,7 @@ export default function LandingView() {
       setError('That file is empty.')
       return
     }
-    load(content)
+    loadLocal(content, file.name.replace(/\.(md|markdown|txt)$/i, ''))
   }
 
   return (
@@ -74,7 +74,7 @@ export default function LandingView() {
           <button
             className="big-button small"
             disabled={!text.trim()}
-            onClick={() => load(text)}
+            onClick={() => loadLocal(text)}
           >
             READ
           </button>

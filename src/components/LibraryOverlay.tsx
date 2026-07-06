@@ -27,6 +27,7 @@ export default function LibraryOverlay() {
   const library = useReader((s) => s.library)
   const activeDocId = useReader((s) => s.activeDocId)
   const open = useReader((s) => s.libraryOpen)
+  const openLibrary = useReader((s) => s.openLibrary)
   const closeLibrary = useReader((s) => s.closeLibrary)
   const toggleLibrary = useReader((s) => s.toggleLibrary)
   const switchTo = useReader((s) => s.switchTo)
@@ -45,9 +46,20 @@ export default function LibraryOverlay() {
     setSel(i >= 0 ? i : 0)
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Owns its keys globally so it works on both the landing screen and inside the
+  // reader (`l` opens; ReaderView bails on libraryOpen so reader nav never fires
+  // underneath). Ignores keys while typing in a field.
   useEffect(() => {
-    if (!open) return
     const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement)?.tagName
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return
+      if (!open) {
+        if (e.key === 'l' && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          e.preventDefault()
+          openLibrary()
+        }
+        return
+      }
       switch (e.key) {
         case 'ArrowDown':
           e.preventDefault()
@@ -75,9 +87,7 @@ export default function LibraryOverlay() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [open, items, sel, switchTo, closeLibrary])
-
-  if (library.length === 0) return null
+  }, [open, items, sel, switchTo, closeLibrary, openLibrary])
 
   const choose = (documentId: string) => {
     switchTo(documentId)
@@ -92,26 +102,33 @@ export default function LibraryOverlay() {
       </button>
 
       {open && (
-        <div className="library-body" role="listbox" aria-label="Received documents">
+        <div className="library-body" role="listbox" aria-label="Documents">
           <div className="library-title">Documents · {library.length}</div>
-          <ul className="library-list">
-            {items.map((d, i) => (
-              <li
-                key={d.documentId}
-                role="option"
-                aria-selected={i === sel}
-                className={`library-item${i === sel ? ' sel' : ''}${
-                  d.documentId === activeDocId ? ' active' : ''
-                }`}
-                onMouseEnter={() => setSel(i)}
-                onClick={() => choose(d.documentId)}
-              >
-                <span className={`li-dot${d.unread ? ' unread' : ''}`} aria-hidden="true" />
-                <span className="li-title">{d.title}</span>
-                <span className="li-time">{ago(d.createdAt)}</span>
-              </li>
-            ))}
-          </ul>
+          {items.length === 0 ? (
+            <div className="library-empty">
+              No documents yet. Paste or open a `.md` — or push one from an agent — to start.
+            </div>
+          ) : (
+            <ul className="library-list">
+              {items.map((d, i) => (
+                <li
+                  key={d.documentId}
+                  role="option"
+                  aria-selected={i === sel}
+                  className={`library-item${i === sel ? ' sel' : ''}${
+                    d.documentId === activeDocId ? ' active' : ''
+                  }`}
+                  onMouseEnter={() => setSel(i)}
+                  onClick={() => choose(d.documentId)}
+                >
+                  <span className={`li-dot${d.unread ? ' unread' : ''}`} aria-hidden="true" />
+                  <span className="li-title">{d.title}</span>
+                  <span className="li-src">{d.source === 'bridge' ? 'pushed' : 'local'}</span>
+                  <span className="li-time">{ago(d.createdAt)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
     </div>

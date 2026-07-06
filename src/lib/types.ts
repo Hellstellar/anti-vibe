@@ -174,13 +174,19 @@ export interface CommentAnchor {
   suffix: string
 }
 
-/** A document received from the bridge, retained so the reader can navigate
- *  between pushes instead of each new push clobbering the last. */
+/** A document in the reader's library, retained so the reader can navigate
+ *  between reads/reviews instead of each new one clobbering the last. Unifies
+ *  all three entry points:
+ *   - 'bridge' — pushed by an agent via MCP; persisted server-side (bridge disk).
+ *   - 'local'  — pasted / opened `.md` in the browser; persisted client-side
+ *     (localStorage). Works on the deployed web app too, where there is no bridge. */
 export interface LibraryDoc {
   documentId: string
   title: string
   markdown: string
-  /** Epoch ms the push arrived (from the bridge, or receipt time). */
+  /** Where the doc came from — drives which store persists it. */
+  source: 'bridge' | 'local'
+  /** Epoch ms the doc entered the library. */
   createdAt: number
   /** True until the reader has opened it — drives the "new arrival" badge. */
   unread: boolean

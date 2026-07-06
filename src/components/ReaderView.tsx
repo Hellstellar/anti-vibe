@@ -70,16 +70,10 @@ export default function ReaderView() {
       const s = useReader.getState()
       const meta = e.metaKey || e.ctrlKey
 
-      // While the library overlay is open it owns the keyboard (↑↓/enter/esc/l);
-      // don't let reader navigation fire underneath it.
+      // While the library overlay is open it owns the keyboard (open via `l` and
+      // ↑↓/enter/esc all live in LibraryOverlay); don't let reader navigation
+      // fire underneath it.
       if (s.libraryOpen) return
-
-      // `l`: open the document library (no-op when nothing has been pushed).
-      if (e.key === 'l' && !meta && !e.shiftKey && !e.altKey) {
-        e.preventDefault()
-        s.openLibrary()
-        return
-      }
 
       // Cmd/Ctrl + arrow: jump to the next/prev section (reveal view).
       if (meta && e.key.startsWith('Arrow')) {

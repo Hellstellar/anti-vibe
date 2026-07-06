@@ -13,6 +13,7 @@ import {
 } from '../lib/theme'
 import { CFG_KEY } from '../lib/storageKeys'
 import { docKeyFor, persistComments, restoreComments } from '../lib/comments'
+import { restoreLocalLibrary, persistLocalLibrary, deriveTitle } from '../lib/library'
 import type {
   Block,
   Comment,
@@ -84,21 +85,29 @@ function saveConfig(cfg: ReaderConfig) {
   }
 }
 
-/** Cap on retained received docs client-side (mirrors the bridge's MAX_DOCS). */
+/** Cap per source (bridge / local), mirroring each backend's own cap. */
 const MAX_LIBRARY = 20
 
-/** Trim to MAX_LIBRARY, evicting oldest first but never the active doc. `lib`
- *  is oldest-first, so this drops from the front. */
-function capLibrary(lib: LibraryDoc[], activeId: string | null): LibraryDoc[] {
-  if (lib.length <= MAX_LIBRARY) return lib
-  let excess = lib.length - MAX_LIBRARY
-  return lib.filter((d) => {
+/** Trim a same-source list to MAX_LIBRARY, evicting oldest first but never the
+ *  active doc (input oldest-first, so it drops from the front). */
+function capSource(list: LibraryDoc[], activeId: string | null): LibraryDoc[] {
+  if (list.length <= MAX_LIBRARY) return list
+  let excess = list.length - MAX_LIBRARY
+  return list.filter((d) => {
     if (excess > 0 && d.documentId !== activeId) {
       excess--
       return false
     }
     return true
   })
+}
+
+/** Cap bridge and local docs independently, then re-order oldest-first by
+ *  arrival so the overlay's newest-first view stays correct. */
+function capLibrary(lib: LibraryDoc[], activeId: string | null): LibraryDoc[] {
+  const local = capSource(lib.filter((d) => d.source === 'local'), activeId)
+  const bridge = capSource(lib.filter((d) => d.source === 'bridge'), activeId)
+  return [...local, ...bridge].sort((a, b) => a.createdAt - b.createdAt)
 }
 
 // Timer handle lives outside React/store state so it survives re-renders.
@@ -154,6 +163,9 @@ interface ReaderState {
   libraryOpen: boolean
 
   load: (src: string, meta?: { documentId?: string; title?: string }) => void
+  /** Load a pasted / opened `.md` doc AND retain it in the client-persisted
+   *  library (source 'local'), so paste/open/push share one resumable library. */
+  loadLocal: (src: string, title?: string) => void
   exit: () => void
   startCountdown: () => void
   /** Enter the section reading view (called when the countdown finishes). */
@@ -329,7 +341,7 @@ export const useReader = create<ReaderState>((set, get) => {
     docKey: '',
     docTitle: '',
     comments: [],
-    library: [],
+    library: restoreLocalLibrary(),
     activeDocId: null,
     libraryOpen: false,
 
@@ -381,9 +393,8 @@ export const useReader = create<ReaderState>((set, get) => {
         docKey: '',
         docTitle: '',
         comments: [],
-        // Leaving to landing drops the session library; a tab reload re-hydrates
-        // it from the bridge's /__antivibe/docs catch-up.
-        library: [],
+        // Keep `library` intact — leaving to landing should still let the human
+        // resume any past read/review from the always-visible library CTA.
         activeDocId: null,
         libraryOpen: false,
       })
@@ -614,6 +625,7 @@ export const useReader = create<ReaderState>((set, get) => {
         documentId: incoming.documentId,
         title: incoming.title?.trim() || 'Untitled',
         markdown: incoming.markdown,
+        source: 'bridge',
         createdAt: incoming.createdAt ?? Date.now(),
         unread: true,
       }
@@ -621,6 +633,30 @@ export const useReader = create<ReaderState>((set, get) => {
       set({ library: capLibrary([...library, entry], isFirst ? entry.documentId : activeDocId) })
       // First doc (fresh tab / landing with nothing open) shows immediately.
       if (isFirst) get().load(entry.markdown, { documentId: entry.documentId, title: entry.title })
+    },
+
+    loadLocal: (src, title) => {
+      if (!src.trim()) return
+      const documentId = docKeyFor(src) // content-hash — stable across paste/open of the same text
+      const displayTitle = title?.trim() || deriveTitle(src)
+      const { library } = get()
+      let next = library
+      if (!library.some((d) => d.documentId === documentId)) {
+        const entry: LibraryDoc = {
+          documentId,
+          title: displayTitle,
+          markdown: src,
+          source: 'local',
+          createdAt: Date.now(),
+          unread: false, // the human just opened it themselves
+        }
+        next = capLibrary([...library, entry], documentId)
+        set({ library: next })
+        persistLocalLibrary(next)
+      }
+      // load() drives the reader; ReaderView mounts (landing -> reader) and its
+      // effect enters the heading view, same as any first load.
+      get().load(src, { documentId, title: displayTitle })
     },
 
     switchTo: (documentId) => {
@@ -633,10 +669,8 @@ export const useReader = create<ReaderState>((set, get) => {
       get().enterReading()
     },
 
-    openLibrary: () => {
-      if (get().library.length > 0) set({ libraryOpen: true })
-    },
+    openLibrary: () => set({ libraryOpen: true }),
     closeLibrary: () => set({ libraryOpen: false }),
-    toggleLibrary: () => (get().libraryOpen ? set({ libraryOpen: false }) : get().openLibrary()),
+    toggleLibrary: () => set({ libraryOpen: !get().libraryOpen }),
   }
 })
