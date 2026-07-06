@@ -8,6 +8,8 @@ A retro-cyberpunk reader for **reviewing LLM / agent output without the fatigue*
 
 > **RSVP** (Rapid Serial Visual Presentation) shows information one item at a time in the same spot. Instead of reading a paragraph at your own pace, words flash by in the center of your vision. It's speed-reading where the content moves, not your gaze — easier to process without scrolling or darting your eyes around.
 
+> **Full disclosure:** yes, a tool for *not* vibe coding is itself vibe coded — for now. That irony isn't lost on us. The plan is to close the loop and use Anti-Vibe on its own source: review this codebase section by section until it's earned its way out of "vibe coded" and into "actually reviewed."
+
 ## Why
 
 LLMs and agents generate walls of text, and the cost of reviewing it is real — not just the time. This app attacks that cost from several sides:
