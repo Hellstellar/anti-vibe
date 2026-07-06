@@ -1,9 +1,18 @@
 {
   "name": "anti-vibe-mcp",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "MCP server that pushes agent-generated markdown into the Anti-Vibe reader for fatigue-free, heading-by-heading review.",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hellstellar/anti-vibe.git",
+    "directory": "mcp"
+  },
+  "homepage": "https://github.com/Hellstellar/anti-vibe#readme",
+  "bugs": {
+    "url": "https://github.com/Hellstellar/anti-vibe/issues"
+  },
   "bin": {
     "anti-vibe-mcp": "./bin/anti-vibe-mcp.mjs"
   },
