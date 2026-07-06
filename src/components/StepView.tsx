@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef } from 'react'
 import { useReader } from '../store/readerStore'
 import type { StepUnit, WordToken } from '../lib/types'
+import { isMermaid } from '../lib/mermaid'
+import MermaidDiagram from './MermaidDiagram'
 import './StepView.css'
 
 const MIN_FONT_PX = 16
@@ -46,6 +48,18 @@ function UnitBody({ unit }: { unit: StepUnit }) {
       )
     case 'code': {
       const value: string = (unit.node as any)?.value ?? ''
+      const raw = (
+        <pre className="step-code">
+          {(unit.node as any)?.lang && (
+            <span className="step-code-lang">{(unit.node as any).lang}</span>
+          )}
+          <code>{value}</code>
+        </pre>
+      )
+      // A mermaid fence steps as one whole rendered diagram (see steps.ts).
+      if (isMermaid(unit.node)) {
+        return <MermaidDiagram value={value} fallback={raw} />
+      }
       // Paged unit -> show only its line range (see lib/codePages.ts).
       const text =
         unit.lineStart != null

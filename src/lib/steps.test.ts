@@ -88,6 +88,15 @@ describe('buildSteps', () => {
     expect(u[0].label).toBe('CODE')
   })
 
+  it('emits one whole DIAGRAM unit for a mermaid fence, never paged', () => {
+    const body = Array.from({ length: 60 }, (_, i) => `  n${i} --> n${i + 1}`).join('\n')
+    const u = build(`# H\n\n\`\`\`mermaid\ngraph TD\n${body}\n\`\`\``)
+    expect(u).toHaveLength(1)
+    expect(u[0].kind).toBe('code')
+    expect(u[0].label).toBe('DIAGRAM')
+    expect(u[0].lineStart).toBeUndefined()
+  })
+
   it('pages a large code block into multiple code units with position labels', () => {
     const body = Array.from({ length: 60 }, (_, i) => `line ${i}`).join('\n')
     const u = build(`# H\n\n\`\`\`js\n${body}\n\`\`\``)

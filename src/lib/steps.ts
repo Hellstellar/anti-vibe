@@ -1,5 +1,6 @@
 import type { Block, Section, StepUnit, Token, WordToken } from './types'
 import { paginateCode } from './codePages'
+import { isMermaid } from './mermaid'
 
 /** Group words into sentences, breaking after .!? (with trailing quotes/brackets). */
 export function splitSentences(words: WordToken[]): WordToken[][] {
@@ -99,6 +100,12 @@ export function buildSteps(
         break
       }
       case 'code': {
+        // A mermaid fence renders as one whole diagram — paging a graph by
+        // source lines is meaningless.
+        if (isMermaid(b.node)) {
+          units.push({ kind: 'code', label: 'DIAGRAM', groupId: bi, node: b.node })
+          break
+        }
         // A big block becomes several fixed-window pages instead of one wall.
         const code = b.node as { value?: string; lang?: string | null }
         const pages = paginateCode(code.value ?? '', code.lang)

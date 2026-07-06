@@ -1,0 +1,30 @@
+.mermaid-diagram {
+  display: flex;
+  justify-content: center;
+  padding: 0.5em 0;
+  overflow-x: auto;
+}
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-loading {
+  font-family: var(--ui-font);
+  font-size: 0.6rem;
+  letter-spacing: 0.15em;
+  color: var(--fg-dim);
+  text-align: center;
+  padding: 1.5em 0;
+}
+
+/* Step mode: the diagram scales to fit the unit body (no scrolling, like the
+   fit-to-screen rule for text units). */
+.step-body .mermaid-diagram {
+  height: 100%;
+  align-items: center;
+  overflow: hidden;
+}
+.step-body .mermaid-diagram svg {
+  max-height: 100%;
+}

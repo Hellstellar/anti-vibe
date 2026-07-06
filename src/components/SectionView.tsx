@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useReader } from '../store/readerStore'
 import type { Block, Token, WordToken } from '../lib/types'
+import { isMermaid } from '../lib/mermaid'
+import MermaidDiagram from './MermaidDiagram'
 import './SectionView.css'
 
 /** Flatten an mdast node to plain text. */
@@ -15,12 +17,16 @@ function nodeText(node: any): string {
 function AtomicBlock({ block }: { block: Block }) {
   const node: any = block.node
   if (block.type === 'code') {
-    return (
+    const raw = (
       <pre className="sv-code">
         {node.lang && <span className="sv-code-lang">{node.lang}</span>}
         <code>{node.value}</code>
       </pre>
     )
+    if (isMermaid(node)) {
+      return <MermaidDiagram value={node.value ?? ''} fallback={raw} />
+    }
+    return raw
   }
   if (block.type === 'table') {
     const rows = (node.children ?? []) as any[]
