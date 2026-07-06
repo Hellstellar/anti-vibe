@@ -314,41 +314,31 @@
   text-underline-offset: 0.25em;
 }
 
-/* Touch capture button — pinned bottom-left, clear of the centered/full-width
-   control bar below and the advance button on the right. Hidden on hover-
-   capable devices except while text is selected; the `c` shortcut covers the
-   rest on desktop. */
-.comment-fab {
-  display: none;
-  position: fixed;
-  left: 1rem;
-  bottom: calc(4.6rem + env(safe-area-inset-bottom, 0px));
-  z-index: 10000;
+.comments-head-actions {
+  display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-family: var(--ui-font);
-  font-size: 0.62rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+}
+
+/* In-panel capture: an accent icon button that appears when text is selected.
+   Anchors the next comment to the selection. */
+.comments-capture {
+  width: 1.9rem;
+  height: 1.9rem;
+  font-size: 0.95rem;
   color: var(--bg);
   background: var(--accent);
   border: none;
-  border-radius: 999px;
-  padding: 0.6em 0.9em;
-  box-shadow: 0 0 12px var(--glow);
+  border-radius: 4px;
 }
-.comment-fab .cf-plus {
-  font-size: 1.1em;
-  line-height: 1;
+.comments-capture:hover {
+  box-shadow: 0 0 10px var(--glow);
 }
-/* A live selection reveals the button on every device (no clutter otherwise). */
-.comment-fab.on-sel {
-  display: inline-flex;
-}
-/* On touch devices there is no `c` key, so the button is always available. */
 @media (hover: none) {
-  .comment-fab {
-    display: inline-flex;
+  .comments-capture {
+    width: 2.4rem;
+    height: 2.4rem;
+    font-size: 1.05rem;
   }
 }
 

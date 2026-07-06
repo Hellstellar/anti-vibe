@@ -196,8 +196,11 @@ export default function CommentLayer() {
       <div ref={panelRef} className={`comments ${panelOpen ? 'open' : ''}`}>
         <button
           className="comments-toggle"
+          // Keep any live text selection alive across the tap so the panel's
+          // "Comment on selection" action can anchor to it.
+          onPointerDown={(e) => e.preventDefault()}
           onClick={() => setPanelOpen((o) => !o)}
-          title="Review comments"
+          title="Comments"
         >
           ✎{active.length > 0 && <span className="comments-badge">{active.length}</span>}
         </button>
@@ -206,13 +209,26 @@ export default function CommentLayer() {
           <div className="comments-body">
             <div className="comments-head">
               <span className="comments-title">Comments</span>
-              <button
-                className="comments-add"
-                onClick={() => openComposer({ anchor: null, scope: 'document' })}
-                title="Add a general note"
-              >
-                + note
-              </button>
+              <div className="comments-head-actions">
+                {selRange && (
+                  <button
+                    className="comments-capture"
+                    onPointerDown={(e) => e.preventDefault()}
+                    onClick={capture}
+                    title="Comment on selection"
+                    aria-label="Comment on selection"
+                  >
+                    ✎
+                  </button>
+                )}
+                <button
+                  className="comments-add"
+                  onClick={() => openComposer({ anchor: null, scope: 'document' })}
+                  title="Add a general note"
+                >
+                  + note
+                </button>
+              </div>
             </div>
 
             {comments.length === 0 ? (
@@ -265,20 +281,6 @@ export default function CommentLayer() {
           </div>
         )}
       </div>
-
-      {/* Touch capture: always shown on touch devices; on desktop it appears
-          only while text is selected (the `c` shortcut covers the rest). */}
-      {!draft && (
-        <button
-          className={`comment-fab ${selRange ? 'on-sel' : ''}`}
-          onPointerDown={(e) => e.preventDefault()} // keep the selection alive
-          onClick={capture}
-          title={selRange ? 'Comment on selection' : 'Add comment'}
-        >
-          <span className="cf-plus" aria-hidden="true">+</span>
-          {selRange ? 'Comment on selection' : 'Comment'}
-        </button>
-      )}
 
       {/* Composer modal */}
       {draft && (
