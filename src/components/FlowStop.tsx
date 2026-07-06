@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { parseMarkdown } from '../lib/parseMarkdown'
 import {
   EDITORS,
@@ -9,6 +9,8 @@ import {
   saveEditorId,
 } from '../lib/editors'
 import type { Block, ResolvedFlowStop, Token, WordToken } from '../lib/types'
+import { IconChevronLeft, IconChevronRight, IconExternalLink, IconEye, IconFileText } from './Icon'
+import { useClickOutside } from './useClickOutside'
 import './FlowStop.css'
 
 /** Classify a unified-diff line for coloring. */
@@ -23,8 +25,8 @@ function DiffView({ text }: { text: string }) {
   if (!text.trim()) {
     return <div className="fs-diff-missing">(diff not resolved — hunk not found in git diff)</div>
   }
-  // Hide the `@@ ... @@` hunk header — it's line-number noise; position lives in
-  // the stepper and the target line in the "open in editor" link.
+  // Hide the `@@ ... @@` hunk header — it's line-number noise; the target line
+  // lives in the "open in editor" link.
   const lines = text
     .replace(/\n$/, '')
     .split('\n')
@@ -92,15 +94,14 @@ function ProseBlock({ block, tokens }: { block: Block; tokens: Token[] }) {
   )
 }
 
-const LAYER_LABEL: Record<ResolvedFlowStop['layer'], string> = {
-  flow: 'FLOW',
-  foundation: 'FOUNDATION',
-}
-
-/** "Open in editor" CTA + a picker to choose which editor (persisted). */
+/** "Open in editor" — an icon button that opens a popover with the deep link
+ *  plus the editor picker (which editor + custom URL template, persisted). */
 function OpenInEditor({ absPath, line }: { absPath?: string; line?: number }) {
+  const [open, setOpen] = useState(false)
   const [editorId, setEditorId] = useState(loadEditorId)
   const [template, setTemplate] = useState(loadCustomTemplate)
+  const ref = useRef<HTMLDivElement>(null)
+  useClickOutside(ref, open, () => setOpen(false))
 
   const href = buildEditorUrl(editorId, absPath, line, template)
   const label = EDITORS.find((e) => e.id === editorId)?.label ?? 'editor'
@@ -115,65 +116,68 @@ function OpenInEditor({ absPath, line }: { absPath?: string; line?: number }) {
   }
 
   return (
-    <div className="fs-open">
-      {href ? (
-        <a className="fs-open-cta" href={href} title={`${absPath}${line ? `:${line}` : ''}`}>
-          Open in {label} ↗
-        </a>
-      ) : (
-        <span className="fs-open-cta disabled" title={absPath ? 'Set a valid custom template' : 'No file path available'}>
-          Open in {label} ↗
-        </span>
-      )}
-      <select
-        className="fs-open-select"
-        value={editorId}
-        onChange={(e) => onEditor(e.target.value)}
-        aria-label="Choose editor"
+    <div className="fs-open" ref={ref}>
+      <button
+        className={`fs-icon-btn${open ? ' active' : ''}`}
+        onClick={() => setOpen((o) => !o)}
+        title="Open in editor"
+        aria-label="Open in editor"
       >
-        {EDITORS.map((e) => (
-          <option key={e.id} value={e.id}>
-            {e.label}
-          </option>
-        ))}
-      </select>
-      {editorId === 'custom' && (
-        <input
-          className="fs-open-template"
-          type="text"
-          value={template}
-          placeholder="myide://open?file={path}&line={line}"
-          onChange={(e) => onTemplate(e.target.value)}
-          spellCheck={false}
-        />
+        <IconExternalLink />
+      </button>
+      {open && (
+        <div className="fs-open-pop">
+          {href ? (
+            <a className="fs-open-cta" href={href} title={`${absPath}${line ? `:${line}` : ''}`}>
+              Open in {label} ↗
+            </a>
+          ) : (
+            <span
+              className="fs-open-cta disabled"
+              title={absPath ? 'Set a valid custom template' : 'No file path available'}
+            >
+              Open in {label} ↗
+            </span>
+          )}
+          <select
+            className="fs-open-select"
+            value={editorId}
+            onChange={(e) => onEditor(e.target.value)}
+            aria-label="Choose editor"
+          >
+            {EDITORS.map((e) => (
+              <option key={e.id} value={e.id}>
+                {e.label}
+              </option>
+            ))}
+          </select>
+          {editorId === 'custom' && (
+            <input
+              className="fs-open-template"
+              type="text"
+              value={template}
+              placeholder="myide://open?file={path}&line={line}"
+              onChange={(e) => onTemplate(e.target.value)}
+              spellCheck={false}
+            />
+          )}
+        </div>
       )}
     </div>
   )
 }
 
-/** The hunk stepper — shown whenever a file has more than one hunk. */
-function HunkNav({
-  idx,
-  count,
-  onPrev,
-  onNext,
-}: {
-  idx: number
-  count: number
-  onPrev: () => void
-  onNext: () => void
-}) {
-  if (count <= 1) return null
+/** The stepper — prev/next only, no counter (the app never shows progress).
+ *  Always shown: with one hunk the arrows step across stops (nextHunk follows
+ *  the call graph at a file's end), so they never vanish. */
+function HunkNav({ onPrev, onNext }: { onPrev: () => void; onNext: () => void }) {
   return (
     <div className="fs-hunk-nav">
-      <button className="fs-hunk-btn" onClick={onPrev} title="Previous hunk (←)">
-        ‹
+      <button className="fs-icon-btn" onClick={onPrev} title="Previous (←)" aria-label="Previous">
+        <IconChevronLeft />
       </button>
-      <span className="fs-hunk-count">
-        hunk {idx + 1} / {count}
-      </span>
-      <button className="fs-hunk-btn" onClick={onNext} title="Next hunk (→)">
-        ›
+      <button className="fs-icon-btn" onClick={onNext} title="Next (→)" aria-label="Next">
+        <IconChevronRight />
       </button>
     </div>
   )
@@ -181,8 +185,6 @@ function HunkNav({
 
 export default function FlowStop({
   stop,
-  position,
-  total,
   hunkIndex,
   minimal,
   calls,
@@ -192,8 +194,6 @@ export default function FlowStop({
   onGotoStop,
 }: {
   stop: ResolvedFlowStop
-  position: number
-  total: number
   hunkIndex: number
   minimal: boolean
   calls: { stop: ResolvedFlowStop; via?: string }[]
@@ -202,32 +202,37 @@ export default function FlowStop({
   onEnterFocus: () => void
   onGotoStop: (id: string) => void
 }) {
-  const hunkCount = stop.hunks.length
-  const idx = Math.min(hunkIndex, Math.max(0, hunkCount - 1))
+  // Whether the prose description is expanded (hidden by default — the diff is
+  // the focus; the write-up is opt-in).
+  const [showDesc, setShowDesc] = useState(false)
+
+  const idx = Math.min(hunkIndex, Math.max(0, stop.hunks.length - 1))
   const hunk = stop.hunks[idx]
+
+  const CallsInto = () =>
+    calls.length > 0 ? (
+      <div className="fs-calls">
+        <span className="fs-calls-label">calls into</span>
+        {calls.map((c) => (
+          <button key={c.stop.id} className="fs-call-chip" onClick={() => onGotoStop(c.stop.id)}>
+            {c.stop.title} {c.via && <span className="fs-call-via">via {c.via}</span>} →
+          </button>
+        ))}
+      </div>
+    ) : null
 
   // Context step: a connective, unchanged node. No diff / stepper / editor link —
   // just enough to keep the flow reading continuously.
   if (stop.context) {
     return (
       <div className={`flow-stop context${minimal ? ' minimal' : ''}`}>
-        <header className="fs-head">
-          <span className="fs-layer fs-layer-context">CONTEXT · no change</span>
-          <h2 className="fs-title">{stop.title}</h2>
-        </header>
         <div className="fs-file">{stop.file}</div>
+        <h2 className="fs-title">{stop.title}</h2>
         {stop.oneLineSummary && <p className="fs-summary">{stop.oneLineSummary}</p>}
         <ProseView markdown={stop.explanation} />
-        {!minimal && calls.length > 0 && (
+        {!minimal && (
           <div className="fs-footer">
-            <div className="fs-calls">
-              <span className="fs-calls-label">calls into</span>
-              {calls.map((c) => (
-                <button key={c.stop.id} className="fs-call-chip" onClick={() => onGotoStop(c.stop.id)}>
-                  {c.stop.title} {c.via && <span className="fs-call-via">via {c.via}</span>} →
-                </button>
-              ))}
-            </div>
+            <CallsInto />
           </div>
         )}
       </div>
@@ -239,11 +244,10 @@ export default function FlowStop({
     return (
       <div className="flow-stop minimal">
         <div className="fs-focus-loc">
-          <span className="fs-focus-title">{stop.title}</span>
           <span className="fs-focus-file">{stop.file}</span>
+          <span className="fs-focus-title">{stop.title}</span>
         </div>
-        <HunkNav idx={idx} count={hunkCount} onPrev={onPrevHunk} onNext={onNextHunk} />
-        {hunk?.note && <p className="fs-hunk-note">{hunk.note}</p>}
+        <HunkNav onPrev={onPrevHunk} onNext={onNextHunk} />
         <DiffView text={hunk?.diffText ?? ''} />
       </div>
     )
@@ -252,45 +256,46 @@ export default function FlowStop({
   return (
     <div className="flow-stop">
       <header className="fs-head">
-        <span className={`fs-layer fs-layer-${stop.layer}`}>{LAYER_LABEL[stop.layer]}</span>
-        <h2 className="fs-title">{stop.title}</h2>
-        {stop.layer === 'flow' && total > 0 && (
-          <span className="fs-step-count">
-            {position + 1} / {total}
-          </span>
-        )}
-      </header>
-      <div className="fs-file">
-        {stop.file}
-        {stop.matchStatus === 'fuzzy' && <span className="fs-match fs-match-fuzzy">~ fuzzy match</span>}
-        {stop.matchStatus === 'missing' && <span className="fs-match fs-match-missing">! no diff</span>}
-      </div>
-      {stop.oneLineSummary && <p className="fs-summary">{stop.oneLineSummary}</p>}
-
-      <HunkNav idx={idx} count={hunkCount} onPrev={onPrevHunk} onNext={onNextHunk} />
-
-      {hunk?.note && <p className="fs-hunk-note">{hunk.note}</p>}
-      <DiffView text={hunk?.diffText ?? ''} />
-      <ProseView markdown={stop.explanation} />
-
-      {/* Action + flow CTAs live at the bottom, like the plan viewer. */}
-      <div className="fs-footer">
-        <div className="fs-actions">
+        <div className="fs-loc">
+          <div className="fs-file">
+            {stop.file}
+            {stop.matchStatus === 'fuzzy' && <span className="fs-match fs-match-fuzzy">~ fuzzy match</span>}
+            {stop.matchStatus === 'missing' && <span className="fs-match fs-match-missing">! no diff</span>}
+          </div>
+          <h2 className="fs-title">{stop.title}</h2>
+        </div>
+        <div className="fs-tools">
+          <button
+            className={`fs-icon-btn${showDesc ? ' active' : ''}`}
+            onClick={() => setShowDesc((v) => !v)}
+            title={showDesc ? 'Hide description' : 'Show description'}
+            aria-label={showDesc ? 'Hide description' : 'Show description'}
+            aria-pressed={showDesc}
+          >
+            <IconFileText />
+          </button>
           <OpenInEditor absPath={stop.absPath} line={hunk?.line} />
-          <button className="fs-focus-cta" onClick={onEnterFocus} title="Focus this hunk (Enter)">
-            Focus ⏎
+          <button
+            className="fs-icon-btn"
+            onClick={onEnterFocus}
+            title="Focus this hunk (Enter)"
+            aria-label="Focus this hunk"
+          >
+            <IconEye />
           </button>
         </div>
-        {calls.length > 0 && (
-          <div className="fs-calls">
-            <span className="fs-calls-label">calls into</span>
-            {calls.map((c) => (
-              <button key={c.stop.id} className="fs-call-chip" onClick={() => onGotoStop(c.stop.id)}>
-                {c.stop.title} {c.via && <span className="fs-call-via">via {c.via}</span>} →
-              </button>
-            ))}
-          </div>
-        )}
+      </header>
+
+      {stop.oneLineSummary && <p className="fs-summary">{stop.oneLineSummary}</p>}
+
+      <HunkNav onPrev={onPrevHunk} onNext={onNextHunk} />
+
+      <DiffView text={hunk?.diffText ?? ''} />
+
+      {showDesc && <ProseView markdown={stop.explanation} />}
+
+      <div className="fs-footer">
+        <CallsInto />
       </div>
     </div>
   )

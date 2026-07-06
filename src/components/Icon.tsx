@@ -75,3 +75,39 @@ export function IconPlay({ size }: { size?: number }) {
     </Svg>
   )
 }
+
+/** Description: show/hide the prose explanation of a change. */
+export function IconFileText({ size }: { size?: number }) {
+  return (
+    <Svg size={size}>
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+      <path d="M14 2v6h6" />
+      <path d="M16 13H8" />
+      <path d="M16 17H8" />
+      <path d="M10 9H8" />
+    </Svg>
+  )
+}
+
+/** Open the change in an external editor. */
+export function IconExternalLink({ size }: { size?: number }) {
+  return (
+    <Svg size={size}>
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </Svg>
+  )
+}
+
+/** Maximize: enter focus mode on a single hunk. */
+export function IconMaximize({ size }: { size?: number }) {
+  return (
+    <Svg size={size}>
+      <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+      <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+      <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+      <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+    </Svg>
+  )
+}

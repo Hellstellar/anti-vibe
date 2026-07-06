@@ -427,6 +427,16 @@ readers.
 limitation.
 **Reference:** AGENTS.md §11, §12.2.
 
+### RS-12.5 — Action controls are icon buttons
+**Standard:** On-surface action controls (toolbars, cards, control bars) are **icon buttons**
+built from `Icon.tsx` (RS-21.5), each with an `aria-label`/`title` (RS-12.3). Verbose choices
+(an editor picker, a URL template, a long form) don't sit inline — they live behind an icon
+that opens a popover/menu. Text-label buttons are reserved for the primary CTA inside such a
+popover, or for content chips (e.g. "calls into" navigation) where the label *is* the data.
+**Why it matters:** A wall of labelled buttons is visual noise and competes with the content
+being reviewed; a consistent icon vocabulary keeps surfaces calm and scannable.
+**Reference:** RS-12.3, RS-21.5.
+
 ---
 
 ## RS-13 — Testing practices

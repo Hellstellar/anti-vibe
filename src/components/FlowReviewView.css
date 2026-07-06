@@ -24,6 +24,10 @@
   position: relative;
   overflow-y: auto;
   padding: 3rem clamp(1.5rem, 5vw, 5rem) 4rem;
+  /* Column flex + auto margins on the card vertically centre it when it's
+     shorter than the viewport, but collapse to normal scrolling when taller. */
+  display: flex;
+  flex-direction: column;
 }
 
 /* Focus mode: minimap hidden, single centered column, roomier top space. */

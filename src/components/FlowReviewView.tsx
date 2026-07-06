@@ -14,7 +14,6 @@ type CallRef = { stop: ResolvedFlowStop; via: string | undefined }
 
 export default function FlowReviewView() {
   const stops = useFlow((s) => s.stops)
-  const flowOrder = useFlow((s) => s.flowOrder)
   const foundationOrder = useFlow((s) => s.foundationOrder)
   const graph = useFlow((s) => s.graph)
   const currentStop = useFlow((s) => s.currentStop)
@@ -97,7 +96,6 @@ export default function FlowReviewView() {
   }, [nextHunk, prevHunk, back, enterFocus, exitFocus, openMap, closeMap, chooseBranch, cancelBranch])
 
   const stop = stops.find((s) => s.id === currentStop) ?? null
-  const spinePos = currentStop ? graph.order.indexOf(currentStop) : -1
   const branchOptions = (pendingBranch ?? [])
     .map((edge) => ({ stop: stops.find((s) => s.id === edge.to), via: edge.via }))
     .filter((o): o is CallRef => !!o.stop)
@@ -132,8 +130,6 @@ export default function FlowReviewView() {
         {stop ? (
           <FlowStop
             stop={stop}
-            position={spinePos}
-            total={flowOrder.length}
             hunkIndex={hunkIndex}
             minimal={focusMode}
             calls={(stop.callsTo ?? [])
