@@ -378,6 +378,10 @@
     width: 100%;
     max-width: none;
     margin: 3.2rem 0.6rem 0;
+    /* Never exceed the (dynamic, keyboard-aware) viewport — scroll inside
+       instead, so a short/landscape screen can't clip the Save button. */
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
   }
   .composer-input {
     min-height: 6rem;
