@@ -88,6 +88,8 @@ const VIEWS: Record<string, { title: string; rows: Row[] }> = {
     title: 'flow map',
     rows: [
       ['click a node', 'jump to that stop'],
+      ['drag / scroll', 'pan the canvas'],
+      ['⌘ scroll', 'zoom'],
       ['esc / m', 'close the map'],
     ],
   },

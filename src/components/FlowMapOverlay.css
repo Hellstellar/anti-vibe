@@ -13,7 +13,7 @@
 .fm-panel {
   display: flex;
   flex-direction: column;
-  width: min(640px, 92vw);
+  width: min(960px, 94vw);
   max-height: 86vh;
   background: var(--bg-2);
   border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
@@ -42,6 +42,54 @@
 }
 .fm-close:hover {
   color: var(--accent);
+}
+
+.fm-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  margin-right: 1rem;
+}
+.fm-controls button {
+  background: none;
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 45%, transparent);
+  border-radius: 3px;
+  color: var(--fg-dim);
+  font: inherit;
+  padding: 0.15rem 0.5rem;
+  cursor: pointer;
+  line-height: 1.2;
+}
+.fm-controls button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.fm-zoom-pct {
+  min-width: 3.5ch;
+  text-align: center;
+  color: var(--fg-dim);
+}
+
+/* Pan/zoom viewport: clips the transformed canvas; drag pans, wheel scrolls,
+   ctrl/cmd+wheel (and pinch) zooms. */
+.fm-viewport {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  min-height: 320px;
+  height: 60vh;
+  cursor: grab;
+  touch-action: none;
+}
+.fm-viewport:active {
+  cursor: grabbing;
+}
+.fm-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
 }
 
 .fm-scroll {
@@ -109,11 +157,12 @@
   fill: var(--accent-2);
 }
 
+/* Sits below the pan/zoom viewport, outside the transform (always visible). */
 .fm-foundation {
-  width: min(560px, 100%);
-  margin: 1.2rem auto 0;
+  width: min(560px, calc(100% - 2rem));
+  margin: 0 auto;
   border-top: 1px dashed color-mix(in srgb, var(--fg-dim) 40%, transparent);
-  padding-top: 1rem;
+  padding: 1rem 0;
   display: flex;
   flex-direction: column;
   gap: 0.4rem;
