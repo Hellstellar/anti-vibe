@@ -23,7 +23,7 @@ export const THEMES: ThemeMeta[] = [
   { id: 'cream', label: 'Cream', sound: 'soft', defaultAlign: 'left' },
 ]
 
-export const DEFAULT_THEME: ThemeId = 'crt'
+export const DEFAULT_THEME: ThemeId = 'cream'
 
 const BY_ID = new Map(THEMES.map((t) => [t.id, t]))
 
