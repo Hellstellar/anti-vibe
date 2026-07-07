@@ -1,18 +1,20 @@
 # Anti-Vibe
 
-### Don't just vibe. Review what your agent writes.
+### Your agent wrote 800 lines in 4 seconds. You read 6 of them and hit "Approve." Be honest.
 
 **▸ Live at [anti-vibe.pages.dev](https://anti-vibe.pages.dev)**
 
-A retro-cyberpunk reader for **reviewing LLM / agent output without the fatigue**. Move through generated markdown section by section, glance at each, and speed-read the parts worth it on demand — eyes still, content moving.
+"Vibe coding" is letting the AI cook and merging whatever it hands back on faith. Fun, fast, and a great way to ship a bug you'll spend Saturday debugging. **Anti-Vibe is the retro-cyberpunk reader for people who actually read the diff** — LLM / agent output, reviewed section by section without the fatigue that makes you give up and click "Approve" at line 6.
+
+Glance at a heading, decide, skip it or speed-read it. Or walk a code change in the order it actually *runs*, one hunk at a time. Eyes still, content moving, no wall of text to bounce off.
 
 > **RSVP** (Rapid Serial Visual Presentation) shows information one item at a time in the same spot. Instead of reading a paragraph at your own pace, words flash by in the center of your vision. It's speed-reading where the content moves, not your gaze — easier to process without scrolling or darting your eyes around.
 
-> **Full disclosure:** yes, a tool for *not* vibe coding is itself vibe coded — for now. That irony isn't lost on us. The plan is to close the loop and use Anti-Vibe on its own source: review this codebase section by section until it's earned its way out of "vibe coded" and into "actually reviewed."
+> **Full disclosure:** yes, a tool for *not* vibe coding is itself vibe coded — for now. The irony is not lost on us; we're firing shots from inside the glass house. The plan is to close the loop and use Anti-Vibe on its own source until it's earned its way out of "vibe coded" and into "actually reviewed."
 
 ## Why
 
-LLMs and agents generate walls of text, and the cost of reviewing it is real — not just the time. This app attacks that cost from several sides:
+LLMs and agents generate walls of text faster than any human can read them, and the cost of reviewing it is real — not just the time. This app attacks that cost from several sides:
 
 - **Less reading fatigue** — RSVP keeps your eyes still (the content moves, your gaze doesn't), and the CRT top/bottom fade keeps the focus on the middle of the screen, easing the load.
 - **Lower inertia to review** — section-by-section navigation means you commit to one small chunk at a time instead of facing the whole document. Glance at a heading, decide, skip it or speed-read it.
@@ -24,12 +26,23 @@ The goal is review tooling that's **easier on your eyes and attention**, not onl
 
 ## Screenshots
 
-Two built-in themes — **CRT** (dark, pixel, scanlines) and **Cream** (warm, soft, left-aligned prose).
+Shown in the **Cream** theme (warm, soft, left-aligned prose). There's also a **CRT** theme — dark, pixel, scanlines — if you want your code review to feel like it's coming from a 1983 terminal.
 
-|           | Landing — paste or open a `.md` file              | Reading view — a section with a top/bottom fade        | RSVP — one word at a time, ORP pivot accented    |
-| --------- | ------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------ |
-| **CRT**   | ![CRT landing](docs/screenshots/landing.png)      | ![CRT reading view](docs/screenshots/reading.png)      | ![CRT RSVP](docs/screenshots/rsvp.png)           |
-| **Cream** | ![Cream landing](docs/screenshots/landing-cream.png) | ![Cream reading view](docs/screenshots/reading-cream.png) | ![Cream RSVP](docs/screenshots/rsvp-cream.png) |
+**Landing — paste or open a `.md` file**
+
+<img src="docs/screenshots/landing-cream.png" alt="Landing view" width="900">
+
+**Reading view — a section with a top/bottom fade**
+
+<img src="docs/screenshots/reading-cream.png" alt="Reading view" width="900">
+
+**RSVP — one word at a time, ORP pivot accented**
+
+<img src="docs/screenshots/rsvp-cream.png" alt="RSVP view" width="900">
+
+**Flow Review — a code change walked in runtime order, one hunk at a time**
+
+<img src="docs/screenshots/flow-cream.png" alt="Flow Review view" width="900">
 
 ## Features
 
@@ -43,7 +56,19 @@ Two built-in themes — **CRT** (dark, pixel, scanlines) and **Cream** (warm, so
 - **Sound** — chiptune blips on interactions (synthesized, no audio files); toggle in settings.
 - **Configurable** — target/start WPM and words-per-flash (saved to localStorage; settings reachable from the landing page and the reader).
 - **Keyboard** — one axis of focus: `enter` **focus deeper** (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` **RSVP the section from the start** (any level) · `space` pause/resume RSVP · `esc` **up one level** (never to landing — the ✕ exits). Arrows are contextual: in the **heading list** `↑`/`↓` move between headings; in the **reading view** `↑`/`↓` scroll and `←`/`→` scroll wide content; in **step mode** `←`/`→` move between units. To jump across sections, **`⌘`/`ctrl` + arrow** (down/right = next, up/left = prev) — always landing in the next section's reading view. Once you finish a section (scrolled to the bottom, or reached the last step), a small **advance button** appears at the bottom — click it to go to the next section.
-- **Theme** — retro-cyberpunk pixelated: dark warm palette, red/orange accents, pixel fonts, CRT scanlines. The reading font is swappable via the `--word-font` CSS variable.
+- **Theme** — two built-in themes (Cream and CRT); the reading font is swappable via the `--word-font` CSS variable.
+
+## Flow Review — read the diff, not the file list
+
+The feature vibe coding hopes you never use. **Flow Review walks a code change in the order it actually runs** — entry → handler → service → effect, like stepping through a sequence diagram — instead of the alphabetical file dump your git tool gives you. One hunk at a time, always showing where you are in the call flow.
+
+- **Runtime order, not file order** — the agent describes the traversal structure; Anti-Vibe runs `git diff` and resolves each stop to its real hunks. You follow the *call graph*, branching where a function calls several others.
+- **Foundation lane** — models / schemas / contracts / types sit pinned at the bottom, read *after* you've seen how they're used.
+- **Minimap** — click any node to jump; the call-flow lane shows edges and the path you've walked.
+- **Focus mode + open-in-editor** — `Enter` hides the chrome to one hunk; per-hunk deep links open in VS Code / Cursor / Windsurf / Zed / JetBrains / a custom template.
+- **Keys** — `← / →` (or `j / k`) step hunks and follow the graph; `1–9` pick a branch; `Enter`/`Esc` focus and back out.
+
+Driven by the `review_flow` MCP tool (below). Full docs: [`docs/FLOW-REVIEW.md`](./docs/FLOW-REVIEW.md).
 
 ## Run
 
@@ -79,9 +104,11 @@ Markdown is parsed once (`src/lib/parseMarkdown.ts`) into a flat **token stream*
 
 Anti-Vibe ships an [MCP](https://modelcontextprotocol.io) STDIO server (`mcp/`) so an AI agent can push its output straight into the reader for review — no copy-paste.
 
-Because Anti-Vibe is a static SPA with no backend, the MCP process also runs a tiny **localhost bridge**: it serves the built app from its own origin and live-pushes documents to the open tab over Server-Sent Events. One tool today:
+Because Anti-Vibe is a static SPA with no backend, the MCP process also runs a tiny **localhost bridge**: it serves the built app from its own origin and live-pushes documents to the open tab over Server-Sent Events. Three tools:
 
-- **`review_markdown`** — `{ markdown, title? }` → normalizes the markdown (CRLF→LF, optional `# title`), validates it parses, sends it to the reader, and opens the tab on first use. Returns `{ documentId, sectionCount, wordCount, url }`.
+- **`review_markdown`** — `{ markdown, title? }` → normalizes the markdown (CRLF→LF, optional `# title`), validates it parses, sends it to the reader, and opens the tab on first use. Preserves code blocks, tables and structure verbatim. Returns `{ documentId, sectionCount, wordCount, url }`.
+- **`rsvpify_markdown`** — `{ markdown, title? }` → same transport, but for content a human will *speed-read*. The agent must first rewrite its output into flowing prose (full sentences, no bullet fragments), replace each code block with a short prose summary of what it does, and keep essential tables verbatim (Anti-Vibe auto-pauses the RSVP stream on them). Returns `{ documentId, sectionCount, wordCount, url }`.
+- **`review_flow`** — `{ stops, title?, repoPath?, diffBase? }` → pushes a **flow-ordered code review**. The agent sends only the traversal *structure* (stops tagged `flow` / `foundation`, wired by `callsTo`, with per-hunk reading order via `hunkFlow`) — never the diff text. Anti-Vibe runs `git diff` in the repo and resolves each stop to its real hunks. Returns `{ documentId, stopCount, resolvedCount, url }`. See [`docs/FLOW-REVIEW.md`](./docs/FLOW-REVIEW.md) for the full input schema and `diffBase` forms.
 
 The server ships as a separate self-contained npm package, [`anti-vibe-mcp`](./mcp), that bundles a built copy of the web app — so the bridge always serves a matching front-end with no clone or build step for end users.
 
@@ -124,11 +151,10 @@ npm run release:mcp    # build:mcp then `npm publish mcp`
 
 ## Roadmap
 
-- Global hotkey to capture selected text from any app (beyond clipboard paste).
-- Sound effects on list items and section changes.
 - Non-markdown / plain-text and HTML input.
 - Customizable fonts and themes in-app.
-- More pause-mode controls (rewind by sentence, bookmarks).
+- Resumability — pick a review back up where you left off.
+- Mobile sync — start on desktop, keep going on your phone.
 
 ## License
 
