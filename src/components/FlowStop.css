@@ -3,7 +3,14 @@
 .flow-stop {
   width: 100%;
   max-width: 56rem;
-  margin: auto;
+  /* Fill the stage as a flex column so the diff can expand into the free space
+     instead of leaving the page half-empty. Top-anchored (no vertical centring)
+     so a different diff size never re-centres and jumps the header/CTAs (CLS). */
+  margin: 0 auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 /* --- header: emphasised file path, quieter title, icon-button toolbar --- */
@@ -43,6 +50,20 @@
   color: var(--accent);
 }
 
+/* Status chip on the file line (e.g. "unchanged" for context stops) — a quiet
+   pill, not a parenthetical tacked onto the title. */
+.fs-tag {
+  font: 0.62rem/1 ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  background: color-mix(in srgb, var(--fg-dim) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  align-self: center;
+}
+
 /* Title is secondary context, not a banner. */
 .fs-title {
   font-size: 0.95rem;
@@ -52,6 +73,17 @@
 }
 .flow-stop.context .fs-title {
   color: var(--fg);
+}
+/* Context (unchanged) stops have no diff, so file / title / summary would stack
+   tight and read cluttered — give them clear vertical rhythm. */
+.flow-stop.context .fs-file {
+  margin-bottom: 0.55rem;
+}
+.flow-stop.context .fs-title {
+  margin-bottom: 1.4rem;
+}
+.flow-stop.context .fs-summary {
+  margin-bottom: 1.75rem;
 }
 
 /* --- icon-button toolbar (RS-12.4) --- */
@@ -156,9 +188,19 @@
   border: 1px solid color-mix(in srgb, var(--fg-dim) 30%, transparent);
   border-radius: 6px;
   padding: 1.1rem 0;
-  overflow-x: auto;
+  /* Content-sized, centred in the free space between the pinned header and the
+     pinned footer (margin auto) — no giant empty box, and the chrome above/below
+     never moves as the diff changes size (no CLS). Rare oversized hunk scrolls
+     inside itself. */
+  margin: auto 0;
+  max-height: 100%;
+  overflow: auto;
   font: 0.98rem/1.6 ui-monospace, monospace;
-  margin: 0 0 1.8rem;
+}
+/* Description open: stop centring — the diff top-anchors so the prose can flow
+   directly beneath it (the two share the space, card scrolls if long). */
+.flow-stop.desc-open .fs-diff {
+  margin: 0 0 1.5rem;
 }
 .fs-diff code {
   display: block;
@@ -172,12 +214,12 @@
 /* Text stays at the theme's readable foreground; +/- is signalled by a subtle
  * background tint and a colored left border, so it reads on both light + dark. */
 .df-add {
-  background: color-mix(in srgb, #2ea043 22%, var(--bg));
-  border-left-color: #2ea043;
+  background: color-mix(in srgb, #2ea043 40%, var(--bg));
+  border-left-color: #3fd35a;
   color: var(--fg-strong);
 }
 .df-del {
-  background: color-mix(in srgb, var(--accent) 22%, var(--bg));
+  background: color-mix(in srgb, var(--accent) 40%, var(--bg));
   border-left-color: var(--accent);
   color: var(--fg-strong);
 }
@@ -187,6 +229,17 @@
 }
 .df-ctx {
   color: var(--fg);
+}
+
+/* Changed tokens within a paired add/del line — a stronger, saturated block on
+   top of the row tint so the eye lands on exactly what changed. */
+.df-add .df-word {
+  background: color-mix(in srgb, #2ea043 62%, var(--bg));
+  border-radius: 2px;
+}
+.df-del .df-word {
+  background: color-mix(in srgb, var(--accent) 62%, var(--bg));
+  border-radius: 2px;
 }
 
 .fs-diff-missing {
@@ -266,7 +319,7 @@
 .flow-stop.minimal {
   width: 100%;
   max-width: 80rem;
-  margin: auto;
+  margin: 0 auto;
 }
 .fs-focus-loc {
   display: flex;

@@ -69,6 +69,21 @@ export default function App() {
     })
   }, [])
 
+  // Flow Review has its own store, so it needs its own SFX subscriber. Sound
+  // enablement is already synced globally by the reader subscriber above.
+  useEffect(() => {
+    let prev = useFlow.getState()
+    return useFlow.subscribe((s) => {
+      if (prev.stops.length === 0 && s.stops.length > 0) sfx.boot()
+      if (s.currentStop !== prev.currentStop) sfx.section() // moved to another stop
+      else if (s.hunkIndex !== prev.hunkIndex) sfx.click() // stepped within a stop
+      if (s.focusMode !== prev.focusMode) (s.focusMode ? sfx.reveal : sfx.pause)()
+      if (s.mapOpen !== prev.mapOpen) sfx.click()
+      if (!!s.pendingBranch && !prev.pendingBranch) sfx.reveal() // branch picker opened
+      prev = s
+    })
+  }, [])
+
   return (
     <>
       {flowActive ? <FlowReviewView /> : hasContent ? <ReaderView /> : <LandingView />}

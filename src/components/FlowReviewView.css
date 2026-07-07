@@ -24,8 +24,8 @@
   position: relative;
   overflow-y: auto;
   padding: 3rem clamp(1.5rem, 5vw, 5rem) 4rem;
-  /* Column flex + auto margins on the card vertically centre it when it's
-     shorter than the viewport, but collapse to normal scrolling when taller. */
+  /* Column flex, card top-anchored (margin: 0 auto) so it grows downward and
+     never re-centres — see FlowStop.css .flow-stop for why (CLS). */
   display: flex;
   flex-direction: column;
 }
@@ -73,6 +73,8 @@
 .fr-left,
 .fr-stage,
 .flow-review .fs-diff,
+.flow-review .fs-prose,
+.flow-review .fs-prose-code,
 .rs-list {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--fg-dim) 55%, transparent) transparent;
@@ -80,6 +82,8 @@
 .fr-left::-webkit-scrollbar,
 .fr-stage::-webkit-scrollbar,
 .flow-review .fs-diff::-webkit-scrollbar,
+.flow-review .fs-prose::-webkit-scrollbar,
+.flow-review .fs-prose-code::-webkit-scrollbar,
 .rs-list::-webkit-scrollbar {
   width: 9px;
   height: 9px;
@@ -87,12 +91,16 @@
 .fr-left::-webkit-scrollbar-track,
 .fr-stage::-webkit-scrollbar-track,
 .flow-review .fs-diff::-webkit-scrollbar-track,
+.flow-review .fs-prose::-webkit-scrollbar-track,
+.flow-review .fs-prose-code::-webkit-scrollbar-track,
 .rs-list::-webkit-scrollbar-track {
   background: transparent;
 }
 .fr-left::-webkit-scrollbar-thumb,
 .fr-stage::-webkit-scrollbar-thumb,
 .flow-review .fs-diff::-webkit-scrollbar-thumb,
+.flow-review .fs-prose::-webkit-scrollbar-thumb,
+.flow-review .fs-prose-code::-webkit-scrollbar-thumb,
 .rs-list::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--fg-dim) 45%, transparent);
   border-radius: 6px;
@@ -101,7 +109,9 @@
 }
 .fr-left:hover::-webkit-scrollbar-thumb,
 .fr-stage:hover::-webkit-scrollbar-thumb,
-.flow-review .fs-diff:hover::-webkit-scrollbar-thumb {
+.flow-review .fs-diff:hover::-webkit-scrollbar-thumb,
+.flow-review .fs-prose:hover::-webkit-scrollbar-thumb,
+.flow-review .fs-prose-code:hover::-webkit-scrollbar-thumb {
   background: color-mix(in srgb, var(--fg-dim) 70%, transparent);
   background-clip: padding-box;
 }

@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
 import { parseMarkdown } from '../lib/parseMarkdown'
+import { diffRows } from '../lib/intralineDiff'
 import {
   EDITORS,
   buildEditorUrl,
@@ -13,34 +14,40 @@ import { IconChevronLeft, IconChevronRight, IconExternalLink, IconEye, IconFileT
 import { useClickOutside } from './useClickOutside'
 import './FlowStop.css'
 
-/** Classify a unified-diff line for coloring. */
-function diffLineClass(line: string): string {
-  if (line.startsWith('@@')) return 'df-hunk'
-  if (line.startsWith('+')) return 'df-add'
-  if (line.startsWith('-')) return 'df-del'
-  return 'df-ctx'
-}
-
 function DiffView({ text }: { text: string }) {
   if (!text.trim()) {
     return <div className="fs-diff-missing">(diff not resolved — hunk not found in git diff)</div>
   }
   // Hide the `@@ ... @@` hunk header — it's line-number noise; the target line
-  // lives in the "open in editor" link.
+  // lives in the "open in editor" link. The rest is diffed at the token level
+  // so only the changed words are highlighted, not the whole line.
   const lines = text
     .replace(/\n$/, '')
     .split('\n')
     .filter((l) => !l.startsWith('@@'))
+  const rows = diffRows(lines)
   return (
     <pre className="fs-diff">
       <code>
-        {lines.map((line, i) => {
-          const cls = diffLineClass(line)
-          // Drop the leading +/-/space marker — add/del is shown by the tint +
-          // gutter, so the glyph is just noise.
+        {rows.map((row, i) => {
+          const empty = row.segs.every((s) => s.text.length === 0)
           return (
-            <span key={i} className={`df-line ${cls}`}>
-              {line.slice(1) || ' '}
+            // Row keeps the subtle tint + gutter; changed tokens get a stronger
+            // .df-word emphasis on top (add/del is shown by color, so the leading
+            // +/-/space marker is dropped as noise). Blank rows render a space so
+            // they don't collapse to zero height.
+            <span key={i} className={`df-line df-${row.kind}`}>
+              {empty
+                ? ' '
+                : row.segs.map((seg, j) =>
+                    seg.changed ? (
+                      <span key={j} className="df-word">
+                        {seg.text}
+                      </span>
+                    ) : (
+                      <span key={j}>{seg.text}</span>
+                    ),
+                  )}
             </span>
           )
         })}
@@ -226,7 +233,10 @@ export default function FlowStop({
   if (stop.context) {
     return (
       <div className={`flow-stop context${minimal ? ' minimal' : ''}`}>
-        <div className="fs-file">{stop.file}</div>
+        <div className="fs-file">
+          {stop.file}
+          <span className="fs-tag fs-tag-context">unchanged</span>
+        </div>
         <h2 className="fs-title">{stop.title}</h2>
         {stop.oneLineSummary && <p className="fs-summary">{stop.oneLineSummary}</p>}
         <ProseView markdown={stop.explanation} />
@@ -254,7 +264,7 @@ export default function FlowStop({
   }
 
   return (
-    <div className="flow-stop">
+    <div className={`flow-stop${showDesc ? ' desc-open' : ''}`}>
       <header className="fs-head">
         <div className="fs-loc">
           <div className="fs-file">

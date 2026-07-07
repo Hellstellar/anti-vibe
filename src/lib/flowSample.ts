@@ -90,7 +90,7 @@ export const flowSample: FlowReviewDoc = {
       file: 'src/lib/middlewareChain.ts',
       layer: 'flow',
       context: true,
-      title: 'Middleware chain (unchanged)',
+      title: 'Middleware chain',
       oneLineSummary: 'Existing dispatcher the request passes through — no change here.',
       explanation:
         'A **context** step: the request threads through the existing middleware runner on its way to the store. Nothing changed here, but the flow would read as a gap without it.',
