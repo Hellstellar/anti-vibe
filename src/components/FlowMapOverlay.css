@@ -105,6 +105,9 @@
 }
 .fm-graph .mm-node {
   position: absolute;
+  /* Fixed-size cards (dagre lays out with these dimensions); clip overflow. */
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .fm-edges {
@@ -138,11 +141,21 @@
 .fm-edge-label.dim {
   opacity: 0.12;
 }
+/* Invisible fat twin of each edge: click target for fit-both-ends. */
+/* Stroke width is set inline (scaled inversely to zoom) so the hit area
+   stays ~14 screen px even when the graph is zoomed far out. */
+.fm-edge-hit {
+  fill: none;
+  stroke: transparent;
+  pointer-events: stroke;
+  cursor: pointer;
+}
 .fm-edge-label {
   fill: var(--fg-dim);
   font-size: 0.6rem;
   font-style: italic;
-  text-anchor: end;
+  /* Dagre reserves a centered box for each label in the layout itself. */
+  text-anchor: middle;
   /* Halo so labels stay readable where trunks pass underneath. */
   paint-order: stroke;
   stroke: var(--bg-2);

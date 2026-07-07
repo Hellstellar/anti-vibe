@@ -1,36 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FlowGraph } from '../lib/flowGraph'
+import type { FlowLayout } from '../lib/flowLayout'
 import type { ResolvedFlowStop } from '../lib/types'
 import './FlowMapOverlay.css'
 
-// Full call-graph canvas, opened from the minimap or `m`. Deterministic
-// fixed-row layout — no DOM measurement: each flow node occupies one row
-// (topological order) indented by its call-graph depth. Edges are orthogonal
-// tree-guide connectors: a trunk drops from under the caller into the gutter
-// its children are indented into, then elbows right into each callee's left
-// edge (arrowhead at entry). Children of one caller overlap on the shared
-// trunk, so sibling groups read as one guide line. Node cards reuse the
-// .mm-node styles from SequenceMinimap.css; this file adds chrome + routing.
-const ROW_H = 64
-const INDENT = 40
-const LANE_W = 560
-/** Left gutter reserved for the right-anchored edge labels, so shallow-depth
- *  callees' labels don't clip against the scroll container's left edge. */
-const LABEL_GUTTER = 120
-const CANVAS_W = LANE_W + LABEL_GUTTER
-const PAD = 12
-/** Trunk offset into the caller's card; staggered per caller row so two
- *  callers' trunks never share an x. */
-const TRUNK_OFF = 14
-const STAGGER = 5
-/** Horizontal (LR) layout: one column per topological-order stop (reads like a
- *  sequence diagram left→right), one lane per call-graph depth. */
-const COL_W = 190
-const CARD_W = COL_W - 26
-const LANE_H = 96
-const CARD_H = 56
+// Full call-graph canvas, opened from the minimap or `m`. Layout (node
+// placement, edge routing, edge-label placement) is delegated to dagre via
+// src/lib/flowLayout — lazy-imported so dagre only loads when the map opens.
+// This file owns the chrome: the pan/zoom viewport, node cards (reusing the
+// .mm-node styles from SequenceMinimap.css), hover tracing, and click-to-fit
+// on edges whose endpoints sit far apart.
+const NODE_W = 220
+const NODE_H = 52
 const MIN_ZOOM = 0.2
 const MAX_ZOOM = 2.5
+const FIT_PAD = 24
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(Math.max(v, lo), hi)
 
@@ -38,6 +22,11 @@ type Layout = 'tb' | 'lr'
 
 function nodeLabel(stop: ResolvedFlowStop): string {
   return stop.title || stop.file.split('/').pop() || stop.file
+}
+
+function edgePath(points: { x: number; y: number }[]): string {
+  if (!points.length) return ''
+  return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
 }
 
 export default function FlowMapOverlay({
@@ -59,44 +48,63 @@ export default function FlowMapOverlay({
 }) {
   const [hoverId, setHoverId] = useState<string | null>(null)
   const [layout, setLayout] = useState<Layout>('tb')
+  const [laid, setLaid] = useState<FlowLayout | null>(null)
   // Pan/zoom viewport: the graph canvas is translated+scaled inside a
-  // fixed-size clipping viewport instead of natively scrolled.
+  // fixed-size clipping viewport.
   const [view, setView] = useState({ x: 0, y: 0, scale: 1 })
   const viewRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<{ px: number; py: number; moved: boolean } | null>(null)
   const movedRef = useRef(false)
 
   const byId = new Map(stops.map((s) => [s.id, s]))
-  const order = graph.order
-  const rowOf = new Map(order.map((id, i) => [id, i]))
-  const maxDepth = order.reduce((m, id) => Math.max(m, graph.depth.get(id) ?? 0), 0)
-  // TB: row per topological-order stop, indented by depth (original layout).
-  // LR: column per topological-order stop, lane per depth.
-  const leftOf = (id: string) =>
-    layout === 'tb'
-      ? LABEL_GUTTER + PAD + (graph.depth.get(id) ?? 0) * INDENT
-      : PAD + (rowOf.get(id) ?? 0) * COL_W
-  const topOf = (id: string) =>
-    layout === 'tb'
-      ? (rowOf.get(id) ?? 0) * ROW_H
-      : PAD + (graph.depth.get(id) ?? 0) * LANE_H
-  const graphW = layout === 'tb' ? CANVAS_W : PAD * 2 + order.length * COL_W
-  const graphH =
-    layout === 'tb'
-      ? Math.max(order.length * ROW_H, ROW_H)
-      : PAD * 2 + (maxDepth + 1) * LANE_H
 
-  const fitView = () => {
+  useEffect(() => {
+    let live = true
+    import('../lib/flowLayout').then((m) => {
+      if (live) setLaid(m.layoutFlow(graph, layout === 'tb' ? 'TB' : 'LR'))
+    })
+    return () => {
+      live = false
+    }
+  }, [graph, layout])
+
+  const onPath = new Set([...history, ...(currentStop ? [currentStop] : [])])
+  const foundation = foundationOrder
+    .map((id) => byId.get(id))
+    .filter((s): s is ResolvedFlowStop => !!s)
+
+  /** Fit the given rect (canvas coordinates) into the viewport. */
+  const fitRect = (x: number, y: number, w: number, h: number) => {
     const el = viewRef.current
     if (!el) return
     const r = el.getBoundingClientRect()
     if (!r.width || !r.height) return
-    const s = clamp(Math.min((r.width - 24) / graphW, (r.height - 24) / graphH, 1), MIN_ZOOM, MAX_ZOOM)
-    setView({ x: (r.width - graphW * s) / 2, y: Math.max((r.height - graphH * s) / 2, 12), scale: s })
+    const s = clamp(Math.min(r.width / (w + FIT_PAD * 2), r.height / (h + FIT_PAD * 2), 1), MIN_ZOOM, MAX_ZOOM)
+    setView({
+      x: (r.width - w * s) / 2 - x * s,
+      y: (r.height - h * s) / 2 - y * s,
+      scale: s,
+    })
   }
-  // Refit whenever the layout flips (and once on mount).
+
+  const fitView = () => {
+    if (laid) fitRect(0, 0, laid.width, laid.height)
+  }
+
+  /** Fit both endpoints of an edge — the escape hatch for long edges whose
+   *  nodes never share a screen. */
+  const fitEdge = (from: string, to: string) => {
+    const a = laid?.nodes.get(from)
+    const b = laid?.nodes.get(to)
+    if (!a || !b) return
+    const x = Math.min(a.x, b.x)
+    const y = Math.min(a.y, b.y)
+    fitRect(x, y, Math.max(a.x, b.x) + NODE_W - x, Math.max(a.y, b.y) + NODE_H - y)
+  }
+
+  // Refit whenever a fresh layout lands (open + direction toggle).
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(fitView, [layout])
+  useEffect(fitView, [laid])
 
   // Native wheel listener: React's synthetic onWheel can't preventDefault
   // (passive), and the page behind the overlay must not scroll.
@@ -135,8 +143,8 @@ export default function FlowMapOverlay({
     })
   }
 
-  // Drag-to-pan. Nodes stay clickable: a click only counts if the pointer
-  // never moved past the 4px threshold (movedRef guards onPick).
+  // Drag-to-pan. Nodes and edges stay clickable: a click only counts if the
+  // pointer never moved past the 4px threshold (movedRef guards the handlers).
   const onPointerDown = (e: React.PointerEvent) => {
     if (e.button !== 0) return
     dragRef.current = { px: e.clientX, py: e.clientY, moved: false }
@@ -163,58 +171,10 @@ export default function FlowMapOverlay({
     dragRef.current = null
   }
 
-  const onPath = new Set([...history, ...(currentStop ? [currentStop] : [])])
-  const foundation = foundationOrder
-    .map((id) => byId.get(id))
-    .filter((s): s is ResolvedFlowStop => !!s)
-
-  // Build orthogonal edge paths (caller → callee) with the caller-side
-  // function as the label. `cross` marks non-parent edges (skip-level, extra
-  // caller, back edge) — drawn dashed so the primary tree stays dominant.
-  const edges: {
-    key: string
-    from: string
-    to: string
-    d: string
-    active: boolean
-    cross: boolean
-    via?: string
-    lx: number
-    ly: number
-  }[] = []
-  const entryCount = new Map<string, number>() // per-callee incoming edges seen
-  for (const [from, tos] of graph.callees) {
-    for (const { to, via } of tos) {
-      if (!rowOf.has(from) || !rowOf.has(to)) continue
-      const nth = entryCount.get(to) ?? 0
-      entryCount.set(to, nth + 1)
-
-      const sx = leftOf(from) + TRUNK_OFF + (rowOf.get(from)! % 4) * STAGGER
-      // Trunk drops from just below the caller's card in both layouts (TB
-      // cards sit at topOf+6 within their ROW_H row; LR cards at topOf).
-      const sy = layout === 'tb' ? topOf(from) + ROW_H - 10 : topOf(from) + CARD_H + 4
-      const ex = leftOf(to) // callee card's left edge (arrow lands here)
-      // Stack multiple incoming stubs a few px apart instead of overlapping.
-      const eyBase = layout === 'tb' ? topOf(to) + 22 : topOf(to) + 16
-      const ey = Math.min(eyBase + nth * 8, eyBase + 24)
-      // Trunk must sit left of the callee card to enter it; for back/cross
-      // edges that means jogging left of the caller first.
-      const tx = Math.min(sx, ex - 8)
-
-      edges.push({
-        key: `${from}->${to}`,
-        from,
-        to,
-        active: onPath.has(from) && onPath.has(to),
-        cross: (graph.depth.get(to) ?? 0) !== (graph.depth.get(from) ?? 0) + 1,
-        d: `M ${sx} ${sy}${tx !== sx ? ` H ${tx}` : ''} V ${ey} H ${ex}`,
-        via,
-        // Label rides the entry stub, right-aligned into the gutter.
-        lx: ex - 6,
-        ly: ey - 5,
-      })
-    }
-  }
+  /** Non-parent edges (skip-level, extra caller, back edge) draw dashed so
+   *  the primary call tree stays dominant. */
+  const isCross = (from: string, to: string) =>
+    (graph.depth.get(to) ?? 0) !== (graph.depth.get(from) ?? 0) + 1
 
   /** Hover tracing: edges touching the hovered node light up, the rest recede. */
   const edgeState = (e: { from: string; to: string }) =>
@@ -257,72 +217,85 @@ export default function FlowMapOverlay({
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
-          <div
-            className="fm-canvas"
-            style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
-          >
-            <div className="fm-graph" style={{ height: graphH, width: graphW }}>
-              <svg className="fm-edges" width={graphW} height={graphH} aria-hidden="true">
-              <defs>
-                <marker
-                  id="fm-arrow"
-                  viewBox="0 0 8 8"
-                  refX="7"
-                  refY="4"
-                  markerWidth="6"
-                  markerHeight="6"
-                  orient="auto-start-reverse"
-                >
-                  <path d="M 0 0 L 8 4 L 0 8 z" fill="context-stroke" />
-                </marker>
-              </defs>
-              {edges.map((e) => (
-                <g key={e.key}>
-                  <path
-                    d={e.d}
-                    markerEnd="url(#fm-arrow)"
-                    className={`fm-edge${e.cross ? ' cross' : ''}${e.active ? ' active' : ''}${edgeState(e)}`}
-                  />
-                  {e.via && (
-                    <text
-                      x={e.lx}
-                      y={e.ly}
-                      className={`fm-edge-label${e.active ? ' active' : ''}${edgeState(e)}`}
+          {laid && (
+            <div
+              className="fm-canvas"
+              style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})` }}
+            >
+              <div className="fm-graph" style={{ height: laid.height, width: laid.width }}>
+                <svg className="fm-edges" width={laid.width} height={laid.height} aria-hidden="true">
+                  <defs>
+                    <marker
+                      id="fm-arrow"
+                      viewBox="0 0 8 8"
+                      refX="7"
+                      refY="4"
+                      markerWidth="6"
+                      markerHeight="6"
+                      orient="auto-start-reverse"
                     >
-                      {e.via}
-                    </text>
-                  )}
-                </g>
-              ))}
-            </svg>
-            {order.map((id) => {
-              const stop = byId.get(id)
-              if (!stop) return null
-              const active = id === currentStop
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className={`mm-node${active ? ' active' : ''}${onPath.has(id) ? ' visited' : ''}${stop.context ? ' context' : ''}`}
-                  style={{
-                    top: layout === 'tb' ? topOf(id) + 6 : topOf(id),
-                    left: leftOf(id),
-                    width: layout === 'tb' ? CANVAS_W - leftOf(id) - PAD : CARD_W,
-                  }}
-                  onClick={() => {
-                    if (!movedRef.current) onPick(id)
-                  }}
-                  onMouseEnter={() => setHoverId(id)}
-                  onMouseLeave={() => setHoverId(null)}
-                  title={stop.file}
-                >
-                  <span className="mm-node-label">{nodeLabel(stop)}</span>
-                  <span className="mm-node-file">{stop.file.split('/').pop()}</span>
-                </button>
-              )
-            })}
+                      <path d="M 0 0 L 8 4 L 0 8 z" fill="context-stroke" />
+                    </marker>
+                  </defs>
+                  {laid.edges.map((e) => {
+                    const active = onPath.has(e.from) && onPath.has(e.to)
+                    const d = edgePath(e.points)
+                    return (
+                      <g key={e.key}>
+                        <path
+                          d={d}
+                          markerEnd="url(#fm-arrow)"
+                          className={`fm-edge${isCross(e.from, e.to) ? ' cross' : ''}${active ? ' active' : ''}${edgeState(e)}`}
+                        />
+                        <path
+                          d={d}
+                          className="fm-edge-hit"
+                          style={{ strokeWidth: 14 / view.scale }}
+                          onClick={() => {
+                            if (!movedRef.current) fitEdge(e.from, e.to)
+                          }}
+                        >
+                          <title>{`${e.via ?? 'calls'} — click to fit both ends`}</title>
+                        </path>
+                        {e.via && e.label && (
+                          <text
+                            x={e.label.x}
+                            y={e.label.y + 3}
+                            className={`fm-edge-label${active ? ' active' : ''}${edgeState(e)}`}
+                          >
+                            {e.via}
+                          </text>
+                        )}
+                      </g>
+                    )
+                  })}
+                </svg>
+                {graph.order.map((id) => {
+                  const stop = byId.get(id)
+                  const pos = laid.nodes.get(id)
+                  if (!stop || !pos) return null
+                  const active = id === currentStop
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className={`mm-node${active ? ' active' : ''}${onPath.has(id) ? ' visited' : ''}${stop.context ? ' context' : ''}`}
+                      style={{ top: pos.y, left: pos.x, width: NODE_W, height: NODE_H }}
+                      onClick={() => {
+                        if (!movedRef.current) onPick(id)
+                      }}
+                      onMouseEnter={() => setHoverId(id)}
+                      onMouseLeave={() => setHoverId(null)}
+                      title={stop.file}
+                    >
+                      <span className="mm-node-label">{nodeLabel(stop)}</span>
+                      <span className="mm-node-file">{stop.file.split('/').pop()}</span>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {foundation.length > 0 && (
