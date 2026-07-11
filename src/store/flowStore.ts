@@ -36,6 +36,9 @@ interface FlowState {
 
   /** Replace the switcher's review list (from the bridge's /docs endpoint). */
   setReviews: (reviews: ReviewMeta[]) => void
+  /** Upsert a single review's metadata into the switcher list (a live push that
+   *  arrives silently, without being foregrounded, still needs to be listed). */
+  addReview: (meta: ReviewMeta) => void
   loadFlow: (doc: FlowReviewDoc) => void
   exitFlow: () => void
   /** Jump directly to a stop (minimap / branch pick / foundation). Records history. */
@@ -112,11 +115,19 @@ export const useFlow = create<FlowState>((set, get) => {
     }
   }
 
+  /** Upsert `meta` into `list` (dedupe by documentId), newest first. */
+  const withReview = (list: ReviewMeta[], meta: ReviewMeta): ReviewMeta[] =>
+    [meta, ...list.filter((r) => r.documentId !== meta.documentId)].sort(
+      (a, b) => b.createdAt - a.createdAt,
+    )
+
   return {
     ...EMPTY,
     reviews: [], // NOT in EMPTY — the switcher list survives exit/reload
 
     setReviews: (reviews) => set({ reviews }),
+
+    addReview: (meta) => set({ reviews: withReview(get().reviews, meta) }),
 
     loadFlow: (doc) => {
       const flowOrder = doc.stops.filter((s) => s.layer === 'flow').map((s) => s.id)
@@ -133,10 +144,9 @@ export const useFlow = create<FlowState>((set, get) => {
         createdAt: doc.createdAt,
         kind: 'flow-review',
         stopCount: doc.stops.length,
+        unread: false, // opening it here reads it
       }
-      const reviews = [meta, ...get().reviews.filter((r) => r.documentId !== doc.documentId)].sort(
-        (a, b) => b.createdAt - a.createdAt,
-      )
+      const reviews = withReview(get().reviews, meta)
       set({
         ...EMPTY,
         documentId: doc.documentId,

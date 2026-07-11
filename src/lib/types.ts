@@ -153,6 +153,9 @@ export interface ReviewMeta {
   createdAt: number
   kind: 'flow-review' | 'markdown'
   stopCount: number
+  /** True until the review has been opened this session — drives the switcher's
+   *  "new arrival" badge, mirroring LibraryDoc.unread for markdown docs. */
+  unread?: boolean
 }
 
 /** A flow-ordered code review pushed into Anti-Vibe. Discriminated from the

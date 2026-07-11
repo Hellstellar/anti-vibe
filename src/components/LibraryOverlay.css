@@ -144,6 +144,19 @@
   background: var(--accent);
 }
 
+/* Flow-review rows: outlined accent tag, so a diff review reads distinctly from
+   a markdown read in the merged list. */
+.li-src.flow {
+  color: var(--accent-2);
+  background: transparent;
+  border: 1px solid var(--accent-2);
+  padding: 0.05rem 0.28rem;
+}
+.library-item.active .li-src.flow {
+  color: var(--bg);
+  background: var(--accent-2);
+}
+
 .li-time {
   font-family: var(--ui-font);
   font-size: 0.55rem;

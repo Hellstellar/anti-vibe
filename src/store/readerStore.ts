@@ -12,6 +12,7 @@ import {
   DEFAULT_THEME,
 } from '../lib/theme'
 import { CFG_KEY } from '../lib/storageKeys'
+import { useFlow } from './flowStore'
 import { docKeyFor, persistComments, restoreComments } from '../lib/comments'
 import { restoreLocalLibrary, persistLocalLibrary, deriveTitle } from '../lib/library'
 import type {
@@ -629,9 +630,10 @@ export const useReader = create<ReaderState>((set, get) => {
         createdAt: incoming.createdAt ?? Date.now(),
         unread: true,
       }
-      const isFirst = tokens.length === 0
+      // Auto-open only into a truly empty screen — not behind a foregrounded
+      // flow review, which would load a doc the human never asked to see.
+      const isFirst = tokens.length === 0 && useFlow.getState().stops.length === 0
       set({ library: capLibrary([...library, entry], isFirst ? entry.documentId : activeDocId) })
-      // First doc (fresh tab / landing with nothing open) shows immediately.
       if (isFirst) get().load(entry.markdown, { documentId: entry.documentId, title: entry.title })
     },
 

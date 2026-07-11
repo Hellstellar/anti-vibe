@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import { normalizeCall } from '../lib/flowGraph'
 import type { ResolvedFlowStop } from '../lib/types'
 import { useFlow } from '../store/flowStore'
+import { useReader } from '../store/readerStore'
 import FlowStop from './FlowStop'
 import FlowMapOverlay from './FlowMapOverlay'
 import SequenceMinimap from './SequenceMinimap'
-import ReviewSwitcher from './ReviewSwitcher'
 import BranchPicker from './BranchPicker'
 import './FlowReviewView.css'
 
@@ -39,6 +39,9 @@ export default function FlowReviewView() {
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName
       if (tag === 'TEXTAREA' || tag === 'INPUT') return
+      // The document switcher owns the keyboard while open (it lists this review
+      // among others); don't move the review underneath it.
+      if (useReader.getState().libraryOpen) return
       const s = useFlow.getState()
       // While a branch is pending, digits 1-9 pick, Esc cancels.
       if (s.pendingBranch) {
@@ -113,7 +116,6 @@ export default function FlowReviewView() {
 
       {!focusMode && (
         <div className="fr-left">
-          <ReviewSwitcher />
           <SequenceMinimap
             stops={stops}
             graph={graph}

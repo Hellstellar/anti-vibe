@@ -88,3 +88,44 @@ describe('flowStore navigation', () => {
     expect(useFlow.getState().currentStop).toBe('f')
   })
 })
+
+describe('flowStore switcher list', () => {
+  beforeEach(() => {
+    useFlow.getState().exitFlow()
+    useFlow.getState().setReviews([])
+  })
+
+  const meta = (documentId: string, createdAt: number, unread: boolean) => ({
+    documentId,
+    title: documentId,
+    createdAt,
+    kind: 'flow-review' as const,
+    stopCount: 1,
+    unread,
+  })
+
+  it('loadFlow lists the review as read (unread false)', () => {
+    useFlow.getState().loadFlow(doc([stop('a', undefined, 1)]))
+    const { reviews } = useFlow.getState()
+    expect(reviews).toHaveLength(1)
+    expect(reviews[0].documentId).toBe('d')
+    expect(reviews[0].unread).toBe(false)
+  })
+
+  it('addReview upserts newest-first and dedupes by documentId', () => {
+    const { addReview } = useFlow.getState()
+    addReview(meta('older', 1, true))
+    addReview(meta('newer', 2, true))
+    addReview(meta('older', 3, false)) // re-push older with a newer timestamp
+    const { reviews } = useFlow.getState()
+    expect(reviews.map((r) => r.documentId)).toEqual(['older', 'newer'])
+    expect(reviews[0].unread).toBe(false) // the upsert replaced the stale entry
+  })
+
+  it('loadFlow clears the unread flag of a previously-silent push', () => {
+    useFlow.getState().addReview(meta('d', 5, true)) // arrived silently, unread
+    useFlow.getState().loadFlow(doc([stop('a', undefined, 1)])) // documentId 'd'
+    const entry = useFlow.getState().reviews.find((r) => r.documentId === 'd')
+    expect(entry?.unread).toBe(false)
+  })
+})
