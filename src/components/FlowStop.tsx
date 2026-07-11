@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react'
-import { parseMarkdown } from '../lib/parseMarkdown'
 import { diffRows } from '../lib/intralineDiff'
+import { buildMarkdownDiff, isMarkdownFile } from '../lib/markdownDiff'
 import {
   EDITORS,
   buildEditorUrl,
@@ -9,9 +9,10 @@ import {
   saveCustomTemplate,
   saveEditorId,
 } from '../lib/editors'
-import type { Block, ResolvedFlowStop, Token, WordToken } from '../lib/types'
+import type { ResolvedFlowStop } from '../lib/types'
 import { IconChevronLeft, IconChevronRight, IconExternalLink, IconEye, IconFileText } from './Icon'
 import { useClickOutside } from './useClickOutside'
+import MarkdownBlocks from './MarkdownBlocks'
 import './FlowStop.css'
 
 function DiffView({ text }: { text: string }) {
@@ -56,48 +57,45 @@ function DiffView({ text }: { text: string }) {
   )
 }
 
-/** Static markdown prose render. Words carry data-token-index so a future
- *  comment layer can anchor to them (mirrors SectionView's markup). */
-function ProseView({ markdown }: { markdown: string }) {
-  const { tokens, blocks } = useMemo(() => parseMarkdown(markdown), [markdown])
-  if (blocks.length === 0) return null
+/** Rendered markdown diff (for `.md` files): each hunk chunk is rendered as
+ *  prose, tinted by side, so a docs change reads as prose instead of raw `+`/`-`
+ *  source. See lib/markdownDiff for the chunk-level granularity. */
+function MarkdownDiffView({ text }: { text: string }) {
+  const chunks = useMemo(() => buildMarkdownDiff(text), [text])
+  if (!text.trim()) {
+    return <div className="fs-diff-missing">(diff not resolved — hunk not found in git diff)</div>
+  }
   return (
-    <div className="fs-prose">
-      {blocks.map((b) => (
-        <ProseBlock key={b.id} block={b} tokens={tokens} />
+    <div className="fs-mddiff">
+      {chunks.map((c, i) => (
+        // MarkdownBlocks renders null for a blank/whitespace-only run, so empty
+        // context chunks don't leave tinted gaps.
+        <MarkdownBlocks key={i} markdown={c.markdown} className={`fs-mddiff-chunk ${c.kind}`} />
       ))}
     </div>
   )
 }
 
-function ProseBlock({ block, tokens }: { block: Block; tokens: Token[] }) {
-  const node = block.node as { value?: string; lang?: string }
-  if (block.type === 'code') {
-    return (
-      <pre className="fs-prose-code">
-        <code>{node.value}</code>
-      </pre>
-    )
-  }
-  const words = tokens
-    .slice(block.tokenStart, block.tokenEnd + 1)
-    .filter((t): t is WordToken => t.kind === 'word')
-  if (words.length === 0) return null
-  const Tag = block.type === 'list' ? 'div' : block.type === 'blockquote' ? 'blockquote' : 'p'
+/** Picks how a hunk is shown: rendered markdown for `.md` files (with a toggle
+ *  back to the exact raw unified diff), and the raw token-diff for every other
+ *  file type (unchanged behaviour). */
+function HunkDiff({ text, file, minimal }: { text: string; file: string; minimal?: boolean }) {
+  const [raw, setRaw] = useState(false)
+  if (!isMarkdownFile(file)) return <DiffView text={text} />
   return (
-    <Tag className={`fs-p ${block.type}`}>
-      {words.map((w) => (
-        <span key={w.index}>
-          {w.breakBefore && <br />}
-          <span
-            data-token-index={w.index}
-            className={w.emphasis.includes('strong') ? 'strong' : w.emphasis.includes('em') ? 'em' : ''}
-          >
-            {w.text}
-          </span>{' '}
-        </span>
-      ))}
-    </Tag>
+    <div className="fs-hunkdiff">
+      {!minimal && (
+        <button
+          className="fs-diff-toggle"
+          onClick={() => setRaw((r) => !r)}
+          title={raw ? 'Show rendered markdown' : 'Show raw diff'}
+          aria-pressed={raw}
+        >
+          {raw ? '¶ rendered' : '⟨⟩ raw diff'}
+        </button>
+      )}
+      {raw ? <DiffView text={text} /> : <MarkdownDiffView text={text} />}
+    </div>
   )
 }
 
@@ -239,7 +237,7 @@ export default function FlowStop({
         </div>
         <h2 className="fs-title">{stop.title}</h2>
         {stop.oneLineSummary && <p className="fs-summary">{stop.oneLineSummary}</p>}
-        <ProseView markdown={stop.explanation} />
+        <MarkdownBlocks markdown={stop.explanation} />
         {!minimal && (
           <div className="fs-footer">
             <CallsInto />
@@ -258,7 +256,7 @@ export default function FlowStop({
           <span className="fs-focus-title">{stop.title}</span>
         </div>
         <HunkNav onPrev={onPrevHunk} onNext={onNextHunk} />
-        <DiffView text={hunk?.diffText ?? ''} />
+        <HunkDiff text={hunk?.diffText ?? ''} file={stop.file} minimal />
       </div>
     )
   }
@@ -300,9 +298,9 @@ export default function FlowStop({
 
       <HunkNav onPrev={onPrevHunk} onNext={onNextHunk} />
 
-      <DiffView text={hunk?.diffText ?? ''} />
+      <HunkDiff text={hunk?.diffText ?? ''} file={stop.file} />
 
-      {showDesc && <ProseView markdown={stop.explanation} />}
+      {showDesc && <MarkdownBlocks markdown={stop.explanation} />}
 
       <div className="fs-footer">
         <CallsInto />

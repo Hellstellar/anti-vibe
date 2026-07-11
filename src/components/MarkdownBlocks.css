@@ -1,0 +1,129 @@
+/* Static markdown renderer (MarkdownBlocks.tsx). Neutral prose styling that
+   reads inside any container — the Flow Review diff chunks and the stop
+   explanation both mount it. Colors/fonts come from the active theme vars. */
+.mb-prose {
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--fg);
+}
+.mb-prose > :first-child {
+  margin-top: 0;
+}
+.mb-prose > :last-child {
+  margin-bottom: 0;
+}
+
+.mb-heading {
+  color: var(--fg-strong);
+  font-weight: 700;
+  line-height: 1.25;
+  margin: 0.6em 0 0.3em;
+}
+.mb-heading:first-child {
+  margin-top: 0;
+}
+h1.mb-heading {
+  font-size: 1.4rem;
+}
+h2.mb-heading {
+  font-size: 1.2rem;
+}
+h3.mb-heading {
+  font-size: 1.08rem;
+}
+h4.mb-heading,
+h5.mb-heading,
+h6.mb-heading {
+  font-size: 1rem;
+}
+
+.mb-p {
+  margin: 0.4em 0;
+}
+.mb-p.blockquote {
+  border-left: 3px solid color-mix(in srgb, var(--fg-dim) 50%, transparent);
+  padding-left: 0.8em;
+  color: var(--fg-dim);
+  font-style: italic;
+}
+
+.mb-p .strong,
+.mb-li .strong,
+.mb-li-para .strong {
+  color: var(--fg-strong);
+  font-weight: 700;
+}
+.mb-p .em,
+.mb-li .em,
+.mb-li-para .em {
+  font-style: italic;
+}
+
+.mb-list {
+  margin: 0.4em 0;
+}
+.mb-li {
+  display: block;
+  position: relative;
+  padding-left: 1.1em;
+}
+.mb-li::before {
+  content: '•';
+  position: absolute;
+  left: 0.2em;
+  color: var(--accent);
+}
+.mb-li-para {
+  display: block;
+}
+
+.mb-code {
+  background: var(--bg-2);
+  border-radius: 6px;
+  padding: 0.7rem 0.9rem;
+  margin: 0.5em 0;
+  overflow-x: auto;
+  font: 0.82rem/1.5 ui-monospace, monospace;
+  position: relative;
+}
+.mb-code-lang {
+  display: block;
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  margin-bottom: 0.4rem;
+}
+.mb-code code {
+  display: block;
+  white-space: pre;
+}
+
+.mb-table {
+  border-collapse: collapse;
+  margin: 0.5em 0;
+  font-size: 0.92rem;
+}
+.mb-table th,
+.mb-table td {
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 35%, transparent);
+  padding: 0.3rem 0.6rem;
+  text-align: left;
+}
+.mb-table th {
+  color: var(--fg-strong);
+  font-weight: 700;
+}
+
+.mb-image {
+  margin: 0.5em 0;
+}
+.mb-image img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+.mb-image figcaption {
+  font-size: 0.8rem;
+  color: var(--fg-dim);
+  margin-top: 0.3rem;
+}

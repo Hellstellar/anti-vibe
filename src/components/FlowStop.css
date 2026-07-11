@@ -252,29 +252,90 @@
   text-align: center;
 }
 
-/* --- prose description (toggled) --- */
-.fs-prose {
+/* --- rendered markdown diff (.md files) --- */
+/* Mirrors .fs-diff's centring/scroll so the chrome above and below stays put. */
+.fs-hunkdiff {
+  display: flex;
+  flex-direction: column;
+  margin: auto 0;
+  max-height: 100%;
+  overflow: auto;
+}
+.flow-stop.desc-open .fs-hunkdiff {
+  margin: 0 0 1.5rem;
+}
+
+/* raw ⇄ rendered toggle — small, right-aligned above the diff. */
+.fs-diff-toggle {
+  align-self: flex-end;
+  margin-bottom: 0.5rem;
+  font: 0.58rem/1 var(--ui-font);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 30%, transparent);
+  border-radius: 4px;
+  padding: 0.32rem 0.5rem;
+  cursor: pointer;
+}
+.fs-diff-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.fs-mddiff {
+  background: var(--bg-2);
+  border: 1px solid color-mix(in srgb, var(--fg-dim) 30%, transparent);
+  border-radius: 6px;
+  padding: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
   font-size: 1.02rem;
-  line-height: 1.65;
+  line-height: 1.6;
   color: var(--fg);
+}
+.fs-mddiff-chunk {
+  border-left: 3px solid transparent;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+}
+/* Added / removed sides use the same green + accent signal as the raw diff, at a
+   lighter tint so rendered prose stays readable on top. */
+.fs-mddiff-chunk.add {
+  background: color-mix(in srgb, #2ea043 22%, var(--bg));
+  border-left-color: #3fd35a;
+}
+.fs-mddiff-chunk.del {
+  background: color-mix(in srgb, var(--accent) 22%, var(--bg));
+  border-left-color: var(--accent);
+}
+/* Removed side: strike the rendered prose so it reads as "was". */
+.fs-mddiff-chunk.del .mb-p,
+.fs-mddiff-chunk.del .mb-heading,
+.fs-mddiff-chunk.del .mb-li,
+.fs-mddiff-chunk.del .mb-li-para {
+  text-decoration: line-through;
+  opacity: 0.75;
+}
+/* Context: unchanged surrounding prose, recessed so the eye lands on the change. */
+.fs-mddiff-chunk.ctx {
+  opacity: 0.6;
+}
+/* Tighten the rendered blocks inside a chunk (no outer margins fighting the gap). */
+.fs-mddiff-chunk.mb-prose {
+  font-size: 0.98rem;
+}
+
+/* --- prose description (toggled) --- */
+/* The stop explanation + rendered md diff both use MarkdownBlocks (.mb-*),
+   styled in MarkdownBlocks.css; the explanation just gets a bottom gap here. */
+.flow-stop .mb-prose {
   margin-bottom: 1.5rem;
 }
-.fs-prose .strong {
-  color: var(--fg-strong);
-  font-weight: 700;
-}
-.fs-prose .em {
-  font-style: italic;
-}
-.fs-prose-code {
-  background: var(--bg-2);
-  border-radius: 6px;
-  padding: 0.8rem 1rem;
-  overflow-x: auto;
-  font: 0.82rem/1.5 ui-monospace, monospace;
-}
-.fs-p.list .fs-li {
-  display: block;
+.fs-mddiff .mb-prose {
+  margin-bottom: 0;
 }
 
 /* --- bottom footer: calls-into chips --- */
