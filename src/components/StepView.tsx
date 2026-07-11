@@ -56,9 +56,12 @@ function UnitBody({ unit }: { unit: StepUnit }) {
           <code>{value}</code>
         </pre>
       )
-      // A mermaid fence steps as one whole rendered diagram (see steps.ts).
+      // A mermaid fence steps as a whole rendered diagram; walk units light
+      // one node/message and dim the rest (see steps.ts / mermaidWalk.ts).
       if (isMermaid(unit.node)) {
-        return <MermaidDiagram value={value} fallback={raw} />
+        return (
+          <MermaidDiagram value={value} fallback={raw} highlight={unit.walk} interactive />
+        )
       }
       // Paged unit -> show only its line range (see lib/codePages.ts).
       const text =
@@ -157,12 +160,13 @@ export default function StepView() {
 
   return (
     <div className="step">
-      {/* keyed by groupId so the label re-animates when the block changes */}
-      <div key={unit.groupId} className="step-context">
+      {/* keyed by groupId so the label re-animates when the block changes
+          (prefixes keep the sibling keys from ever colliding) */}
+      <div key={`g${unit.groupId}`} className="step-context">
         {unit.label}
       </div>
 
-      <div key={stepIndex} ref={bodyRef} className="step-body" onClick={onClick}>
+      <div key={`s${stepIndex}`} ref={bodyRef} className="step-body" onClick={onClick}>
         <UnitBody unit={unit} />
       </div>
 

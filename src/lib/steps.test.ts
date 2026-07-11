@@ -88,13 +88,25 @@ describe('buildSteps', () => {
     expect(u[0].label).toBe('CODE')
   })
 
-  it('emits one whole DIAGRAM unit for a mermaid fence, never paged', () => {
-    const body = Array.from({ length: 60 }, (_, i) => `  n${i} --> n${i + 1}`).join('\n')
-    const u = build(`# H\n\n\`\`\`mermaid\ngraph TD\n${body}\n\`\`\``)
+  it('emits a DIAGRAM overview then one walk unit per node for a mermaid fence', () => {
+    const u = build(
+      '# H\n\n```mermaid\ngraph TD\n  A[Start] --> B[End]\n```',
+    )
+    expect(u.map((x) => x.label)).toEqual([
+      'DIAGRAM',
+      'DIAGRAM › Start',
+      'DIAGRAM › End',
+    ])
+    expect(u.every((x) => x.kind === 'code' && x.lineStart === undefined)).toBe(true)
+    expect(u[0].walk).toBeUndefined()
+    expect(u[1].walk).toEqual({ type: 'flow-node', id: 'A', label: 'Start' })
+  })
+
+  it('keeps an unsupported mermaid type as a single whole DIAGRAM unit', () => {
+    const u = build('# H\n\n```mermaid\npie\n  "a": 1\n```')
     expect(u).toHaveLength(1)
-    expect(u[0].kind).toBe('code')
     expect(u[0].label).toBe('DIAGRAM')
-    expect(u[0].lineStart).toBeUndefined()
+    expect(u[0].walk).toBeUndefined()
   })
 
   it('pages a large code block into multiple code units with position labels', () => {

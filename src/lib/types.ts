@@ -203,6 +203,13 @@ export type ReaderMode =
 /** One screen in Step mode: a sentence, list item, table row, code or image. */
 export type StepKind = 'sentence' | 'listItem' | 'tableRow' | 'code' | 'image' | 'quote'
 
+/** One stop on a mermaid diagram walk (see lib/mermaidWalk.ts): the diagram
+ *  element a step highlights while the rest of the diagram dims. */
+export type DiagramWalkItem =
+  | { type: 'flow-node'; id: string; label: string }
+  | { type: 'seq-message'; index: number; label: string }
+  | { type: 'seq-note'; index: number; label: string }
+
 export interface StepUnit {
   kind: StepKind
   /** Context label shown above the unit, e.g. "PARAGRAPH", "LIST · 2/4". */
@@ -219,6 +226,9 @@ export interface StepUnit {
    *  Large blocks are paged (see lib/codePages.ts); absent => whole value. */
   lineStart?: number
   lineEnd?: number
+  /** For a mermaid code unit: the walk stop this step highlights. Absent on
+   *  the leading whole-diagram overview unit. */
+  walk?: DiagramWalkItem
 }
 
 /** How much of the document a comment covers. 'document' => no anchor. */
