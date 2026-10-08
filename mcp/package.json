@@ -1,6 +1,6 @@
 {
   "name": "anti-vibe-mcp",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "mcpName": "io.github.Hellstellar/anti-vibe",
   "description": "MCP server that sends your coding agent's output to the Anti-Vibe reader: read it one sentence at a time, skim it by heading, or speed-read it.",
   "license": "MIT",
