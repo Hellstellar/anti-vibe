@@ -14,9 +14,7 @@ Then ask your agent to "send this to Anti-Vibe". For other MCP clients, see [MCP
 
 "Vibe coding" is letting the AI cook and merging whatever it hands back on faith. Fun, fast, and a great way to ship a bug you'll spend Saturday debugging. **Anti-Vibe is the retro-cyberpunk reader for people who actually read the diff** — LLM / agent output, reviewed section by section without the fatigue that makes you give up and click "Approve" at line 6.
 
-Glance at a heading, decide, skip it or speed-read it. Or walk a code change in the order it actually *runs*, one hunk at a time. Eyes still, content moving, no wall of text to bounce off.
-
-> **RSVP** (Rapid Serial Visual Presentation) shows information one item at a time in the same spot. Instead of reading a paragraph at your own pace, words flash by in the center of your vision. It's speed-reading where the content moves, not your gaze — easier to process without scrolling or darting your eyes around.
+Read it **one sentence at a time**: each sentence, list item, or table row alone on the screen, with everything else out of sight. Skim by heading and skip what doesn't matter. Speed-read it when you're in a hurry. No wall of text to bounce off.
 
 > **Full disclosure:** yes, a tool for *not* vibe coding is itself vibe coded — for now. The irony is not lost on us; we're firing shots from inside the glass house. The plan is to close the loop and use Anti-Vibe on its own source until it's earned its way out of "vibe coded" and into "actually reviewed."
 
@@ -24,7 +22,7 @@ Glance at a heading, decide, skip it or speed-read it. Or walk a code change in 
 
 LLMs and agents generate walls of text faster than any human can read them, and the cost of reviewing it is real — not just the time. This app attacks that cost from several sides:
 
-- **Less reading fatigue** — RSVP keeps your eyes still (the content moves, your gaze doesn't), and the CRT top/bottom fade keeps the focus on the middle of the screen, easing the load.
+- **Less reading fatigue** — one sentence at a time means there's no wall of text to scan, and the reading view's top/bottom fade keeps the focus on the middle of the screen, easing the load.
 - **Lower inertia to review** — section-by-section navigation means you commit to one small chunk at a time instead of facing the whole document. Glance at a heading, decide, skip it or speed-read it.
 - **Faster review** — opt-in RSVP blasts through the sections worth reading at your target WPM; review keeps pace with how much AI output you now generate.
 - **Less screen time** — faster, gentler review means fewer hours staring at walls of text.
@@ -44,20 +42,20 @@ Shown in the **Cream** theme (warm, soft, left-aligned prose). There's also a **
 
 <img src="docs/screenshots/reading-cream.png" alt="Reading view" width="900">
 
-**RSVP — one word at a time, ORP pivot accented**
+**One sentence at a time — step through a section, one unit on screen**
+
+<img src="docs/screenshots/step-cream.png" alt="Step mode showing one sentence" width="900">
+
+**Speed-read (RSVP) — one word at a time, ORP pivot accented**
 
 <img src="docs/screenshots/rsvp-cream.png" alt="RSVP view" width="900">
-
-**Flow Review — a code change walked in runtime order, one hunk at a time**
-
-<img src="docs/screenshots/flow-cream.png" alt="Flow Review view" width="900">
 
 ## Features
 
 - **Load** — paste markdown from the clipboard, or open a `.md` file.
 - **Section navigation** — the doc is split into heading-delimited sections. You land on the heading list: `↑`/`↓` move between headings, **Enter** opens a section in the reading view, and **Cmd/Ctrl + arrow** jumps to the next or previous section. Skim heading-to-heading without reading everything.
-- **Opt-in RSVP** — when a section looks worth speed-reading, **Cmd/Ctrl + Enter** RSVPs it from the start. Or click a word to set your place, then press `space` (or the fast-forward button) to RSVP from there. Words flash centered with the ORP/pivot letter pinned to a reticle; speed ramps from slow to your target WPM (and re-ramps on each start). `space` pauses in place on the current word, with a scrub strip to move back or forward; `space` again resumes, and `esc` returns to the reading view.
-- **Step mode** — for the gentlest read, press **Enter** again in the reading view (or the eye button) to step through the section one unit at a time: a sentence, a list item, a table row (shown as header→value pairs), a code block, an image, or one element of a mermaid diagram. A breadcrumb label (`PARAGRAPH`, `LIST › LIST`, `TABLE ROW`) shows where you are in the layout. Stepping starts from the word you clicked, or the section start. `Enter` advances, `Shift+Enter` goes back.
+- **One sentence at a time (step mode)** — press **Enter** again in the reading view (or the eye button) to step through the section one unit at a time: a sentence, a list item, a table row (shown as header→value pairs), a code block, an image, or one element of a mermaid diagram. A breadcrumb label (`PARAGRAPH`, `LIST › LIST`, `TABLE ROW`) shows where you are in the layout. Stepping starts from the word you clicked, or the section start. `Enter` advances, `Shift+Enter` goes back.
+- **Speed-read (RSVP)** — RSVP (Rapid Serial Visual Presentation) flashes one word at a time in the same spot, so the content moves and your eyes don't. When a section looks worth speed-reading, **Cmd/Ctrl + Enter** RSVPs it from the start. Or click a word to set your place, then press `space` (or the fast-forward button) to RSVP from there. Words flash centered with the ORP/pivot letter pinned to a reticle; speed ramps from slow to your target WPM (and re-ramps on each start). `space` pauses in place on the current word, with a scrub strip to move back or forward; `space` again resumes, and `esc` returns to the reading view.
 - **CRT reading view** — a revealed section shows in full inside a scrollable pane that dissolves toward the top and bottom edges (CRT-style fade). Scroll with the arrow keys.
 - **Markdown-aware** — headings, lists, blockquotes, fenced code, tables, and images render as styled markdown; prose centered, list items bulleted, line breaks preserved.
 - **Help** — a `?` icon beside the settings gear opens a menu of the shortcuts for the current view.
@@ -66,7 +64,11 @@ Shown in the **Cream** theme (warm, soft, left-aligned prose). There's also a **
 - **Keyboard** — one axis of focus: `enter` **focus deeper** (heading → reveal → step → next unit) · `shift+enter` step back · `cmd/ctrl+enter` **RSVP the section from the start** (any level) · `space` pause/resume RSVP · `esc` **up one level** (never to landing — the ✕ exits). Arrows are contextual: in the **heading list** `↑`/`↓` move between headings; in the **reading view** `↑`/`↓` scroll and `←`/`→` scroll wide content; in **step mode** `←`/`→` move between units. To jump across sections, **`⌘`/`ctrl` + arrow** (down/right = next, up/left = prev) — always landing in the next section's reading view. Once you finish a section (scrolled to the bottom, or reached the last step), a small **advance button** appears at the bottom — click it to go to the next section.
 - **Theme** — two built-in themes (Cream and CRT); the reading font is swappable via the `--word-font` CSS variable.
 
-## Flow Review — read the diff, not the file list
+## Flow Review (in development)
+
+Early and changing fast: expect rough edges, and expect the `review_flow` input to change.
+
+<img src="docs/screenshots/flow-cream.png" alt="Flow Review view" width="900">
 
 The feature vibe coding hopes you never use. **Flow Review walks a code change in the order it actually runs** — entry → handler → service → effect, like stepping through a sequence diagram — instead of the alphabetical file dump your git tool gives you. One hunk at a time, always showing where you are in the call flow.
 
@@ -116,7 +118,7 @@ Because Anti-Vibe is a static SPA with no backend, the MCP process also runs a t
 
 - **`review_markdown`** — `{ markdown, title? }` → normalizes the markdown (CRLF→LF, optional `# title`), validates it parses, sends it to the reader, and opens the tab on first use. Preserves code blocks, tables and structure verbatim. Returns `{ documentId, sectionCount, wordCount, url }`.
 - **`rsvpify_markdown`** — `{ markdown, title? }` → same transport, but for content a human will *speed-read*. The agent must first rewrite its output into flowing prose (full sentences, no bullet fragments), replace each code block with a short prose summary of what it does, and keep essential tables verbatim (Anti-Vibe auto-pauses the RSVP stream on them). Returns `{ documentId, sectionCount, wordCount, url }`.
-- **`review_flow`** — `{ stops, title?, repoPath?, diffBase? }` → pushes a **flow-ordered code review**. The agent sends only the traversal *structure* (stops tagged `flow` / `foundation`, wired by `callsTo`, with per-hunk reading order via `hunkFlow`) — never the diff text. Anti-Vibe runs `git diff` in the repo and resolves each stop to its real hunks. Returns `{ documentId, stopCount, resolvedCount, url }`. See [`docs/FLOW-REVIEW.md`](./docs/FLOW-REVIEW.md) for the full input schema and `diffBase` forms.
+- **`review_flow`** (in development) — `{ stops, title?, repoPath?, diffBase? }` → pushes a **flow-ordered code review**. The agent sends only the traversal *structure* (stops tagged `flow` / `foundation`, wired by `callsTo`, with per-hunk reading order via `hunkFlow`) — never the diff text. Anti-Vibe runs `git diff` in the repo and resolves each stop to its real hunks. Returns `{ documentId, stopCount, resolvedCount, url }`. See [`docs/FLOW-REVIEW.md`](./docs/FLOW-REVIEW.md) for the full input schema and `diffBase` forms.
 
 The server ships as a separate self-contained npm package, [`anti-vibe-mcp`](./mcp), that bundles a built copy of the web app — so the bridge always serves a matching front-end with no clone or build step for end users.
 
