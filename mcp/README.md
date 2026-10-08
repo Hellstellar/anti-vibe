@@ -26,7 +26,7 @@ Any other MCP client (Claude Desktop `claude_desktop_config.json`, Cursor `mcp.j
 }
 ```
 
-Then ask your agent to "send this to Anti-Vibe for review". The first call opens `http://127.0.0.1:7777`; later calls update the same tab.
+Then ask your agent to "send this to Anti-Vibe for review". The first call opens `http://127.0.0.1:7777`; later calls go to the same tab. If you're in another window, the tab switches to the new document; if you're reading in it, the new document waits in the Documents list (`l`).
 
 ## Tools
 

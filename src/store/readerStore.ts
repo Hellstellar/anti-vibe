@@ -12,7 +12,6 @@ import {
   DEFAULT_THEME,
 } from '../lib/theme'
 import { CFG_KEY } from '../lib/storageKeys'
-import { useFlow } from './flowStore'
 import { docKeyFor, persistComments, restoreComments } from '../lib/comments'
 import { restoreLocalLibrary, persistLocalLibrary, deriveTitle } from '../lib/library'
 import type {
@@ -219,11 +218,14 @@ interface ReaderState {
   /** Drop all comments for the current document. */
   clearComments: () => void
 
-  /** Add a bridge-pushed doc to the library. The first doc (nothing loaded yet)
-   *  opens immediately; a push arriving mid-review is appended silently (unread
-   *  badge) so the human is never yanked off what they're reading. Deduped by
-   *  documentId, so SSE replay on (re)connect is idempotent. */
-  receiveDoc: (doc: { documentId: string; markdown: string; title?: string; createdAt?: number }) => void
+  /** Add a bridge-pushed doc to the library. `foreground` (decided by the bridge
+   *  receiver) opens it now; otherwise it's appended silently (unread badge) so
+   *  the human is never yanked off what they're reading. Deduped by documentId,
+   *  so SSE replay on (re)connect is idempotent and never re-opens a doc. */
+  receiveDoc: (
+    doc: { documentId: string; markdown: string; title?: string; createdAt?: number },
+    foreground: boolean,
+  ) => void
   /** Load a library doc by id, restoring its own comments. */
   switchTo: (documentId: string) => void
   /** Open the library overlay (no-op when the library is empty). */
@@ -618,7 +620,7 @@ export const useReader = create<ReaderState>((set, get) => {
       persistComments(get().docKey, [])
     },
 
-    receiveDoc: (incoming) => {
+    receiveDoc: (incoming, foreground) => {
       if (!incoming.markdown || !incoming.documentId) return
       const { library, tokens, activeDocId } = get()
       if (library.some((d) => d.documentId === incoming.documentId)) return // dedupe replay
@@ -630,11 +632,12 @@ export const useReader = create<ReaderState>((set, get) => {
         createdAt: incoming.createdAt ?? Date.now(),
         unread: true,
       }
-      // Auto-open only into a truly empty screen — not behind a foregrounded
-      // flow review, which would load a doc the human never asked to see.
-      const isFirst = tokens.length === 0 && useFlow.getState().stops.length === 0
-      set({ library: capLibrary([...library, entry], isFirst ? entry.documentId : activeDocId) })
-      if (isFirst) get().load(entry.markdown, { documentId: entry.documentId, title: entry.title })
+      set({ library: capLibrary([...library, entry], foreground ? entry.documentId : activeDocId) })
+      if (!foreground) return
+      // Nothing loaded yet: ReaderView mounts and enters the heading view itself.
+      // Already showing a doc: switch the way the library picker does.
+      if (tokens.length === 0) get().load(entry.markdown, { documentId: entry.documentId, title: entry.title })
+      else get().switchTo(entry.documentId)
     },
 
     loadLocal: (src, title) => {

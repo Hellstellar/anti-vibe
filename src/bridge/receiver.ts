@@ -16,10 +16,25 @@ function metaOfFlow(doc: FlowReviewDoc, unread: boolean): ReviewMeta {
 }
 
 /** True when neither surface has anything loaded — an incoming doc may then
- *  auto-open. Once something is loaded, further pushes only join the switcher
- *  (unread) so the human is never yanked off what they're reading/reviewing. */
+ *  auto-open. */
 function screenIsEmpty(): boolean {
   return useReader.getState().tokens.length === 0 && useFlow.getState().stops.length === 0
+}
+
+/** Already in this tab (reader library or flow switcher) — an SSE replay, not a new push. */
+function isKnown(doc: PushedDoc): boolean {
+  return (
+    useReader.getState().library.some((d) => d.documentId === doc.documentId) ||
+    useFlow.getState().reviews.some((r) => r.documentId === doc.documentId)
+  )
+}
+
+/** A live push takes the screen when the screen is empty, or when it's new and
+ *  this window isn't the one the human is using (they sent it from their
+ *  terminal and will come back to read it). While they're using this window it
+ *  only joins the switcher (unread), so they're never yanked mid-read. */
+function shouldForegroundLive(doc: PushedDoc): boolean {
+  return screenIsEmpty() || (!isKnown(doc) && !document.hasFocus())
 }
 
 /**
@@ -31,11 +46,13 @@ function screenIsEmpty(): boolean {
  * a silent no-op everywhere except behind the bridge.
  *
  * A push is one of two kinds:
- *  - markdown  → retained as its own reader-library entry (dedupe + first-doc
- *    auto-load live in the store's receiveDoc), so a re-sent doc — SSE replay on
- *    connect, or a re-probe — is idempotent and never clobbers the doc being read.
- *  - flow-review → loaded into the flow store (the first one auto-opens); the
- *    store also appends it to the review switcher list.
+ *  - markdown  → retained as its own reader-library entry (deduped in the
+ *    store's receiveDoc), so a re-sent doc — SSE replay on connect, or a
+ *    re-probe — is idempotent and never clobbers the doc being read.
+ *  - flow-review → listed in the review switcher, and loaded into the flow store
+ *    when it takes the screen.
+ * Which push takes the screen: on catch-up, the newest doc; live, see
+ * shouldForegroundLive.
  */
 
 interface PushedMarkdownDoc {
@@ -51,23 +68,23 @@ function isFlow(doc: PushedDoc): doc is FlowReviewDoc {
   return 'kind' in doc && doc.kind === 'flow-review'
 }
 
-function receive(doc: PushedDoc | null): void {
+function receive(doc: PushedDoc | null, foreground: boolean): void {
   if (!doc || !doc.documentId) return
   if (isFlow(doc)) {
-    // Always list it in the switcher (idempotent upsert). Only foreground it
-    // when the screen is empty — otherwise it waits silently to be picked, so a
-    // push arriving mid-read/review never yanks the human off their work.
+    // Always list it in the switcher (idempotent upsert); otherwise it waits
+    // silently to be picked.
     useFlow.getState().addReview(metaOfFlow(doc, true))
-    if (screenIsEmpty()) {
+    if (foreground) {
       useReader.getState().exit() // ensure the reader isn't holding a stale mode
       useFlow.getState().loadFlow(doc)
     }
     return
   }
   if (!doc.markdown) return
-  // The reader store retains every markdown push; it auto-opens the first one
-  // (guarded on a flow occupying the screen) and lists the rest as unread.
-  useReader.getState().receiveDoc(doc)
+  if (foreground) useFlow.getState().exitFlow() // reveal the reader
+  // The reader store retains every markdown push and lists it as unread unless
+  // it opens now.
+  useReader.getState().receiveDoc(doc, foreground)
 }
 
 /** Derive the flow-review switcher list from the full library payload. */
@@ -107,7 +124,8 @@ function subscribe(): void {
   const es = new EventSource('/__antivibe/events')
   es.addEventListener('document', (ev) => {
     try {
-      receive(JSON.parse((ev as MessageEvent).data))
+      const doc: PushedDoc = JSON.parse((ev as MessageEvent).data)
+      receive(doc, shouldForegroundLive(doc))
     } catch {
       /* ignore malformed frames */
     }
@@ -126,7 +144,12 @@ export function connectBridge(): void {
     .then((docs: PushedDoc[]) => {
       if (Array.isArray(docs)) {
         useFlow.getState().setReviews(toReviewMeta(docs))
-        for (const doc of docs) receive(doc)
+        // Newest first, so the doc that opens into the empty screen is the
+        // latest push (the bridge lists oldest first). Catch-up never uses the
+        // focus rule: a tab loading in the background would otherwise open
+        // every doc in turn.
+        const newestFirst = [...docs].sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
+        for (const doc of newestFirst) receive(doc, screenIsEmpty())
       }
       subscribe()
     })
