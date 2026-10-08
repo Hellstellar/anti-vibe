@@ -6,7 +6,13 @@ It runs a tiny loopback bridge that serves the Anti-Vibe web app from its own or
 
 ## Install
 
-Add to your MCP client (Claude Desktop `claude_desktop_config.json`, or `claude mcp add`):
+Claude Code:
+
+```bash
+claude mcp add anti-vibe -- npx -y anti-vibe-mcp
+```
+
+Any other MCP client (Claude Desktop `claude_desktop_config.json`, Cursor `mcp.json`):
 
 ```json
 {

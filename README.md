@@ -2,7 +2,15 @@
 
 ### Your agent wrote 800 lines in 4 seconds. You read 6 of them and hit "Approve." Be honest.
 
-**▸ Live at [anti-vibe.pages.dev](https://anti-vibe.pages.dev)**
+**▸ Live at [anti-vibe.pages.dev](https://anti-vibe.pages.dev)** (paste any markdown, no install)
+
+**Add it to Claude Code:**
+
+```bash
+claude mcp add anti-vibe -- npx -y anti-vibe-mcp
+```
+
+Then ask your agent to "send this to Anti-Vibe". For other MCP clients, see [MCP server](#mcp-server).
 
 "Vibe coding" is letting the AI cook and merging whatever it hands back on faith. Fun, fast, and a great way to ship a bug you'll spend Saturday debugging. **Anti-Vibe is the retro-cyberpunk reader for people who actually read the diff** — LLM / agent output, reviewed section by section without the fatigue that makes you give up and click "Approve" at line 6.
 
