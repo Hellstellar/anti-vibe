@@ -2,6 +2,8 @@
 
 ### Your agent wrote 800 lines in 4 seconds. You read 6 of them and hit "Approve." Be honest.
 
+<img src="docs/screenshots/demo.gif" alt="Claude Code writes a long answer, sends it to Anti-Vibe, and it's read one sentence at a time" width="900">
+
 **▸ Live at [anti-vibe.pages.dev](https://anti-vibe.pages.dev)** (paste any markdown, no install)
 
 **Add it to Claude Code:**
