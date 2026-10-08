@@ -196,7 +196,7 @@ async function main(): Promise<void> {
 
   await ensureBridge()
 
-  const server = new McpServer({ name: 'anti-vibe', version: '0.1.0' })
+  const server = new McpServer({ name: 'anti-vibe', version: VERSION })
 
   server.registerTool(
     'review_markdown',
