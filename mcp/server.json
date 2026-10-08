@@ -1,0 +1,31 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Hellstellar/anti-vibe",
+  "title": "Anti-Vibe",
+  "description": "Review coding-agent output one section at a time, speed-read it, or walk a diff in call order.",
+  "websiteUrl": "https://anti-vibe.pages.dev",
+  "repository": {
+    "url": "https://github.com/Hellstellar/anti-vibe",
+    "source": "github",
+    "subfolder": "mcp"
+  },
+  "version": "0.4.6",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "anti-vibe-mcp",
+      "version": "0.4.6",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "ANTIVIBE_MCP_PORT",
+          "description": "Loopback port for the reader tab (default 7777)",
+          "isRequired": false,
+          "default": "7777"
+        }
+      ]
+    }
+  ]
+}
