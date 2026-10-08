@@ -67,7 +67,7 @@ function loadConfig(): ReaderConfig {
         ...parsed,
         // Pass the raw align through (undefined for blobs saved before this
         // field existed) so sanitizeConfig falls back to the theme's default
-        // instead of DEFAULT_CONFIG.align masking it with 'center'.
+        // instead of DEFAULT_CONFIG.align masking it.
         align: parsed.align,
         multipliers: { ...DEFAULT_CONFIG.multipliers, ...parsed.multipliers },
       })

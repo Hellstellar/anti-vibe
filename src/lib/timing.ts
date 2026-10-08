@@ -1,4 +1,5 @@
 import type { ReaderConfig, WordToken } from './types'
+import { DEFAULT_THEME, defaultAlignFor } from './theme'
 
 export const DEFAULT_CONFIG: ReaderConfig = {
   startWpm: 150,
@@ -6,8 +7,8 @@ export const DEFAULT_CONFIG: ReaderConfig = {
   rampWords: 20,
   chunkSize: 1,
   soundOn: true,
-  theme: 'crt',
-  align: 'center',
+  theme: DEFAULT_THEME,
+  align: defaultAlignFor(DEFAULT_THEME),
   symbols: 'dim',
   multipliers: {
     longWordPerChar: 0.04,
